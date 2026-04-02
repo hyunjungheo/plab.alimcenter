@@ -3361,18 +3361,29 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
     function handleCredentialResponse(response) {
         try {
-            var pl = JSON.parse(atob(response.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+            // UTF-8 한글 이름 깨짐 방지: TextDecoder 사용
+            var base64 = response.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+            var binary = atob(base64);
+            var bytes = new Uint8Array(binary.length);
+            for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            var pl = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+
             var email = pl.email;
+            var name  = pl.name || email;
+
             if (email.split('@')[1] === ALLOWED_DOMAIN) {
                 sessionStorage.setItem('admin_auth','true');
                 sessionStorage.setItem('admin_email', email);
-                sessionStorage.setItem('admin_name', pl.name || email);
+                sessionStorage.setItem('admin_name', name);
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 checkWritingTeamUI();
-                var badge = document.getElementById('admin-user-badge');
+                var badge  = document.getElementById('admin-user-badge');
                 var nameEl = document.getElementById('admin-user-name');
-                if (badge && nameEl) { nameEl.textContent = email; badge.style.display = 'flex'; }
+                if (badge && nameEl) {
+                    nameEl.textContent = email;
+                    badge.style.display = 'flex';
+                }
             } else {
                 var err = document.getElementById('login-error');
                 if (err) { err.textContent = email + ' 계정은 접근 권한이 없습니다. plabfootball.com 이메일로 로그인해주세요.'; err.style.display = 'block'; }
