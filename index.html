@@ -3217,6 +3217,21 @@
     // ── 허용 도메인 (이 도메인 이메일이면 모두 로그인 가능) ──
     const ALLOWED_DOMAIN = 'plabfootball.com';
 
+    // ── 라이팅팀 권한 UI 업데이트 ─────────────────────────
+    function checkWritingTeamUI() {
+        var WRITING_TEAM = [
+            'jongsa.kim@plabfootball.com',
+            'seonyoung.lim@plabfootball.com',
+            'hyunjung.heo@plabfootball.com'
+        ];
+        var email = (sessionStorage.getItem('admin_email') || '').toLowerCase();
+        var isWritingTeam = WRITING_TEAM.includes(email);
+
+        // 가이드 수정 버튼
+        var btn = document.getElementById('guideEditBtn');
+        if (btn) btn.style.display = isWritingTeam ? 'flex' : 'none';
+    }
+
     // ── Google 로그인 콜백 ───────────────────────────────
     function handleCredentialResponse(response) {
         try {
@@ -3233,6 +3248,7 @@
                 sessionStorage.setItem('admin_name', email);
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
+                checkWritingTeamUI();
 
                 // 헤더에 로그인 사용자 표시
                 const userBadge = document.getElementById('admin-user-badge');
@@ -3261,6 +3277,7 @@
         if (isAuth === 'true') {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
+            checkWritingTeamUI();
             const name = sessionStorage.getItem('admin_name') || '';
             const userBadge = document.getElementById('admin-user-badge');
             const userName = document.getElementById('admin-user-name');
@@ -4051,16 +4068,6 @@
                     <button id="guideEditBtn" onclick="enterEditMode()" style="padding: 12px 32px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 8px;">
                         ✏️ 가이드 수정
                     </button>
-                    <script>
-                    (function(){
-                        var WRITING_TEAM = ['jongsa.kim@plabfootball.com','seonyoung.lim@plabfootball.com','hyunjung.heo@plabfootball.com'];
-                        var email = (sessionStorage.getItem('admin_email')||'').toLowerCase();
-                        if(WRITING_TEAM.includes(email)){
-                            var btn = document.getElementById('guideEditBtn');
-                            if(btn) btn.style.display='flex';
-                        }
-                    })();
-                    </script>
                 </div>
             </div>
             
