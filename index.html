@@ -2910,7 +2910,7 @@
 .abody h2{font-size:19px;font-weight:700;margin:14px 0 6px}
 .abody h3{font-size:16px;font-weight:700;margin:12px 0 5px}
 .abody p{margin:4px 0}
-.abody table{width:100%;border-collapse:collapse;margin:8px 0}
+.abody table{max-width:100%;border-collapse:collapse;margin:8px 0;table-layout:fixed}
 .abody td,.abody th{border:1px solid #e5e7eb;padding:8px 10px;font-size:13px}
 .abody th{font-weight:600;background:#f3f4f6}
 .abody blockquote{border-left:3px solid #3b82f6;padding:8px 16px;margin:8px 0;color:#6b7280;background:#f9fafb}
@@ -2918,7 +2918,7 @@
 .abody ul{list-style:disc;padding-left:24px;margin:4px 0}
 .abody ol{list-style:decimal;padding-left:24px;margin:4px 0}
 .abody li{margin:2px 0;font-size:14px;line-height:1.75}
-.abody img{max-width:100%;border-radius:6px;margin:8px 0}
+.abody img{max-width:100%;border-radius:6px;margin:8px 0;height:auto}
 html.dark .abody td,html.dark .abody th{border-color:var(--bdr)}
 html.dark .abody th{background:var(--card)}
 html.dark .abody blockquote{background:var(--card);color:var(--muted);border-color:#3B82F6}
@@ -3140,6 +3140,61 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         .img-resize-bar{display:none;align-items:center;gap:8px;padding:6px 12px;background:#fff;border:1px solid #E5E7EB;border-radius:8px;position:fixed;z-index:2000;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
         .img-resize-bar.show{display:flex}
         /* ═══ RTE 에디터 CSS 끝 ═══ */
+        
+
+        .abody{font-size:14px;line-height:1.75;color:#111827;word-break:break-word;}
+        .abody *{box-sizing:border-box;}
+        /* 에디터 전용 UI 뷰에서 숨기기 */
+        .abody .col-layout-del,
+        .abody .col-resize-handle,
+        .abody .callout-color-btn,
+        .abody ._rh{display:none!important}
+        /* col-item 뷰모드 스타일 */
+        .abody .col-item{border:none!important;padding:8px!important;outline:none!important;}
+        .abody .col-item::before{display:none!important;}
+        /* 표 */
+        .abody table td,.abody table th{overflow:hidden;word-break:break-word;}
+        /* 이미지 정렬 inline style 유지 */
+        .abody img[style*="margin"]{display:block;}
+        /* ═══ abody 뷰 CSS ═══ */
+        .abody .img-link-card{display:flex;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin:10px 0;cursor:pointer;text-decoration:none;color:inherit;transition:box-shadow .15s;max-height:130px}
+        .abody .img-link-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.12)}
+        .abody .callout{border-radius:4px;padding:14px 16px;margin:4px 0 8px;display:flex;gap:10px;align-items:flex-start;border:none}
+        .abody .callout-icon{font-size:18px;flex-shrink:0;line-height:1.6;width:24px;text-align:center}
+        .abody .callout-text{flex:1;min-width:0}
+        .abody .callout-text p{margin:0;font-size:14px;line-height:1.75}
+        .abody .callout .callout-color-btn{display:none}
+        .abody h1{font-size:24px;font-weight:800;margin:16px 0 8px}
+        .abody h2{font-size:19px;font-weight:700;margin:14px 0 6px}
+        .abody h3{font-size:16px;font-weight:700;margin:12px 0 5px}
+        .abody p{margin:4px 0}
+        .abody table{max-width:100%;border-collapse:collapse;margin:8px 0;table-layout:fixed}
+        .abody td,.abody th{border:1px solid #e5e7eb;padding:8px 10px;font-size:13px}
+        .abody th{font-weight:600;background:#f3f4f6}
+        .abody blockquote{border-left:3px solid #3b82f6;padding:8px 16px;margin:8px 0;color:#6b7280;background:#f9fafb}
+        .abody pre{background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px}
+        .abody ul{list-style:disc;padding-left:24px;margin:4px 0}
+        .abody ol{list-style:decimal;padding-left:24px;margin:4px 0}
+        .abody li{margin:2px 0;font-size:14px;line-height:1.75}
+        .abody img{max-width:100%;border-radius:6px;margin:8px 0;height:auto}
+        .abody td,html.dark .abody th{border-color:#E5E7EB}
+        .abody th{background:#F9FAFB}
+        .abody blockquote{background:#F9FAFB;color:#6B7280;border-color:#3B82F6}
+        .abody .col-layout{display:grid;gap:16px;margin:12px 0}
+        .abody .col-layout.cols-2{grid-template-columns:repeat(2,1fr)}
+        .abody .col-layout.cols-3{grid-template-columns:repeat(3,1fr)}
+        .abody .col-layout.cols-4{grid-template-columns:repeat(4,1fr)}
+        .abody .col-layout.cols-5{grid-template-columns:repeat(5,1fr)}
+        .abody .col-layout.cols-6{grid-template-columns:repeat(6,1fr)}
+        .abody .col-item{padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px}
+        .abody .callout-color-btn{display:none!important}
+        .abody .col-layout-del{display:none!important}
+        .abody .rte-video-wrap video{width:100%;border-radius:10px}
+        .abody code{background:rgba(135,131,120,.15);color:#e03e3e;padding:2px 5px;border-radius:4px;font-family:monospace;font-size:.88em}
+        .abody hr{border:none;border-top:2px solid #E5E7EB;margin:18px 0}
+        .abody a{color:#3B82F6;text-decoration:underline}
+        .abody .col-resize-handle{display:none!important}
+        /* ═══ abody 뷰 CSS 끝 ═══ */
         </style>
 <script>
         // Critical navigation functions
@@ -4092,12 +4147,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             <!-- 게시글 보기 모드 (기본) -->
             <div id="guideViewMode">
                 <!-- 게시글 내용 -->
-                <div id="guideViewContent" style="background: var(--bg-primary); border-radius: 12px; padding: 40px; border: 1px solid var(--border-color);">
-                    <div style="text-align: center; padding: 32px 20px 24px; border-bottom: 1px solid var(--border-color); margin: -40px -40px 32px -40px; background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), transparent);">
-                        <div style="font-size: 48px; margin-bottom: 12px;">📖</div>
-                        <h2 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">알림톡 라이팅 가이드</h2>
-                        <p style="font-size: 14px; color: var(--text-secondary);">효과적인 알림톡 작성을 위한 가이드라인</p>
-                    </div>
+                <div id="guideViewContent" class="abody" style="min-height:200px;font-size:14px;line-height:1.75;color:#111827;">
+                    <p style="color:#9CA3AF;font-style:italic;">가이드를 불러오는 중...</p>
+                </div>
                     
                     <div style="padding: 24px 0; border-bottom: 1px solid var(--border-color);">
                         <h2 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">✍️ 작성 원칙</h2>
@@ -4271,7 +4323,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         </div>
 
         <!-- ── 에디터 본문 ── -->
-        <div class="rte-body" id="guideEditBody" contenteditable="true"
+        <div class="rte-body" id="guideEditBody" class="rte-body" contenteditable="true"
           onkeydown="rteKeyDown(event)"
           onmouseup="saveRange()"
           onkeyup="saveRange()"
@@ -6896,9 +6948,15 @@ document.addEventListener("click", function(e) {
         function enterEditMode() {
             document.getElementById('guideViewMode').style.display = 'none';
             document.getElementById('guideEditMode').style.display = 'block';
-            var viewContent = document.getElementById('guideViewContent').innerHTML;
-            var body = document.getElementById('guideEditBody');
-            if (body) { body.innerHTML = viewContent; body.focus(); }
+            var viewEl = document.getElementById('guideViewContent');
+            var body   = document.getElementById('guideEditBody');
+            if (body && viewEl) {
+                // 뷰 내용을 에디터로 복사 (빈 초기 메시지 제외)
+                var html = viewEl.innerHTML;
+                if (html.includes('가이드를 불러오는 중')) html = '<p><br></p>';
+                body.innerHTML = html;
+                body.focus();
+            }
             setTimeout(function(){
                 if (typeof initTableResize === 'function') initTableResize();
                 if (typeof _patchCalloutColorBtns === 'function') _patchCalloutColorBtns();
@@ -6912,7 +6970,16 @@ document.addEventListener("click", function(e) {
         
         function saveGuide() {
             var html = document.getElementById('guideEditBody').innerHTML;
-            document.getElementById('guideViewContent').innerHTML = html;
+            // col-item placeholder 속성 제거 (뷰에서 불필요)
+            var tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            tmp.querySelectorAll('.col-item[contenteditable]').forEach(function(el){
+                el.removeAttribute('contenteditable');
+                el.removeAttribute('data-ph');
+                el.removeAttribute('onkeydown');
+            });
+            var cleanHtml = tmp.innerHTML;
+            document.getElementById('guideViewContent').innerHTML = cleanHtml;
             cancelEdit();
             if (window._saveGuideToFirestore) {
                 window._saveGuideToFirestore(html).then(function() {
