@@ -3563,9 +3563,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             </svg>
         </div>
         <div class="header-right" style="display:flex; align-items:center; gap:12px;">
-            <div id="admin-user-badge" style="display:none;align-items:center;gap:8px;padding:6px 14px;background:#EFF6FF;border-radius:20px;font-size:13px;font-weight:600;color:#2563EB;font-family:'Pretendard',-apple-system,sans-serif;">
+            <div id="admin-user-badge" style="display:none;align-items:center;gap:8px;padding:6px 14px;background:#EFF6FF;border-radius:20px;font-size:13px;font-weight:600;color:#2563EB;font-family:Pretendard,-apple-system,sans-serif;">
                 <span style="font-size:13px;">👤</span>
-                <span id="admin-user-name" style="font-family:'Pretendard',-apple-system,sans-serif;font-size:13px;"></span>
+                <span id="admin-user-name" style="font-family:Pretendard,-apple-system,sans-serif;font-size:13px;"></span>
             </div>
             <button onclick="adminLogout()" style="
                 padding: 6px 14px;
@@ -5709,7 +5709,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (!el) {
                 el = document.createElement('div');
                 el.id = '_guideToast';
-                el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#1F2937;color:white;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.25);transform:translateY(8px);opacity:0;transition:all .22s;pointer-events:none;display:flex;align-items:center;gap:8px;min-width:160px;font-family:'Pretendard',-apple-system,sans-serif;';
+                el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#1F2937;color:white;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.25);transform:translateY(8px);opacity:0;transition:all .22s;pointer-events:none;display:flex;align-items:center;gap:8px;min-width:160px;font-family:Pretendard,-apple-system,sans-serif;';
                 document.body.appendChild(el);
             }
             el.textContent = msg;
@@ -9111,14 +9111,18 @@ document.addEventListener("click", function(e) {
   if(cmd==='formatBlock'&&val&&!val.startsWith('<')) val='<'+val+'>';
   document.execCommand(cmd,false,val||null);
   saveRange();
-}\n\n        function saveRange(){
+}
+
+        function saveRange(){
   const sel=window.getSelection();
   if(sel&&sel.rangeCount){
     const r=sel.getRangeAt(0);
     const body=document.getElementById('guideEditBody');
     if(body&&body.contains(r.commonAncestorContainer))_savedRange=r.cloneRange();
   }
-}\n\n        function restoreRange(){
+}
+
+        function restoreRange(){
   const body=document.getElementById('guideEditBody');
   if(!_savedRange){
     // 커서가 없으면 에디터 끝에 강제 위치
@@ -9136,7 +9140,9 @@ document.addEventListener("click", function(e) {
   }
   const sel=window.getSelection();
   sel.removeAllRanges();sel.addRange(_savedRange);
-}\n\n        function setFontSize(sz){
+}
+
+        function setFontSize(sz){
   if(!sz)return;
   document.getElementById('guideEditBody').focus();
   restoreRange();
@@ -9145,7 +9151,9 @@ document.addEventListener("click", function(e) {
     el.removeAttribute('size');el.style.fontSize=sz;
   });
   saveRange();
-}\n\n        function rteInlineCode(){
+}
+
+        function rteInlineCode(){
   var body = document.getElementById('guideEditBody');
   if(!body) return;
   body.focus();
@@ -9180,7 +9188,9 @@ document.addEventListener("click", function(e) {
     }
   }
   saveRange();
-}\n\n        function rteKeyDown(e){
+}
+
+        function rteKeyDown(e){
   /* ── 선택된 HR 삭제 ── */
   if(window._selHr && (e.key==='Backspace'||e.key==='Delete')){
     e.preventDefault();
@@ -9248,7 +9258,9 @@ document.addEventListener("click", function(e) {
     // 빈 li에서 Enter → 리스트 종료 처리는 브라우저 기본 동작 사용
     return;
   }
-}\n\n        function rteIndent(){
+}
+
+        function rteIndent(){
   document.getElementById('guideEditBody')?.focus();
   restoreRange();
   const sel=window.getSelection();
@@ -9258,12 +9270,16 @@ document.addEventListener("click", function(e) {
   if(li) document.execCommand('indent',false);
   else document.execCommand('insertHTML',false,'&nbsp;&nbsp;&nbsp;&nbsp;');
   saveRange();
-}\n\n        function rteOutdent(){
+}
+
+        function rteOutdent(){
   document.getElementById('guideEditBody')?.focus();
   restoreRange();
   document.execCommand('outdent',false);
   saveRange();
-}\n\n        function onRteImgClick(e){
+}
+
+        function onRteImgClick(e){
   /* 링크 카드 클릭 시 편집 중 네비게이션 방지 */
   const lc=e.target.closest('.img-link-card');
   if(lc){e.preventDefault();e.stopPropagation();return;}
@@ -9302,7 +9318,9 @@ document.addEventListener("click", function(e) {
   document.getElementById('imgResizeInfo').textContent=`${img.naturalWidth||'?'}×${img.naturalHeight||'?'}px`;
   bar.classList.add('show');
   e.stopPropagation();
-}\n\n        function onImgResize(val){
+}
+
+        function onImgResize(val){
   if(!_selImg)return;
   _selImg.style.width=val+'%';
   _selImg.style.maxWidth='100%';
@@ -9310,17 +9328,23 @@ document.addEventListener("click", function(e) {
   _selImg.style.display='block';
   _selImg.style.margin='12px auto';
   document.getElementById('imgResizePct').textContent=val+'%';
-}\n\n        function imgAlign(dir){
+}
+
+        function imgAlign(dir){
   if(!_selImg)return;
   if(dir==='left'){_selImg.style.margin='12px auto 12px 0';}
   else if(dir==='right'){_selImg.style.margin='12px 0 12px auto';}
   else{_selImg.style.margin='12px auto';}
   _selImg.style.display='block';
-}\n\n        function closeImgResize(){
+}
+
+        function closeImgResize(){
   document.getElementById('imgResizeBar').classList.remove('show');
   if(_selImg)_selImg.classList.remove('img-selected');
   _selImg=null;
-}\n\n        function rteInsertImages(e){
+}
+
+        function rteInsertImages(e){
   Array.from(e.target.files).forEach(f=>{
     const r=new FileReader();
     r.onload=ev=>{
@@ -9332,7 +9356,9 @@ document.addEventListener("click", function(e) {
     r.readAsDataURL(f);
   });
   e.target.value='';
-}\n\n        function rteInsertGallery(e){
+}
+
+        function rteInsertGallery(e){
   const files=Array.from(e.target.files);
   if(!files.length)return;
   const readers=files.map(f=>new Promise(res=>{
@@ -9350,7 +9376,13 @@ document.addEventListener("click", function(e) {
     saveRange();
   });
   e.target.value='';
-}\n\n        function sideImgOver(e){e.preventDefault();}\n\n        function sideImgDrop(e){e.preventDefault();Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(f=>{const r=new FileReader();r.onload=ev=>{document.getElementById('guideEditBody').focus();restoreRange();document.execCommand('insertHTML',false,`<img src="${ev.target.result}" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block">`);saveRange();};r.readAsDataURL(f);});}\n\n        function rteDropHandler(e){
+}
+
+        function sideImgOver(e){e.preventDefault();}
+
+        function sideImgDrop(e){e.preventDefault();Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(f=>{const r=new FileReader();r.onload=ev=>{document.getElementById('guideEditBody').focus();restoreRange();document.execCommand('insertHTML',false,`<img src="${ev.target.result}" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block">`);saveRange();};r.readAsDataURL(f);});}
+
+        function rteDropHandler(e){
   e.preventDefault();
   var files=Array.from(e.dataTransfer.files);
   files.forEach(function(f){
@@ -9369,7 +9401,9 @@ document.addEventListener("click", function(e) {
       r.readAsDataURL(f);
     }
   });
-}\n\n        function rtePasteHandler(e){
+}
+
+        function rtePasteHandler(e){
   var cd=e.clipboardData;if(!cd)return;
   var html=cd.getData('text/html');
   if(!html)return;
@@ -9392,12 +9426,16 @@ document.addEventListener("click", function(e) {
     saveRange();
     setTimeout(function(){initTableResize();},100);
   }
-}\n\n        function rteInsertVideo(e){
+}
+
+        function rteInsertVideo(e){
   var file=e.target.files[0];
   if(!file)return;
   _insertMediaFile(file, file.type==='image/gif'?'gif':'video');
   e.target.value='';
-}\n\n        function _insertMediaFile(file, type){
+}
+
+        function _insertMediaFile(file, type){
   var r=new FileReader();
   r.onload=function(ev){
     var src=ev.target.result;
@@ -9415,7 +9453,9 @@ document.addEventListener("click", function(e) {
     saveRange();
   };
   r.readAsDataURL(file);
-}\n\n        function openColorPopup(mode,btn){
+}
+
+        function openColorPopup(mode,btn){
   _colorMode=mode;
   saveRange();
   const popup=document.getElementById('colorPopup');
@@ -9431,7 +9471,9 @@ document.addEventListener("click", function(e) {
   popup.style.left=Math.min(rect.left, window.innerWidth-pw-8)+'px';
   popup.classList.add('open');
   setTimeout(()=>document.addEventListener('click',()=>popup.classList.remove('open'),{once:true}),50);
-}\n\n        function applyColor(c){
+}
+
+        function applyColor(c){
   document.getElementById('guideEditBody').focus();
   restoreRange();
   if(_colorMode==='fore'){
@@ -9461,7 +9503,9 @@ document.addEventListener("click", function(e) {
     }
   }
   saveRange();
-}\n\n        function clearBgColor(){
+}
+
+        function clearBgColor(){
   document.getElementById('guideEditBody').focus();
   restoreRange();
   document.execCommand('hiliteColor',false,'transparent');
@@ -9483,7 +9527,9 @@ document.addEventListener("click", function(e) {
   }
   saveRange();
   document.getElementById('colorPopup').classList.remove('open');
-}\n\n        function openLinkPopup(btn){
+}
+
+        function openLinkPopup(btn){
   saveRange();_linkRange=_savedRange;
   const popup=document.getElementById('linkPopup');
   const rect=btn.getBoundingClientRect();
@@ -9491,7 +9537,11 @@ document.addEventListener("click", function(e) {
   popup.classList.add('open');
   document.getElementById('linkUrl').focus();
   setTimeout(()=>document.addEventListener('mousedown',(e)=>{if(!popup.contains(e.target))popup.classList.remove('open')},{once:true}),50);
-}\n\n        function closeLinkPopup(){document.getElementById('linkPopup').classList.remove('open');}\n\n        function insertLink(){
+}
+
+        function closeLinkPopup(){document.getElementById('linkPopup').classList.remove('open');}
+
+        function insertLink(){
   const url=document.getElementById('linkUrl').value.trim();
   const text=document.getElementById('linkText').value.trim();
   if(!url)return;
@@ -9502,13 +9552,17 @@ document.addEventListener("click", function(e) {
   closeLinkPopup();
   document.getElementById('linkUrl').value='';document.getElementById('linkText').value='';
   saveRange();
-}\n\n        function selectTblHeaderColor(c){
+}
+
+        function selectTblHeaderColor(c){
   _tblHeaderColor=c;
   document.querySelectorAll('#tblHeaderColors [data-color]').forEach(el=>{
     el.style.borderColor=el.dataset.color===c?'var(--abl)':'transparent';
   });
   document.getElementById('tblHeaderColorPicker').value=c;
-}\n\n        function openTblBuilder(btn){
+}
+
+        function openTblBuilder(btn){
   const builder=document.getElementById('tblBuilder');
   const rect=btn.getBoundingClientRect();
   const left=Math.min(rect.left,window.innerWidth-340);
@@ -9516,7 +9570,9 @@ document.addEventListener("click", function(e) {
   builder.classList.add('open');
   saveRange();
   setTimeout(()=>document.addEventListener('click',(e)=>{if(!builder.contains(e.target))builder.classList.remove('open')},{once:true}),50);
-}\n\n        function insertTableAdv(){
+}
+
+        function insertTableAdv(){
   const rows=Math.max(1,Math.min(30,parseInt(document.getElementById('tblRowInp').value)||3));
   const cols=Math.max(1,Math.min(20,parseInt(document.getElementById('tblColInp').value)||3));
   const hasHeader=document.getElementById('tblHasHeader').checked;
@@ -9543,7 +9599,9 @@ document.addEventListener("click", function(e) {
   restoreRange();
   document.execCommand('insertHTML',false,html);
   saveRange();
-}\n\n        function initTableResize(){
+}
+
+        function initTableResize(){
   _initTblCtx();
   _patchCalloutColorBtns();
   // 이전 리스너 완전 제거
@@ -9576,9 +9634,13 @@ document.addEventListener("click", function(e) {
       activeTbl = null;
     }
   }, sig);
-}\n\n        function clearRH(){
+}
+
+        function clearRH(){
   document.querySelectorAll('._rh').forEach(function(n){ n.remove(); });
-}\n\n        function makeRH(tbl){
+}
+
+        function makeRH(tbl){
   clearRH();
   if(!tbl || !document.contains(tbl)) return;
   tbl.style.tableLayout = 'fixed';
@@ -9676,14 +9738,22 @@ document.addEventListener("click", function(e) {
       });
     })(i);
   }
-}\n\n        function buildHandles(tbl){ makeRH(tbl); }\n\n        function removeHandles(){ clearRH(); }\n\n        function rteInsertCallout(){
+}
+
+        function buildHandles(tbl){ makeRH(tbl); }
+
+        function removeHandles(){ clearRH(); }
+
+        function rteInsertCallout(){
   document.getElementById('guideEditBody').focus();
   restoreRange();
   const html=`<div class="callout" data-callout="1" style="background:#f1f1ef"><span class="callout-icon" title="클릭하여 이모지 변경">💡</span><div class="callout-text" contenteditable="true"><p>여기에 내용을 입력하세요</p></div><span class="callout-color-btn" title="배경색 변경" contenteditable="false" style="position:absolute;top:6px;right:6px;font-size:14px;cursor:pointer;opacity:.4;transition:opacity .15s;user-select:none">🎨</span></div><p><br></p>`;
   document.execCommand('insertHTML',false,html);
   _patchCalloutColorBtns();
   saveRange();
-}\n\n        function pickCalloutEmoji(iconEl){
+}
+
+        function pickCalloutEmoji(iconEl){
   const emojis=['💡','⚠️','✅','❌','📌','🔔','💬','ℹ️','🚫','⭐','📝','🎯','💎','🔥','👀','✏️'];
   const existing=document.getElementById('_emojiPicker');
   if(existing){existing.remove();return;}
@@ -9700,7 +9770,9 @@ document.addEventListener("click", function(e) {
   picker.style.top=(r.bottom+4)+'px';picker.style.left=r.left+'px';
   document.body.appendChild(picker);
   setTimeout(function(){document.addEventListener('click',function rm(ev){if(!picker.contains(ev.target)&&!ev.target.closest('.callout-icon')){picker.remove();document.removeEventListener('click',rm);}});},200);
-}\n\n        function pickCalloutColor(calloutEl){
+}
+
+        function pickCalloutColor(calloutEl){
   if(!calloutEl||!calloutEl.classList.contains('callout'))return;
   const existing=document.getElementById('_calloutColorPicker');
   if(existing){existing.remove();return;}
@@ -9730,7 +9802,9 @@ document.addEventListener("click", function(e) {
   p.style.left=Math.min(rect.right+8,window.innerWidth-220)+'px';
   document.body.appendChild(p);
   setTimeout(function(){document.addEventListener('click',function rm2(e){if(!p.contains(e.target)&&!e.target.closest('.callout-color-btn')){p.remove();document.removeEventListener('click',rm2);}},{capture:true});},200);
-}\n\n        function _patchCalloutColorBtns(){
+}
+
+        function _patchCalloutColorBtns(){
   document.querySelectorAll('#guideEditBody .callout').forEach(function(el){
     if(el.querySelector('.callout-color-btn'))return;
     el.style.position='relative';
@@ -9740,7 +9814,9 @@ document.addEventListener("click", function(e) {
     /* onclick은 contenteditable 안에서 불안정 → 이벤트 위임으로 처리됨 */
     el.appendChild(btn);
   });
-}\n\n        function rteInsertImgCard(){
+}
+
+        function rteInsertImgCard(){
   saveRange();
   /* 내부 게시글 옵션 빌드 */
   const postOpts='';
@@ -9814,7 +9890,9 @@ document.addEventListener("click", function(e) {
       }
     };
   },50);
-}\n\n        function _ilcSwitchTab(mode){
+}
+
+        function _ilcSwitchTab(mode){
   window._ilcMode=mode;
   const intTab=document.getElementById('_ilcTabInt'),extTab=document.getElementById('_ilcTabExt');
   const intBox=document.getElementById('_ilcInternal'),extBox=document.getElementById('_ilcExternal');
@@ -9830,7 +9908,9 @@ document.addEventListener("click", function(e) {
     extBox.style.display='';intBox.style.display='none';
     if(hint)hint.style.display='none';
   }
-}\n\n        function _ilcInsert(){
+}
+
+        function _ilcInsert(){
   const title=document.getElementById('_ilcTitle')?.value||'';
   const desc=document.getElementById('_ilcDesc')?.value||'';
   const imgSrc=window._ilcImgSrc||'';
@@ -9864,7 +9944,9 @@ document.addEventListener("click", function(e) {
   restoreRange();
   document.execCommand('insertHTML',false,html);
   saveRange();
-}\n\n        function toggleEditorFullscreen(){
+}
+
+        function toggleEditorFullscreen(){
   const wrap=document.getElementById('guideEditBody')?.closest('.rte-wrap');
   const editorArea=document.getElementById('mainBody');
   const btn=document.getElementById('btnFullscreen');
@@ -9915,7 +9997,9 @@ document.addEventListener("click", function(e) {
     }
     if(btn)btn.textContent='⛶ 전체화면';
   }
-}\n\n        function _normalizeTable(tbl){
+}
+
+        function _normalizeTable(tbl){
   /* 기본 스타일 */
   tbl.removeAttribute('class');
   tbl.removeAttribute('data-block-id');
@@ -10016,7 +10100,9 @@ document.addEventListener("click", function(e) {
     if(cg2) cg2.after(tbody);
     else tbl.appendChild(tbody);
   }
-}\n\n        function insertColumns(n){
+}
+
+        function insertColumns(n){
   const body = document.getElementById('guideEditBody');
   if(!body) return;
   body.focus();
@@ -10038,10 +10124,14 @@ document.addEventListener("click", function(e) {
     const first = body.querySelector('.col-item');
     if(first){ first.focus(); }
   }, 50);
-}\n\n        function removeColLayout(btn){
+}
+
+        function removeColLayout(btn){
   const wrap = btn.closest('.col-layout-wrap');
   if(wrap) wrap.remove();
-}\n\n        function _initTblCtx(){
+}
+
+        function _initTblCtx(){
   const ed=document.getElementById('guideEditBody');
   if(!ed||ed._tblCtxBound)return;
   ed._tblCtxBound=true;
@@ -10073,7 +10163,23 @@ document.addEventListener("click", function(e) {
     const m=document.getElementById('_tblCtxMenu');if(m&&!m.contains(e.target))m.remove();
     const s=document.getElementById('_tblColorSub');if(s&&!s.contains(e.target))s.remove();
   });
-}\n\n        function _tblAddRowAbove(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,nr=t.insertRow(r.rowIndex);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}\n\n        function _tblAddRowBelow(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,idx=r.rowIndex+1,nr=idx>=t.rows.length?t.insertRow(-1):t.insertRow(idx);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}\n\n        function _tblAddColLeft(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';r.insertBefore(nc,r.cells[ci]);});}\n\n        function _tblAddColRight(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';if(r.cells[ci+1])r.insertBefore(nc,r.cells[ci+1]);else r.appendChild(nc);});}\n\n        function _tblHeaderColorPick(btn){_showColorSub(btn,function(col){const t=_tblCtxTarget?.tbl;if(t&&t.rows[0])Array.from(t.rows[0].cells).forEach(function(c){c.style.background=col;});});}\n\n        function _tblCellColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)c.style.background=col;});}\n\n        function _tblRowColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)Array.from(c.parentElement.cells).forEach(function(td){td.style.background=col;});});}\n\n        function _showColorSub(anchorBtn,onPick){
+}
+
+        function _tblAddRowAbove(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,nr=t.insertRow(r.rowIndex);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}
+
+        function _tblAddRowBelow(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,idx=r.rowIndex+1,nr=idx>=t.rows.length?t.insertRow(-1):t.insertRow(idx);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}
+
+        function _tblAddColLeft(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';r.insertBefore(nc,r.cells[ci]);});}
+
+        function _tblAddColRight(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';if(r.cells[ci+1])r.insertBefore(nc,r.cells[ci+1]);else r.appendChild(nc);});}
+
+        function _tblHeaderColorPick(btn){_showColorSub(btn,function(col){const t=_tblCtxTarget?.tbl;if(t&&t.rows[0])Array.from(t.rows[0].cells).forEach(function(c){c.style.background=col;});});}
+
+        function _tblCellColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)c.style.background=col;});}
+
+        function _tblRowColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)Array.from(c.parentElement.cells).forEach(function(td){td.style.background=col;});});}
+
+        function _showColorSub(anchorBtn,onPick){
   let s=document.getElementById('_tblColorSub');if(s)s.remove();
   s=document.createElement('div');s.id='_tblColorSub';
   s.style.cssText='position:fixed;background:#1C2030;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:10000;width:180px';
@@ -10099,12 +10205,16 @@ document.addEventListener("click", function(e) {
   s.style.top=ar.top+'px';s.style.left=Math.min(ar.right+6,window.innerWidth-200)+'px';
   document.body.appendChild(s);
   setTimeout(function(){document.addEventListener('click',function rm(e){if(!s.contains(e.target)){s.remove();document.removeEventListener('click',rm);}},{capture:true});},50);
-}\n\n        function rteStripBg(){
+}
+
+        function rteStripBg(){
   var rb=document.getElementById('guideEditBody');
   if(!rb)return;
   _cleanEditorBg(rb);
   toast('✓ 배경색이 초기화되었습니다');
-}\n\n        function _cleanEditorBg(container){
+}
+
+        function _cleanEditorBg(container){
   if(!container)return;
   container.querySelectorAll('div,section,article,main,header,footer,aside,nav').forEach(function(el){
     if(el.classList.contains('callout')||el.closest('.callout')) return;
@@ -10122,7 +10232,9 @@ document.addEventListener("click", function(e) {
     if(!cleaned||cleaned===';') el.removeAttribute('style');
     else if(cleaned!==st) el.setAttribute('style',cleaned);
   });
-}\n\n        function _getIndentMargin(){
+}
+
+        function _getIndentMargin(){
   if(!_savedRange) return 0;
   const node=_savedRange.startContainer;
   const el=node?.nodeType===3?node.parentElement:node;
