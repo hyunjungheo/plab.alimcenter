@@ -3012,6 +3012,9 @@
         // Critical navigation functions
         function navigateTo(page) {
             console.log('Navigating to:', page);
+
+            // 페이지 이동 시마다 권한 UI 갱신
+            if (typeof checkWritingTeamUI === 'function') checkWritingTeamUI();
             
             const menuItems = document.querySelectorAll('.sidebar .menu-item');
             menuItems.forEach(item => item.classList.remove('active'));
@@ -3061,14 +3064,14 @@
                 modal.style.alignItems = 'center';
                 modal.style.justifyContent = 'center';
                 document.body.style.overflow = 'hidden';
-                // createModal(multi-step) 열릴 때 기본 정보(2단계)부터 시작
+                // createModal 열릴 때 1단계(유형선택)부터 시작
                 if (modalId === 'createModal') {
-                    currentStep = 2;
-                    selectedType = 'alimtalk';
-                    if (typeof updateStepDisplay === 'function') {
-                        // 알림톡 기본 필드 표시
-                        document.querySelectorAll('#templateCodeGroup,#templateNameGroup,#versionGroup,#customerGroup,#categoryGroup,#timingGroup,#linkGroup,#messageTitleGroup,#highlightGroup,#buttonGroup,#sendTypeGroup').forEach(function(el){ if(el) el.style.display='block'; });
-                        updateStepDisplay();
+                    if (typeof currentStep !== 'undefined') {
+                        currentStep = 1;
+                        selectedType = '';
+                        if (typeof updateStepDisplay === 'function') {
+                            updateStepDisplay();
+                        }
                     }
                 }
             }
@@ -5950,7 +5953,7 @@
         
         function openDetailModal(id) {
             // 발송현황·고객여정 모두 viewOnlyModal로 통일
-            document.getElementById('viewOnlyModal').classList.add('active');
+            openModal('viewOnlyModal');
         }
         
         
@@ -6066,14 +6069,14 @@
 
             if (status === '라이팅 검토') {
                 if (isWritingTeam) {
-                    document.getElementById('reviewComparisonModal').classList.add('active');
+                    openModal('reviewComparisonModal');
                 } else {
                     alert('라이팅 검토는 라이팅팀만 접근할 수 있습니다.');
                 }
             } else if (status === '등록 완료') {
-                document.getElementById('viewOnlyModal').classList.add('active');
+                openModal('viewOnlyModal');
             } else {
-                document.getElementById('createModal').classList.add('active');
+                openModal('createModal');
             }
         }
         
@@ -6291,10 +6294,15 @@
                 step.classList.toggle('active', index + 1 === currentStep);
             });
             
-            // Update navigation buttons
-            document.getElementById('prevBtn').style.display = currentStep > 2 ? 'inline-block' : 'none';
-            document.getElementById('nextBtn').style.display = currentStep < 4 ? 'inline-block' : 'none';
-            document.getElementById('submitBtn').style.display = currentStep === 4 ? 'inline-block' : 'none';
+            // Update navigation buttons (null-safe)
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const stepSubtitle = document.getElementById('stepSubtitle');
+
+            if (prevBtn) prevBtn.style.display = currentStep > 2 ? 'inline-block' : 'none';
+            if (nextBtn) nextBtn.style.display = currentStep < 4 ? 'inline-block' : 'none';
+            if (submitBtn) submitBtn.style.display = currentStep === 4 ? 'inline-block' : 'none';
             
             // Update title
             const titles = {
@@ -6303,7 +6311,7 @@
                 3: '3단계: 메세지 작성',
                 4: '4단계: 수정 내역 (선택사항)'
             };
-            document.getElementById('stepSubtitle').textContent = titles[currentStep];
+            if (stepSubtitle) stepSubtitle.textContent = titles[currentStep];
         }
         
         function updatePreviewStep3() {
@@ -6380,7 +6388,7 @@
             
             // Open create modal with the selected format
             setTimeout(() => {
-                document.getElementById('createModal').classList.add('active');
+                openModal('createModal');
                 
                 // Update modal title
                 const formatNames = {
