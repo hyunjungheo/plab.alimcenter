@@ -1011,9 +1011,9 @@
         
         .info-row {
             display: grid;
-            grid-template-columns: 160px 1fr;
-            gap: 24px;
-            padding: 16px 20px;
+            grid-template-columns: 100px 1fr;
+            gap: 16px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border);
             align-items: start;
         }
@@ -1025,13 +1025,16 @@
         .info-label {
             font-weight: 600;
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: 13px;
+            white-space: nowrap;
         }
         
         .info-value {
             color: var(--text-primary);
             font-size: 14px;
             line-height: 1.6;
+            word-break: keep-all;
+            min-width: 0;
         }
         
         /* Review Comparison */
@@ -1251,7 +1254,7 @@
         
         .view-only-grid {
             display: grid;
-            grid-template-columns: 420px 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 32px;
             align-items: start;
         }
