@@ -3069,15 +3069,11 @@
                 modal.style.alignItems = 'center';
                 modal.style.justifyContent = 'center';
                 document.body.style.overflow = 'hidden';
-                // createModal 열릴 때 1단계(유형선택)부터 시작
                 if (modalId === 'createModal') {
-                    if (typeof currentStep !== 'undefined') {
-                        currentStep = 1;
-                        selectedType = '';
-                        if (typeof updateStepDisplay === 'function') {
-                            updateStepDisplay();
-                        }
-                    }
+                    setTimeout(function() {
+                        if (typeof currentStep !== 'undefined') { currentStep = 1; selectedType = ''; }
+                        if (typeof updateStepDisplay === 'function') updateStepDisplay();
+                    }, 0);
                 }
             }
         }
@@ -3085,9 +3081,8 @@
         function closeModal(modalId) {
             var modal = document.getElementById(modalId);
             if (modal) {
-                // style.display와 classList 모두 처리
+                modal.removeAttribute('style');
                 modal.style.display = 'none';
-                modal.style.cssText = 'display:none';
                 modal.classList.remove('active');
                 document.body.style.overflow = 'auto';
                 if (modalId === 'simpleFormModal' && !window.isNavigating && typeof resetModalForm === 'function') {
@@ -3235,11 +3230,14 @@
         ];
         var email = (sessionStorage.getItem('admin_email') || '').toLowerCase();
         var isWritingTeam = WRITING_TEAM.includes(email);
-
-        // 가이드 수정 버튼
-        var btn = document.getElementById('guideEditBtn');
-        if (btn) btn.style.display = isWritingTeam ? 'flex' : 'none';
+        function tryShow(n) {
+            var btn = document.getElementById('guideEditBtn');
+            if (btn) { btn.style.display = isWritingTeam ? 'flex' : 'none'; return; }
+            if (n < 20) setTimeout(function(){ tryShow(n+1); }, 150);
+        }
+        tryShow(0);
     }
+    window.checkWritingTeamUI = checkWritingTeamUI;
 
     // ── Google 로그인 콜백 ───────────────────────────────
     function handleCredentialResponse(response) {
@@ -5685,10 +5683,21 @@
         
         function openDetailModal(id) {
             var modal = document.getElementById('viewOnlyModal');
-            if (modal) {
-                modal.style.cssText = 'display:flex !important; align-items:center; justify-content:center; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:1000; overflow-y:auto;';
-                document.body.style.overflow = 'hidden';
-            }
+            if (!modal) { console.error('viewOnlyModal not found'); return; }
+            modal.removeAttribute('style');
+            modal.classList.remove('active');
+            modal.style.display = 'flex';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.right = '0';
+            modal.style.bottom = '0';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.background = 'rgba(15,23,42,0.6)';
+            modal.style.zIndex = '9999';
+            modal.style.overflowY = 'auto';
+            document.body.style.overflow = 'hidden';
         }
         
         
@@ -8760,8 +8769,12 @@ document.addEventListener("click", function(e) {
             ];
             var email = (sessionStorage.getItem('admin_email') || '').toLowerCase();
             var isWritingTeam = WRITING_TEAM.includes(email);
-            var btn = document.getElementById('guideEditBtn');
-            if (btn) btn.style.display = isWritingTeam ? 'flex' : 'none';
+            function tryShow(n) {
+                var btn = document.getElementById('guideEditBtn');
+                if (btn) { btn.style.display = isWritingTeam ? 'flex' : 'none'; return; }
+                if (n < 20) setTimeout(function(){ tryShow(n+1); }, 150);
+            }
+            tryShow(0);
         }
 
     </script>
