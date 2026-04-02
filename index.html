@@ -3009,7 +3009,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 .rte-toolbar{
   background:#F9FAFB;border-bottom:1px solid #E5E7EB;
   padding:8px 12px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;
-  position:sticky;top:57px;z-index:10;border-radius:10px 10px 0 0;
+  position:sticky;top:0;z-index:10;border-radius:10px 10px 0 0;
 }
 .rte-sep{width:1px;height:18px;background:#E5E7EB;margin:0 4px;flex-shrink:0}
 .rtb{
@@ -3026,7 +3026,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
   min-height:60vh;
   font-size:14px;color:#111827;line-height:1.75;outline:none;font-weight:400;
   position:relative;box-sizing:border-box;text-rendering:optimizeLegibility;
-  width:100%;padding:16px 0;
+  width:100%;padding:20px 16px;
 }
 .rte-body:empty::before{content:'내용을 입력하세요...';color:#6B7280;opacity:.5;pointer-events:none}
 /* 에디터 내부 스타일 */
@@ -3254,6 +3254,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 setTimeout(function() {
                     if (typeof currentStep !== 'undefined') { currentStep = 1; selectedType = ''; }
                     if (typeof updateStepDisplay === 'function') updateStepDisplay();
+                    // 모달 스크롤 최상단
+                    var mc = document.querySelector('#createModal .modal-content');
+                    if (mc) mc.scrollTop = 0;
                 }, 0);
             }
         }
@@ -4278,7 +4281,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
           onkeydown="rteKeyDown(event)"
           onmouseup="saveRange()"
           onkeyup="saveRange()"
-          onclick="onRteImgClick(event)" ondrop="rteDropHandler(event)" ondragover="event.preventDefault()" onpaste="rtePasteHandler(event)" style="min-height:60vh;font-size:14px;color:#111827;line-height:1.75;outline:none;padding:20px 0;box-sizing:border-box;">
+          onclick="onRteImgClick(event)" ondrop="rteDropHandler(event)" ondragover="event.preventDefault()" onpaste="rtePasteHandler(event)" style="min-height:60vh;font-size:14px;color:#111827;line-height:1.75;outline:none;padding:20px 16px;box-sizing:border-box;">
           
         </div>
       </div>
@@ -5092,7 +5095,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
     
     <!-- Read-only View Modal for Completed Templates -->
     <div class="modal" id="viewOnlyModal" style="display: none;">
-        <div class="modal-content" style="max-width: 1200px;">
+        <div class="modal-content" style="max-width: 800px;max-height:80vh;overflow-y:auto;">
             <div class="modal-header">
                 <div class="modal-title-section">
                     <h2>알림톡 템플릿 상세</h2>
@@ -5767,6 +5770,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         categoryModal.style.display = 'flex';
                         categoryModal.style.alignItems = 'center';
                         categoryModal.style.justifyContent = 'center';
+                        var _cm = categoryModal.querySelector('.modal-content'); if(_cm) _cm.scrollTop = 0;
                     }
                 } else {
                     // 모달/푸시/안내/기타: 바로 작성 폼
@@ -5775,6 +5779,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         formModal.style.display = 'flex';
                         formModal.style.alignItems = 'center';
                         formModal.style.justifyContent = 'center';
+                        var _sfmc = formModal.querySelector('.modal-content'); if(_sfmc) _sfmc.scrollTop = 0;
                         
                         var modalTitle = document.getElementById('simpleFormTitle');
                         if (modalTitle) {
@@ -6054,6 +6059,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 4: '4단계: 수정 내역 (선택사항)'
             };
             var _ss=document.getElementById('stepSubtitle');if(_ss)_ss.textContent=titles[currentStep];
+            // 단계 전환 시 스크롤 최상단
+            var _mc = document.querySelector('#createModal .modal-content, #simpleFormModal .modal-content');
+            if (_mc) _mc.scrollTop = 0;
         }
         
         function updatePreviewStep3() {
