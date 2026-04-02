@@ -3126,22 +3126,20 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 .tbl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:8px}
 .tbl-cell{width:22px;height:22px;border:1px solid #E5E7EB;border-radius:3px;cursor:pointer;transition:all .1s;background:#F9FAFB}
 .tbl-cell.hl{background:#3B82F6;border-color:#3B82F6}
-
-.color-popup{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px;display:none;flex-direction:column;gap:6px;width:228px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
-.color-popup.open{display:flex}
-.cp-swatch{cursor:pointer;transition:transform .12s,box-shadow .12s;border-radius:4px;width:22px;height:22px}
-.cp-swatch:hover{transform:scale(1.2);box-shadow:0 0 0 2px #3B82F6}
-.link-popup{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;display:none;flex-direction:column;gap:8px;width:280px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
-.link-popup.open{display:flex}
-.link-popup input{padding:7px 10px;border:1px solid #E5E7EB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;width:100%;box-sizing:border-box}
-.tbl-builder{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px;display:none;flex-direction:column;width:280px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
-.tbl-builder.open{display:flex}
-.img-resize-bar{display:none;align-items:center;gap:8px;padding:6px 12px;background:#fff;border:1px solid #E5E7EB;border-radius:8px;position:fixed;z-index:2000;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
-.img-resize-bar.show{display:flex}
-        /* ═══ RTE 에디터 CSS 끝 ═══ */
-        
         .mback{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
         .mback.open{display:flex}
+        .color-popup{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px;display:none;flex-direction:column;gap:6px;width:228px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+        .color-popup.open{display:flex}
+        .cp-swatch{cursor:pointer;transition:transform .12s;border-radius:4px;width:22px;height:22px}
+        .cp-swatch:hover{transform:scale(1.2);box-shadow:0 0 0 2px #3B82F6}
+        .link-popup{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;display:none;flex-direction:column;gap:8px;width:280px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+        .link-popup.open{display:flex}
+        .link-popup input{padding:7px 10px;border:1px solid #E5E7EB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;width:100%;box-sizing:border-box}
+        .tbl-builder{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px;display:none;flex-direction:column;width:280px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+        .tbl-builder.open{display:flex}
+        .img-resize-bar{display:none;align-items:center;gap:8px;padding:6px 12px;background:#fff;border:1px solid #E5E7EB;border-radius:8px;position:fixed;z-index:2000;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+        .img-resize-bar.show{display:flex}
+        /* ═══ RTE 에디터 CSS 끝 ═══ */
         </style>
 <script>
         // Critical navigation functions
@@ -3187,24 +3185,21 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     p.style.display = 'none';
                 }
             });
-
-            // 권한 UI 갱신
             setTimeout(function(){ if(typeof checkWritingTeamUI==='function') checkWritingTeamUI(); }, 0);
         }
         
         function openModal(modalId) {
             var modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = 'flex';
-                modal.style.alignItems = 'center';
-                modal.style.justifyContent = 'center';
-                document.body.style.overflow = 'hidden';
-                if (modalId === 'createModal') {
-                    setTimeout(function() {
-                        if (typeof currentStep !== 'undefined') { currentStep = 1; selectedType = ''; }
-                        if (typeof updateStepDisplay === 'function') updateStepDisplay();
-                    }, 0);
-                }
+            if (!modal) return;
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            document.body.style.overflow = 'hidden';
+            if (modalId === 'createModal') {
+                setTimeout(function() {
+                    if (typeof currentStep !== 'undefined') { currentStep = 1; selectedType = ''; }
+                    if (typeof updateStepDisplay === 'function') updateStepDisplay();
+                }, 0);
             }
         }
         
@@ -3272,11 +3267,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
     <script>
     const ALLOWED_DOMAIN = 'plabfootball.com';
-
     function checkWritingTeamUI() {
-        var WRITING_TEAM = ['jongsa.kim@plabfootball.com','seonyoung.lim@plabfootball.com','hyunjung.heo@plabfootball.com'];
-        var email = (sessionStorage.getItem('admin_email') || '').toLowerCase();
-        var isWT = WRITING_TEAM.includes(email);
+        var WT = ['jongsa.kim@plabfootball.com','seonyoung.lim@plabfootball.com','hyunjung.heo@plabfootball.com'];
+        var email = (sessionStorage.getItem('admin_email')||'').toLowerCase();
+        var isWT = WT.includes(email);
         function tryShow(n) {
             var btn = document.getElementById('guideEditBtn');
             if (btn) { btn.style.display = isWT ? 'flex' : 'none'; return; }
@@ -3286,9 +3280,34 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
     }
     window.checkWritingTeamUI = checkWritingTeamUI;
 
-    // handleCredentialResponse → 새 버전으로 대체
+    function handleCredentialResponse(response) {
+        try {
+            var pl = JSON.parse(atob(response.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+            var email = pl.email;
+            if (email.split('@')[1] === ALLOWED_DOMAIN) {
+                sessionStorage.setItem('admin_auth','true');
+                sessionStorage.setItem('admin_email', email);
+                sessionStorage.setItem('admin_name', pl.name || email);
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                checkWritingTeamUI();
+                var badge = document.getElementById('admin-user-badge');
+                var nameEl = document.getElementById('admin-user-name');
+                if (badge && nameEl) { nameEl.textContent = email; badge.style.display = 'flex'; }
+            } else {
+                var err = document.getElementById('login-error');
+                if (err) { err.textContent = email + ' 계정은 접근 권한이 없습니다. plabfootball.com 이메일로 로그인해주세요.'; err.style.display = 'block'; }
+            }
+        } catch(e) { console.error('Login error:', e); }
+    }
 
-    // adminLogout → 새 버전으로 대체
+    function adminLogout() {
+        sessionStorage.removeItem('admin_auth');
+        sessionStorage.removeItem('admin_email');
+        sessionStorage.removeItem('admin_name');
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('main-content').style.display = 'none';
+    }
 
     window.addEventListener('DOMContentLoaded', function() {
         if (sessionStorage.getItem('admin_auth') === 'true') {
@@ -4137,8 +4156,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         ✏️ 가이드 수정
                     </button>
                 </div>
-                <div style="text-align: right; margin-top: 12px;">
-                    <span style="font-size: 13px; color: #818798;">가이드 수정은 라이팅 가디언즈가 해요.</span>
+                <div style="text-align:right;margin-top:12px;">
+                    <span style="font-size:13px;color:#818798;">가이드 수정은 라이팅 가디언즈가 해요.</span>
                 </div>
             </div>
             
@@ -4256,8 +4275,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
           onkeydown="rteKeyDown(event)"
           onmouseup="saveRange()"
           onkeyup="saveRange()"
-          onclick="onRteImgClick(event)" ondrop="rteDropHandler(event)" ondragover="event.preventDefault()" onpaste="rtePasteHandler(event)"
-          style="min-height:60vh;font-size:14px;color:#111827;line-height:1.75;outline:none;padding:28px 30px;box-sizing:border-box;">
+          onclick="onRteImgClick(event)" ondrop="rteDropHandler(event)" ondragover="event.preventDefault()" onpaste="rtePasteHandler(event)" style="min-height:60vh;font-size:14px;color:#111827;line-height:1.75;outline:none;padding:28px 30px;box-sizing:border-box;">
           
         </div>
       </div>
@@ -5678,19 +5696,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
         
         function openDetailModal(id) {
-            var modal = document.getElementById('viewOnlyModal');
-            if (!modal) return;
-            modal.removeAttribute('style');
-            modal.classList.remove('active');
-            modal.style.display = 'flex';
-            modal.style.position = 'fixed';
-            modal.style.top = '0'; modal.style.left = '0';
-            modal.style.right = '0'; modal.style.bottom = '0';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            modal.style.background = 'rgba(15,23,42,0.6)';
-            modal.style.zIndex = '9999';
-            modal.style.overflowY = 'auto';
+            var m = document.getElementById('viewOnlyModal');
+            if (!m) return;
+            m.removeAttribute('style');
+            m.classList.remove('active');
+            m.style.cssText = 'display:flex;position:fixed;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;background:rgba(15,23,42,0.6);z-index:9999;overflow-y:auto;';
             document.body.style.overflow = 'hidden';
         }
         
@@ -5805,18 +5815,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             
             // If template is in review, show comparison modal
             if (status === '라이팅 검토') {
-                var __m=document.getElementById('reviewComparisonModal');
-                if(__m){__m.removeAttribute('style');__m.style.display='flex';__m.style.position='fixed';__m.style.top='0';__m.style.left='0';__m.style.right='0';__m.style.bottom='0';__m.style.alignItems='center';__m.style.justifyContent='center';__m.style.background='rgba(15,23,42,0.6)';__m.style.zIndex='9999';__m.style.overflowY='auto';document.body.style.overflow='hidden';}
+                document.getElementById('reviewComparisonModal').classList.add('active');
             }
             // If template is completed, show read-only view
             else if (status === '등록 완료') {
-                var __m=document.getElementById('viewOnlyModal');
-                if(__m){__m.removeAttribute('style');__m.style.display='flex';__m.style.position='fixed';__m.style.top='0';__m.style.left='0';__m.style.right='0';__m.style.bottom='0';__m.style.alignItems='center';__m.style.justifyContent='center';__m.style.background='rgba(15,23,42,0.6)';__m.style.zIndex='9999';__m.style.overflowY='auto';document.body.style.overflow='hidden';}
+                document.getElementById('viewOnlyModal').classList.add('active');
             } 
             // For templates in progress, show editable form
             else {
-                var __m=document.getElementById('createModal');
-                if(__m){__m.removeAttribute('style');__m.style.display='flex';__m.style.position='fixed';__m.style.top='0';__m.style.left='0';__m.style.right='0';__m.style.bottom='0';__m.style.alignItems='center';__m.style.justifyContent='center';__m.style.background='rgba(15,23,42,0.6)';__m.style.zIndex='9999';__m.style.overflowY='auto';document.body.style.overflow='hidden';}
+                document.getElementById('createModal').classList.add('active');
             }
         }
         
@@ -6032,9 +6039,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             });
             
             // Update navigation buttons
-            var prevBtn=document.getElementById('prevBtn'); if(prevBtn) prevBtn.style.display = currentStep > 2 ? 'inline-block' : 'none';
-            var _nb=document.getElementById('nextBtn'); if(_nb) _nb.style.display = currentStep<4?'inline-block':'none';
-            var _sb=document.getElementById('submitBtn'); if(_sb) _sb.style.display = currentStep===4?'inline-block':'none';
+            var _pb=document.getElementById('prevBtn');if(_pb)_pb.style.display=currentStep>2?'inline-block':'none';
+            var _nb=document.getElementById('nextBtn');if(_nb)_nb.style.display=currentStep<4?'inline-block':'none';
+            var _sb=document.getElementById('submitBtn');if(_sb)_sb.style.display=currentStep===4?'inline-block':'none';
             
             // Update title
             const titles = {
@@ -6043,7 +6050,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 3: '3단계: 메세지 작성',
                 4: '4단계: 수정 내역 (선택사항)'
             };
-            var _ss=document.getElementById('stepSubtitle'); if(_ss) _ss.textContent = titles[currentStep];
+            var _ss=document.getElementById('stepSubtitle');if(_ss)_ss.textContent=titles[currentStep];
         }
         
         function updatePreviewStep3() {
@@ -6120,8 +6127,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             
             // Open create modal with the selected format
             setTimeout(() => {
-                var __m=document.getElementById('createModal');
-                if(__m){__m.removeAttribute('style');__m.style.display='flex';__m.style.position='fixed';__m.style.top='0';__m.style.left='0';__m.style.right='0';__m.style.bottom='0';__m.style.alignItems='center';__m.style.justifyContent='center';__m.style.background='rgba(15,23,42,0.6)';__m.style.zIndex='9999';__m.style.overflowY='auto';document.body.style.overflow='hidden';}
+                document.getElementById('createModal').classList.add('active');
                 
                 // Update modal title
                 const formatNames = {
@@ -6540,7 +6546,6 @@ document.addEventListener("click", function(e) {
 
     
                 function openTemplateSelection() {
-            console.log('Opening template selection');
             openModal('typeSelectionModal');
         }
         
@@ -6911,12 +6916,12 @@ document.addEventListener("click", function(e) {
             cancelEdit();
             if (window._saveGuideToFirestore) {
                 window._saveGuideToFirestore(html).then(function() {
-                    var t = document.createElement('div');
-                    t.textContent = '✅ 가이드가 저장되었습니다';
-                    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1F2937;color:white;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;';
+                    var t=document.createElement('div');
+                    t.textContent='✅ 가이드가 저장되었습니다';
+                    t.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1F2937;color:white;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;';
                     document.body.appendChild(t);
-                    setTimeout(function(){ t.remove(); }, 2500);
-                }).catch(function(e){ alert('저장 실패: ' + e.message); });
+                    setTimeout(function(){t.remove();},2500);
+                }).catch(function(e){alert('저장 실패:'+e.message);});
             } else { alert('저장되었습니다!'); }
         }
         
@@ -6940,31 +6945,20 @@ document.addEventListener("click", function(e) {
             execCmd('insertHTML', html);
         }
         
-        function insertColumns(n){
-  const body = document.getElementById('guideEditBody');
-  if(!body) return;
-  body.focus();
-  restoreRange();
-
-  // 컬럼 HTML 생성
-  const items = Array.from({length:n}, function(_, i){
-    return '<div class="col-item" contenteditable="true" data-ph="컬럼 '+(i+1)+'" onkeydown="rteKeyDown(event)"></div>';
-  }).join('');
-  const html = '<div class="col-layout-wrap" contenteditable="false">'
-    + '<div class="col-layout cols-'+n+'">' + items + '</div>'
-    + '<span class="col-layout-del" onclick="removeColLayout(this)" title="컬럼 삭제">✕</span>'
-    + '</div><p><br></p>';
-
-  document.execCommand('insertHTML', false, html);
-  saveRange();
-  // 첫 번째 컬럼에 포커스
-  setTimeout(function(){
-    const first = body.querySelector('.col-item');
-    if(first){ first.focus(); }
-  }, 50);
-}
+        function insertColumns(num) {
+            var cols = '';
+            var width = Math.floor(100 / num);
+            for (var i = 0; i < num; i++) {
+                cols += '<div style="flex: 1; padding: 12px; border: 1px dashed #E5E7EB; border-radius: 8px; min-height: 100px;">컬럼 ' + (i+1) + '</div>';
+            }
+            var html = '<div style="display: flex; gap: 12px; margin: 16px 0;">' + cols + '</div><p><br></p>';
+            execCmd('insertHTML', html);
+        }
         
-        // insertCallout → RTE 버전으로 대체
+        function insertCallout() {
+            var html = '<div style="background: #FEF3C7; border-radius: 8px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; margin: 16px 0;"><span style="font-size: 20px; cursor: pointer;" onclick="cycleCalloutIcon(this)">💡</span><div style="flex: 1;" contenteditable="true">여기에 내용을 입력하세요</div></div><p><br></p>';
+            execCmd('insertHTML', html);
+        }
         
         function cycleCalloutIcon(el) {
             var icons = ['💡', '⚠️', '✅', '❌', '📌', '🔥', '💬', '📝', 'ℹ️'];
@@ -9015,7 +9009,7 @@ document.addEventListener("click", function(e) {
 </div>
 
 <!-- MODAL -->
-<div class="mback" id="mback" onclick="if(event.target===this)closeModal()" style="display:none">
+<div class="mback" id="mback" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal">
     <div class="mhdr">
       <div class="mhdr-t" id="mTitle">-</div>
@@ -9041,13 +9035,9 @@ document.addEventListener("click", function(e) {
 
     <!-- RTE 팝업 끝 -->
 
-</body>
-</html>
-
-        /* ═══ RTE 에디터 전역 변수 ═══ */
-        var _savedRange = null, _selImg = null, _colorMode = 'fore';
-        var _linkRange = null, _tblHeaderColor = '#1E2840', _rszAbort = null;
-        var _tblCtxTarget = null;
+    <script>
+        /* ═══ RTE 에디터 전역변수 ═══ */
+        var _savedRange=null,_selImg=null,_colorMode='fore',_linkRange=null,_tblHeaderColor='#1E2840',_rszAbort=null,_tblCtxTarget=null;
 
         /* ═══ RTE 에디터 JS ═══ */
         function rteCmd(cmd,val){
@@ -9056,24 +9046,18 @@ document.addEventListener("click", function(e) {
   if(cmd==='formatBlock'&&val&&!val.startsWith('<')) val='<'+val+'>';
   document.execCommand(cmd,false,val||null);
   saveRange();
-}
-
-        function saveRange(){
+}\n\n        function saveRange(){
   const sel=window.getSelection();
   if(sel&&sel.rangeCount){
     const r=sel.getRangeAt(0);
     const body=document.getElementById('guideEditBody');
     if(body&&body.contains(r.commonAncestorContainer))_savedRange=r.cloneRange();
   }
-}
-
-        function restoreRange(){
+}\n\n        function restoreRange(){
   if(!_savedRange)return;
   const sel=window.getSelection();
   sel.removeAllRanges();sel.addRange(_savedRange);
-}
-
-        function setFontSize(sz){
+}\n\n        function setFontSize(sz){
   if(!sz)return;
   document.getElementById('guideEditBody').focus();
   restoreRange();
@@ -9082,9 +9066,7 @@ document.addEventListener("click", function(e) {
     el.removeAttribute('size');el.style.fontSize=sz;
   });
   saveRange();
-}
-
-        function rteInlineCode(){
+}\n\n        function rteInlineCode(){
   var body = document.getElementById('guideEditBody');
   if(!body) return;
   body.focus();
@@ -9119,9 +9101,7 @@ document.addEventListener("click", function(e) {
     }
   }
   saveRange();
-}
-
-        function rteKeyDown(e){
+}\n\n        function rteKeyDown(e){
   /* ── 선택된 HR 삭제 ── */
   if(window._selHr && (e.key==='Backspace'||e.key==='Delete')){
     e.preventDefault();
@@ -9189,9 +9169,7 @@ document.addEventListener("click", function(e) {
     // 빈 li에서 Enter → 리스트 종료 처리는 브라우저 기본 동작 사용
     return;
   }
-}
-
-        function rteIndent(){
+}\n\n        function rteIndent(){
   document.getElementById('guideEditBody')?.focus();
   restoreRange();
   const sel=window.getSelection();
@@ -9201,16 +9179,12 @@ document.addEventListener("click", function(e) {
   if(li) document.execCommand('indent',false);
   else document.execCommand('insertHTML',false,'&nbsp;&nbsp;&nbsp;&nbsp;');
   saveRange();
-}
-
-        function rteOutdent(){
+}\n\n        function rteOutdent(){
   document.getElementById('guideEditBody')?.focus();
   restoreRange();
   document.execCommand('outdent',false);
   saveRange();
-}
-
-        function onRteImgClick(e){
+}\n\n        function onRteImgClick(e){
   /* 링크 카드 클릭 시 편집 중 네비게이션 방지 */
   const lc=e.target.closest('.img-link-card');
   if(lc){e.preventDefault();e.stopPropagation();return;}
@@ -9249,9 +9223,7 @@ document.addEventListener("click", function(e) {
   document.getElementById('imgResizeInfo').textContent=`${img.naturalWidth||'?'}×${img.naturalHeight||'?'}px`;
   bar.classList.add('show');
   e.stopPropagation();
-}
-
-        function onImgResize(val){
+}\n\n        function onImgResize(val){
   if(!_selImg)return;
   _selImg.style.width=val+'%';
   _selImg.style.maxWidth='100%';
@@ -9259,23 +9231,17 @@ document.addEventListener("click", function(e) {
   _selImg.style.display='block';
   _selImg.style.margin='12px auto';
   document.getElementById('imgResizePct').textContent=val+'%';
-}
-
-        function imgAlign(dir){
+}\n\n        function imgAlign(dir){
   if(!_selImg)return;
   if(dir==='left'){_selImg.style.margin='12px auto 12px 0';}
   else if(dir==='right'){_selImg.style.margin='12px 0 12px auto';}
   else{_selImg.style.margin='12px auto';}
   _selImg.style.display='block';
-}
-
-        function closeImgResize(){
+}\n\n        function closeImgResize(){
   document.getElementById('imgResizeBar').classList.remove('show');
   if(_selImg)_selImg.classList.remove('img-selected');
   _selImg=null;
-}
-
-        function rteInsertImages(e){
+}\n\n        function rteInsertImages(e){
   Array.from(e.target.files).forEach(f=>{
     const r=new FileReader();
     r.onload=ev=>{
@@ -9287,9 +9253,7 @@ document.addEventListener("click", function(e) {
     r.readAsDataURL(f);
   });
   e.target.value='';
-}
-
-        function rteInsertGallery(e){
+}\n\n        function rteInsertGallery(e){
   const files=Array.from(e.target.files);
   if(!files.length)return;
   const readers=files.map(f=>new Promise(res=>{
@@ -9307,13 +9271,7 @@ document.addEventListener("click", function(e) {
     saveRange();
   });
   e.target.value='';
-}
-
-        function sideImgOver(e){e.preventDefault();}
-
-        function sideImgDrop(e){e.preventDefault();Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(f=>{const r=new FileReader();r.onload=ev=>{document.getElementById('guideEditBody').focus();restoreRange();document.execCommand('insertHTML',false,`<img src="${ev.target.result}" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block">`);saveRange();};r.readAsDataURL(f);});}
-
-        function rteDropHandler(e){
+}\n\n        function sideImgOver(e){e.preventDefault();}\n\n        function sideImgDrop(e){e.preventDefault();Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(f=>{const r=new FileReader();r.onload=ev=>{document.getElementById('guideEditBody').focus();restoreRange();document.execCommand('insertHTML',false,`<img src="${ev.target.result}" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block">`);saveRange();};r.readAsDataURL(f);});}\n\n        function rteDropHandler(e){
   e.preventDefault();
   var files=Array.from(e.dataTransfer.files);
   files.forEach(function(f){
@@ -9332,9 +9290,7 @@ document.addEventListener("click", function(e) {
       r.readAsDataURL(f);
     }
   });
-}
-
-        function rtePasteHandler(e){
+}\n\n        function rtePasteHandler(e){
   var cd=e.clipboardData;if(!cd)return;
   var html=cd.getData('text/html');
   if(!html)return;
@@ -9357,16 +9313,12 @@ document.addEventListener("click", function(e) {
     saveRange();
     setTimeout(function(){initTableResize();},100);
   }
-}
-
-        function rteInsertVideo(e){
+}\n\n        function rteInsertVideo(e){
   var file=e.target.files[0];
   if(!file)return;
   _insertMediaFile(file, file.type==='image/gif'?'gif':'video');
   e.target.value='';
-}
-
-        function _insertMediaFile(file, type){
+}\n\n        function _insertMediaFile(file, type){
   var r=new FileReader();
   r.onload=function(ev){
     var src=ev.target.result;
@@ -9384,9 +9336,7 @@ document.addEventListener("click", function(e) {
     saveRange();
   };
   r.readAsDataURL(file);
-}
-
-        function openColorPopup(mode,btn){
+}\n\n        function openColorPopup(mode,btn){
   _colorMode=mode;
   saveRange();
   const popup=document.getElementById('colorPopup');
@@ -9402,9 +9352,7 @@ document.addEventListener("click", function(e) {
   popup.style.left=Math.min(rect.left, window.innerWidth-pw-8)+'px';
   popup.classList.add('open');
   setTimeout(()=>document.addEventListener('click',()=>popup.classList.remove('open'),{once:true}),50);
-}
-
-        function applyColor(c){
+}\n\n        function applyColor(c){
   document.getElementById('guideEditBody').focus();
   restoreRange();
   if(_colorMode==='fore'){
@@ -9434,9 +9382,7 @@ document.addEventListener("click", function(e) {
     }
   }
   saveRange();
-}
-
-        function clearBgColor(){
+}\n\n        function clearBgColor(){
   document.getElementById('guideEditBody').focus();
   restoreRange();
   document.execCommand('hiliteColor',false,'transparent');
@@ -9458,9 +9404,7 @@ document.addEventListener("click", function(e) {
   }
   saveRange();
   document.getElementById('colorPopup').classList.remove('open');
-}
-
-        function openLinkPopup(btn){
+}\n\n        function openLinkPopup(btn){
   saveRange();_linkRange=_savedRange;
   const popup=document.getElementById('linkPopup');
   const rect=btn.getBoundingClientRect();
@@ -9468,19 +9412,24 @@ document.addEventListener("click", function(e) {
   popup.classList.add('open');
   document.getElementById('linkUrl').focus();
   setTimeout(()=>document.addEventListener('mousedown',(e)=>{if(!popup.contains(e.target))popup.classList.remove('open')},{once:true}),50);
-}
-
-        function closeLinkPopup(){document.getElementById('linkPopup').classList.remove('open');}
-
-        function selectTblHeaderColor(c){
+}\n\n        function closeLinkPopup(){document.getElementById('linkPopup').classList.remove('open');}\n\n        function insertLink(){
+  const url=document.getElementById('linkUrl').value.trim();
+  const text=document.getElementById('linkText').value.trim();
+  if(!url)return;
+  document.getElementById('guideEditBody').focus();
+  if(_linkRange){const sel=window.getSelection();sel.removeAllRanges();sel.addRange(_linkRange);}
+  if(text)document.execCommand('insertHTML',false,`<a href="${url}" target="_blank">${text}</a>`);
+  else document.execCommand('createLink',false,url);
+  closeLinkPopup();
+  document.getElementById('linkUrl').value='';document.getElementById('linkText').value='';
+  saveRange();
+}\n\n        function selectTblHeaderColor(c){
   _tblHeaderColor=c;
   document.querySelectorAll('#tblHeaderColors [data-color]').forEach(el=>{
     el.style.borderColor=el.dataset.color===c?'var(--abl)':'transparent';
   });
   document.getElementById('tblHeaderColorPicker').value=c;
-}
-
-        function openTblBuilder(btn){
+}\n\n        function openTblBuilder(btn){
   const builder=document.getElementById('tblBuilder');
   const rect=btn.getBoundingClientRect();
   const left=Math.min(rect.left,window.innerWidth-340);
@@ -9488,9 +9437,7 @@ document.addEventListener("click", function(e) {
   builder.classList.add('open');
   saveRange();
   setTimeout(()=>document.addEventListener('click',(e)=>{if(!builder.contains(e.target))builder.classList.remove('open')},{once:true}),50);
-}
-
-        function insertTableAdv(){
+}\n\n        function insertTableAdv(){
   const rows=Math.max(1,Math.min(30,parseInt(document.getElementById('tblRowInp').value)||3));
   const cols=Math.max(1,Math.min(20,parseInt(document.getElementById('tblColInp').value)||3));
   const hasHeader=document.getElementById('tblHasHeader').checked;
@@ -9517,9 +9464,7 @@ document.addEventListener("click", function(e) {
   restoreRange();
   document.execCommand('insertHTML',false,html);
   saveRange();
-}
-
-        function initTableResize(){
+}\n\n        function initTableResize(){
   _initTblCtx();
   _patchCalloutColorBtns();
   // 이전 리스너 완전 제거
@@ -9552,13 +9497,9 @@ document.addEventListener("click", function(e) {
       activeTbl = null;
     }
   }, sig);
-}
-
-        function clearRH(){
+}\n\n        function clearRH(){
   document.querySelectorAll('._rh').forEach(function(n){ n.remove(); });
-}
-
-        function makeRH(tbl){
+}\n\n        function makeRH(tbl){
   clearRH();
   if(!tbl || !document.contains(tbl)) return;
   tbl.style.tableLayout = 'fixed';
@@ -9656,22 +9597,14 @@ document.addEventListener("click", function(e) {
       });
     })(i);
   }
-}
-
-        function buildHandles(tbl){ makeRH(tbl); }
-
-        function removeHandles(){ clearRH(); }
-
-        function rteInsertCallout(){
+}\n\n        function buildHandles(tbl){ makeRH(tbl); }\n\n        function removeHandles(){ clearRH(); }\n\n        function rteInsertCallout(){
   document.getElementById('guideEditBody').focus();
   restoreRange();
   const html=`<div class="callout" data-callout="1" style="background:#f1f1ef"><span class="callout-icon" title="클릭하여 이모지 변경">💡</span><div class="callout-text" contenteditable="true"><p>여기에 내용을 입력하세요</p></div><span class="callout-color-btn" title="배경색 변경" contenteditable="false" style="position:absolute;top:6px;right:6px;font-size:14px;cursor:pointer;opacity:.4;transition:opacity .15s;user-select:none">🎨</span></div><p><br></p>`;
   document.execCommand('insertHTML',false,html);
   _patchCalloutColorBtns();
   saveRange();
-}
-
-        function pickCalloutEmoji(iconEl){
+}\n\n        function pickCalloutEmoji(iconEl){
   const emojis=['💡','⚠️','✅','❌','📌','🔔','💬','ℹ️','🚫','⭐','📝','🎯','💎','🔥','👀','✏️'];
   const existing=document.getElementById('_emojiPicker');
   if(existing){existing.remove();return;}
@@ -9688,9 +9621,7 @@ document.addEventListener("click", function(e) {
   picker.style.top=(r.bottom+4)+'px';picker.style.left=r.left+'px';
   document.body.appendChild(picker);
   setTimeout(function(){document.addEventListener('click',function rm(ev){if(!picker.contains(ev.target)&&!ev.target.closest('.callout-icon')){picker.remove();document.removeEventListener('click',rm);}});},200);
-}
-
-        function pickCalloutColor(calloutEl){
+}\n\n        function pickCalloutColor(calloutEl){
   if(!calloutEl||!calloutEl.classList.contains('callout'))return;
   const existing=document.getElementById('_calloutColorPicker');
   if(existing){existing.remove();return;}
@@ -9720,9 +9651,7 @@ document.addEventListener("click", function(e) {
   p.style.left=Math.min(rect.right+8,window.innerWidth-220)+'px';
   document.body.appendChild(p);
   setTimeout(function(){document.addEventListener('click',function rm2(e){if(!p.contains(e.target)&&!e.target.closest('.callout-color-btn')){p.remove();document.removeEventListener('click',rm2);}},{capture:true});},200);
-}
-
-        function _patchCalloutColorBtns(){
+}\n\n        function _patchCalloutColorBtns(){
   document.querySelectorAll('#guideEditBody .callout').forEach(function(el){
     if(el.querySelector('.callout-color-btn'))return;
     el.style.position='relative';
@@ -9732,9 +9661,7 @@ document.addEventListener("click", function(e) {
     /* onclick은 contenteditable 안에서 불안정 → 이벤트 위임으로 처리됨 */
     el.appendChild(btn);
   });
-}
-
-        function rteInsertImgCard(){
+}\n\n        function rteInsertImgCard(){
   saveRange();
   /* 내부 게시글 옵션 빌드 */
   const postOpts=S.posts.filter(p=>p.id!==_editId).map(p=>`<option value="${p.id}">${p.title}</option>`).join('');
@@ -9756,7 +9683,7 @@ document.addEventListener("click", function(e) {
       <input type="file" id="_ilcFileIn" accept="image/*" style="display:none" onchange="_ilcOnFile(event)">
     </div>
     <!-- 내부 게시글 선택 -->
-    <div id="_ilcInternal" style="display:none">
+    <div id="_ilcInternal">
       <div style="margin-bottom:10px">
         <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">게시글 선택 *</div>
         <select id="_ilcPostId" class="fi" style="width:100%;padding:8px 10px;font-size:13px">
@@ -9808,9 +9735,7 @@ document.addEventListener("click", function(e) {
       }
     };
   },50);
-}
-
-        function _ilcSwitchTab(mode){
+}\n\n        function _ilcSwitchTab(mode){
   window._ilcMode=mode;
   const intTab=document.getElementById('_ilcTabInt'),extTab=document.getElementById('_ilcTabExt');
   const intBox=document.getElementById('_ilcInternal'),extBox=document.getElementById('_ilcExternal');
@@ -9826,9 +9751,7 @@ document.addEventListener("click", function(e) {
     extBox.style.display='';intBox.style.display='none';
     if(hint)hint.style.display='none';
   }
-}
-
-        function _ilcInsert(){
+}\n\n        function _ilcInsert(){
   const title=document.getElementById('_ilcTitle')?.value||'';
   const desc=document.getElementById('_ilcDesc')?.value||'';
   const imgSrc=window._ilcImgSrc||'';
@@ -9862,9 +9785,7 @@ document.addEventListener("click", function(e) {
   restoreRange();
   document.execCommand('insertHTML',false,html);
   saveRange();
-}
-
-        function toggleEditorFullscreen(){
+}\n\n        function toggleEditorFullscreen(){
   const wrap=document.getElementById('guideEditBody')?.closest('.rte-wrap');
   const editorArea=document.getElementById('mainBody');
   const btn=document.getElementById('btnFullscreen');
@@ -9904,7 +9825,7 @@ document.addEventListener("click", function(e) {
     const fs=document.getElementById('editorFS');
     if(fs){
       // 내용 원복
-      const fsBody=fs.querySelector('#guideEditBody');
+      const fsBody=fs.querySelector('#rteBody');
       const orig=document.getElementById('guideEditBody');
       if(fsBody&&orig&&orig!==fsBody) orig.innerHTML=fsBody.innerHTML;
       // 제목 원복
@@ -9915,9 +9836,7 @@ document.addEventListener("click", function(e) {
     }
     if(btn)btn.textContent='⛶ 전체화면';
   }
-}
-
-        function _normalizeTable(tbl){
+}\n\n        function _normalizeTable(tbl){
   /* 기본 스타일 */
   tbl.removeAttribute('class');
   tbl.removeAttribute('data-block-id');
@@ -10018,14 +9937,32 @@ document.addEventListener("click", function(e) {
     if(cg2) cg2.after(tbody);
     else tbl.appendChild(tbody);
   }
-}
+}\n\n        function insertColumns(n){
+  const body = document.getElementById('guideEditBody');
+  if(!body) return;
+  body.focus();
+  restoreRange();
 
-        function removeColLayout(btn){
+  // 컬럼 HTML 생성
+  const items = Array.from({length:n}, function(_, i){
+    return '<div class="col-item" contenteditable="true" data-ph="컬럼 '+(i+1)+'" onkeydown="rteKeyDown(event)"></div>';
+  }).join('');
+  const html = '<div class="col-layout-wrap" contenteditable="false">'
+    + '<div class="col-layout cols-'+n+'">' + items + '</div>'
+    + '<span class="col-layout-del" onclick="removeColLayout(this)" title="컬럼 삭제">✕</span>'
+    + '</div><p><br></p>';
+
+  document.execCommand('insertHTML', false, html);
+  saveRange();
+  // 첫 번째 컬럼에 포커스
+  setTimeout(function(){
+    const first = body.querySelector('.col-item');
+    if(first){ first.focus(); }
+  }, 50);
+}\n\n        function removeColLayout(btn){
   const wrap = btn.closest('.col-layout-wrap');
   if(wrap) wrap.remove();
-}
-
-        function _initTblCtx(){
+}\n\n        function _initTblCtx(){
   const ed=document.getElementById('guideEditBody');
   if(!ed||ed._tblCtxBound)return;
   ed._tblCtxBound=true;
@@ -10057,23 +9994,7 @@ document.addEventListener("click", function(e) {
     const m=document.getElementById('_tblCtxMenu');if(m&&!m.contains(e.target))m.remove();
     const s=document.getElementById('_tblColorSub');if(s&&!s.contains(e.target))s.remove();
   });
-}
-
-        function _tblAddRowAbove(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,nr=t.insertRow(r.rowIndex);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}
-
-        function _tblAddRowBelow(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,idx=r.rowIndex+1,nr=idx>=t.rows.length?t.insertRow(-1):t.insertRow(idx);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}
-
-        function _tblAddColLeft(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';r.insertBefore(nc,r.cells[ci]);});}
-
-        function _tblAddColRight(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';if(r.cells[ci+1])r.insertBefore(nc,r.cells[ci+1]);else r.appendChild(nc);});}
-
-        function _tblHeaderColorPick(btn){_showColorSub(btn,function(col){const t=_tblCtxTarget?.tbl;if(t&&t.rows[0])Array.from(t.rows[0].cells).forEach(function(c){c.style.background=col;});});}
-
-        function _tblCellColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)c.style.background=col;});}
-
-        function _tblRowColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)Array.from(c.parentElement.cells).forEach(function(td){td.style.background=col;});});}
-
-        function _showColorSub(anchorBtn,onPick){
+}\n\n        function _tblAddRowAbove(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,nr=t.insertRow(r.rowIndex);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}\n\n        function _tblAddRowBelow(){const c=_tblCtxTarget?.cell;if(!c)return;const r=c.parentElement,t=_tblCtxTarget.tbl,cols=r.cells.length,idx=r.rowIndex+1,nr=idx>=t.rows.length?t.insertRow(-1):t.insertRow(idx);for(let i=0;i<cols;i++){const td=nr.insertCell();td.contentEditable='true';td.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';td.innerHTML='&nbsp;';}}\n\n        function _tblAddColLeft(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';r.insertBefore(nc,r.cells[ci]);});}\n\n        function _tblAddColRight(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(function(r){const nc=document.createElement(r.rowIndex===0&&r.cells[0]?.tagName==='TH'?'TH':'TD');nc.contentEditable='true';nc.style.cssText='border:1px solid var(--abdr);padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';nc.innerHTML='&nbsp;';if(r.cells[ci+1])r.insertBefore(nc,r.cells[ci+1]);else r.appendChild(nc);});}\n\n        function _tblHeaderColorPick(btn){_showColorSub(btn,function(col){const t=_tblCtxTarget?.tbl;if(t&&t.rows[0])Array.from(t.rows[0].cells).forEach(function(c){c.style.background=col;});});}\n\n        function _tblCellColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)c.style.background=col;});}\n\n        function _tblRowColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)Array.from(c.parentElement.cells).forEach(function(td){td.style.background=col;});});}\n\n        function _showColorSub(anchorBtn,onPick){
   let s=document.getElementById('_tblColorSub');if(s)s.remove();
   s=document.createElement('div');s.id='_tblColorSub';
   s.style.cssText='position:fixed;background:#1C2030;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:10000;width:180px';
@@ -10099,16 +10020,12 @@ document.addEventListener("click", function(e) {
   s.style.top=ar.top+'px';s.style.left=Math.min(ar.right+6,window.innerWidth-200)+'px';
   document.body.appendChild(s);
   setTimeout(function(){document.addEventListener('click',function rm(e){if(!s.contains(e.target)){s.remove();document.removeEventListener('click',rm);}},{capture:true});},50);
-}
-
-        function rteStripBg(){
+}\n\n        function rteStripBg(){
   var rb=document.getElementById('guideEditBody');
   if(!rb)return;
   _cleanEditorBg(rb);
   toast('✓ 배경색이 초기화되었습니다');
-}
-
-        function _cleanEditorBg(container){
+}\n\n        function _cleanEditorBg(container){
   if(!container)return;
   container.querySelectorAll('div,section,article,main,header,footer,aside,nav').forEach(function(el){
     if(el.classList.contains('callout')||el.closest('.callout')) return;
@@ -10126,9 +10043,7 @@ document.addEventListener("click", function(e) {
     if(!cleaned||cleaned===';') el.removeAttribute('style');
     else if(cleaned!==st) el.setAttribute('style',cleaned);
   });
-}
-
-        function _getIndentMargin(){
+}\n\n        function _getIndentMargin(){
   if(!_savedRange) return 0;
   const node=_savedRange.startContainer;
   const el=node?.nodeType===3?node.parentElement:node;
@@ -10138,5 +10053,11 @@ document.addEventListener("click", function(e) {
   if(!target||target===body) return 0;
   return parseInt(target.style.paddingLeft)||0;
 }
-
         /* ═══ RTE 에디터 JS 끝 ═══ */
+
+        /* 기존 단순 insertCallout → RTE 버전 alias */
+        function insertCallout(){ rteInsertCallout(); }
+    </script>
+
+</body>
+</html>
