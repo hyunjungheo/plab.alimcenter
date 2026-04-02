@@ -2876,7 +2876,7 @@
 
     
         /* ═══ RTE 에디터 CSS ═══ */
-        .rte-wrap{border:1px solid #E5E7EB;border-radius:10px;position:relative;background:#FFFFFF}
+        .rte-wrap{border:1px solid #E5E7EB;border-radius:10px;position:relative;background:#FFFFFF;overflow:hidden}
 
 /* ── 전체화면 에디터 ── */
 .editor-fullscreen{position:fixed;inset:0;z-index:2000;background:#FFFFFF;display:flex;flex-direction:column;overflow:hidden}
@@ -3026,7 +3026,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
   min-height:60vh;
   font-size:14px;color:#111827;line-height:1.75;outline:none;font-weight:400;
   position:relative;box-sizing:border-box;text-rendering:optimizeLegibility;
-  max-width:780px;margin:0 auto;padding:28px 30px;width:100%;
+  width:100%;padding:16px 0;
 }
 .rte-body:empty::before{content:'내용을 입력하세요...';color:#6B7280;opacity:.5;pointer-events:none}
 /* 에디터 내부 스타일 */
@@ -3304,10 +3304,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             try {
                 const snap = await getDoc(doc(db, 'guide', 'writing'));
                 if (snap.exists()) {
+                    const html = snap.data().content;
+                    window._guideHtml = html;
                     const el = document.getElementById('guideViewContent');
-                    if (el) el.innerHTML = snap.data().content;
+                    if (el) el.innerHTML = html;
+                } else {
+                    window._guideHtml = '';
                 }
-            } catch(e) { console.warn('가이드 불러오기:', e); }
+            } catch(e) { console.warn('가이드 불러오기:', e); window._guideHtml = ''; }
         }
         async function saveGuideToFirestore(html) {
             await setDoc(doc(db, 'guide', 'writing'), {
@@ -4146,73 +4150,20 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         <div class="page-content">
             <!-- 게시글 보기 모드 (기본) -->
             <div id="guideViewMode">
-                <!-- 게시글 내용 -->
+                <!-- 가이드 본문 (Firebase에서 불러온 내용) -->
                 <div id="guideViewContent" class="abody" style="min-height:200px;font-size:14px;line-height:1.75;color:#111827;">
                     <p style="color:#9CA3AF;font-style:italic;">가이드를 불러오는 중...</p>
                 </div>
-                    
-                    <div style="padding: 24px 0; border-bottom: 1px solid var(--border-color);">
-                        <h2 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">✍️ 작성 원칙</h2>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 20px; text-align: center;">
-                                <div style="font-size: 28px; margin-bottom: 10px;">📝</div>
-                                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">명확하게</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">핵심 정보를 간결하게</div>
-                            </div>
-                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 20px; text-align: center;">
-                                <div style="font-size: 28px; margin-bottom: 10px;">💬</div>
-                                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">친근하게</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">플랩풋볼 톤앤매너</div>
-                            </div>
-                            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 20px; text-align: center;">
-                                <div style="font-size: 28px; margin-bottom: 10px;">✅</div>
-                                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">정확하게</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">오타 없이 정확한 정보</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="padding: 24px 0; border-bottom: 1px solid var(--border-color);">
-                        <h2 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">📋 작성 단계</h2>
-                        <div style="display: flex; flex-direction: column; gap: 16px;">
-                            <div style="display: flex; gap: 14px; align-items: flex-start;">
-                                <div style="width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: var(--primary); color: white; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">1</div>
-                                <div><strong style="font-size: 15px; color: var(--text-primary);">목적 정의</strong><p style="font-size: 14px; color: var(--text-secondary); margin: 4px 0 0;">이 메시지의 목적이 무엇인지 명확히 합니다.</p></div>
-                            </div>
-                            <div style="display: flex; gap: 14px; align-items: flex-start;">
-                                <div style="width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: var(--primary); color: white; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">2</div>
-                                <div><strong style="font-size: 15px; color: var(--text-primary);">핵심 정보 정리</strong><p style="font-size: 14px; color: var(--text-secondary); margin: 4px 0 0;">꼭 전달해야 할 정보를 우선순위대로 정리합니다.</p></div>
-                            </div>
-                            <div style="display: flex; gap: 14px; align-items: flex-start;">
-                                <div style="width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: var(--primary); color: white; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">3</div>
-                                <div><strong style="font-size: 15px; color: var(--text-primary);">초안 작성</strong><p style="font-size: 14px; color: var(--text-secondary); margin: 4px 0 0;">가이드라인에 맞춰 초안을 작성합니다.</p></div>
-                            </div>
-                            <div style="display: flex; gap: 14px; align-items: flex-start;">
-                                <div style="width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: var(--primary); color: white; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">4</div>
-                                <div><strong style="font-size: 15px; color: var(--text-primary);">검토 및 수정</strong><p style="font-size: 14px; color: var(--text-secondary); margin: 4px 0 0;">도메인 담당자의 피드백을 받고 수정합니다.</p></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="padding: 24px 0;">
-                        <div style="background: #FEF3C7; border-radius: 8px; padding: 16px; display: flex; gap: 12px; align-items: flex-start;">
-                            <span style="font-size: 20px;">💡</span>
-                            <p style="font-size: 14px; color: #92400E; line-height: 1.7; margin: 0;"><strong>Tip:</strong> 알림톡은 고객에게 직접 전달되는 메시지입니다. 항상 고객의 입장에서 읽어보고, 필요한 정보가 명확하게 전달되는지 확인하세요.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 하단 수정 버튼 -->
-                <div style="display: flex; justify-content: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-color);">
-                    <button id="guideEditBtn" onclick="enterEditMode()" style="padding: 12px 32px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 8px;">
+
+                <!-- 하단: 수정 버튼 + 가디언즈 문구 (라이팅팀만 보임) -->
+                <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;color:#818798;">가이드 수정은 라이팅 가디언즈가 해요.</span>
+                    <button id="guideEditBtn" onclick="enterEditMode()" style="padding:10px 24px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;display:none;align-items:center;gap:8px;">
                         ✏️ 가이드 수정
                     </button>
                 </div>
-                <div style="text-align:right;margin-top:12px;">
-                    <span style="font-size:13px;color:#818798;">가이드 수정은 라이팅 가디언즈가 해요.</span>
-                </div>
             </div>
-            
+
             <!-- 수정 모드 (기본 숨김) -->
             <div id="guideEditMode" style="display: none;">
                 <!-- 상단 버튼 -->
@@ -4301,9 +4252,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
           <div class="rte-sep"></div>
 
           <!-- 이미지 첨부 / 갤러리 삽입 / 동영상·GIF -->
-          <button class="rtb" onclick="document.getElementById('rteImgIn').click()" title="이미지 1장 삽입">🖼️</button>
+          <button class="rtb" onclick="saveRange();document.getElementById('rteImgIn').click()" title="이미지 1장 삽입">🖼️</button>
           <button class="rtb" onclick="openGalleryInline()" title="갤러리 그리드 삽입 (여러 장)">🖼️✦</button>
-          <button class="rtb" onclick="document.getElementById('rteVidIn').click()" title="동영상/GIF 삽입">🎬</button>
+          <button class="rtb" onclick="saveRange();document.getElementById('rteVidIn').click()" title="동영상/GIF 삽입">🎬</button>
           <input type="file" id="rteImgIn" accept="image/*" style="display:none" multiple onchange="rteInsertImages(event)">
           <input type="file" id="rteGalIn" accept="image/*" style="display:none" multiple onchange="rteInsertGallery(event)">
           <input type="file" id="rteVidIn" accept="video/*,image/gif" style="display:none" onchange="rteInsertVideo(event)">
@@ -4327,7 +4278,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
           onkeydown="rteKeyDown(event)"
           onmouseup="saveRange()"
           onkeyup="saveRange()"
-          onclick="onRteImgClick(event)" ondrop="rteDropHandler(event)" ondragover="event.preventDefault()" onpaste="rtePasteHandler(event)" style="min-height:60vh;font-size:14px;color:#111827;line-height:1.75;outline:none;padding:28px 30px;box-sizing:border-box;">
+          onclick="onRteImgClick(event)" ondrop="rteDropHandler(event)" ondragover="event.preventDefault()" onpaste="rtePasteHandler(event)" style="min-height:60vh;font-size:14px;color:#111827;line-height:1.75;outline:none;padding:20px 0;box-sizing:border-box;">
           
         </div>
       </div>
@@ -6948,13 +6899,11 @@ document.addEventListener("click", function(e) {
         function enterEditMode() {
             document.getElementById('guideViewMode').style.display = 'none';
             document.getElementById('guideEditMode').style.display = 'block';
-            var viewEl = document.getElementById('guideViewContent');
-            var body   = document.getElementById('guideEditBody');
-            if (body && viewEl) {
-                // 뷰 내용을 에디터로 복사 (빈 초기 메시지 제외)
-                var html = viewEl.innerHTML;
-                if (html.includes('가이드를 불러오는 중')) html = '<p><br></p>';
-                body.innerHTML = html;
+            var body = document.getElementById('guideEditBody');
+            if (body) {
+                // Firebase에서 불러온 순수 HTML만 사용 (DOM 오염 방지)
+                var html = window._guideHtml || '';
+                body.innerHTML = html || '<p><br></p>';
                 body.focus();
             }
             setTimeout(function(){
@@ -6979,6 +6928,7 @@ document.addEventListener("click", function(e) {
                 el.removeAttribute('onkeydown');
             });
             var cleanHtml = tmp.innerHTML;
+            window._guideHtml = cleanHtml;
             document.getElementById('guideViewContent').innerHTML = cleanHtml;
             cancelEdit();
             if (window._saveGuideToFirestore) {
@@ -9730,78 +9680,44 @@ document.addEventListener("click", function(e) {
   });
 }\n\n        function rteInsertImgCard(){
   saveRange();
-  /* 내부 게시글 옵션 빌드 */
-  const postOpts=S.posts.filter(p=>p.id!==_editId).map(p=>`<option value="${p.id}">${p.title}</option>`).join('');
-  const m=document.createElement('div');
-  m.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center';
-  m.innerHTML=`<div style="background:var(--ab,#fff);border-radius:14px;padding:24px;width:440px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.25);font-family:inherit">
-    <div style="font-size:15px;font-weight:700;color:var(--at,#111);margin-bottom:14px">🔗 이미지 링크 카드</div>
-    <!-- 탭 -->
-    <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--abdr,#ddd);border-radius:8px;overflow:hidden">
-      <button id="_ilcTabInt" style="flex:1;padding:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;background:var(--blue,#3b82f6);color:#fff;font-family:inherit" onclick="_ilcSwitchTab('internal')">📄 내부 게시글</button>
-      <button id="_ilcTabExt" style="flex:1;padding:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;background:var(--as,#f3f4f6);color:var(--am,#888);font-family:inherit" onclick="_ilcSwitchTab('external')">🌐 외부 링크</button>
-    </div>
-    <!-- 이미지 -->
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">이미지 (선택)</div>
-      <div id="_ilcImgPreview" style="width:100%;height:70px;border:1px dashed var(--abdr,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--as,#f9f9f9);overflow:hidden" onclick="document.getElementById('_ilcFileIn').click()">
-        <span style="font-size:12px;color:var(--am,#aaa)">클릭하여 이미지 업로드</span>
-      </div>
-      <input type="file" id="_ilcFileIn" accept="image/*" style="display:none" onchange="_ilcOnFile(event)">
-    </div>
-    <!-- 내부 게시글 선택 -->
-    <div id="_ilcInternal">
-      <div style="margin-bottom:10px">
-        <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">게시글 선택 *</div>
-        <select id="_ilcPostId" class="fi" style="width:100%;padding:8px 10px;font-size:13px">
-          <option value="">-- 게시글 선택 --</option>
-          ${postOpts}
-        </select>
-      </div>
-      <div style="margin-bottom:10px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--am,#888)">
-          <input type="checkbox" id="_ilcSetChild" checked style="width:14px;height:14px;accent-color:var(--blue,#3b82f6)">
-          하위 글로 설정 <span style="font-size:10px;color:var(--am,#aaa)">(체크 시 해당 글은 링크 카드로만 접근 가능)</span>
-        </label>
-      </div>
-    </div>
-    <!-- 외부 링크 -->
-    <div id="_ilcExternal" style="display:none">
-      <div style="margin-bottom:10px">
-        <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">링크 URL *</div>
-        <input id="_ilcUrl" class="fi" style="width:100%;padding:8px 10px;font-size:13px" placeholder="https://example.com">
-      </div>
-    </div>
-    <!-- 공통: 제목/설명 -->
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">제목 * <span id="_ilcAutoHint" style="color:var(--blue,#3b82f6);font-size:10px">(게시글 선택 시 자동 입력)</span></div>
-      <input id="_ilcTitle" class="fi" style="width:100%;padding:8px 10px;font-size:13px" placeholder="카드 제목">
-    </div>
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">설명 (선택)</div>
-      <input id="_ilcDesc" class="fi" style="width:100%;padding:8px 10px;font-size:13px" placeholder="짧은 설명">
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-gh" style="padding:7px 16px;font-size:13px;border-radius:8px" onclick="this.closest('div[style*=fixed]').remove()">취소</button>
-      <button class="btn btn-bl" style="padding:7px 16px;font-size:13px;border-radius:8px" onclick="_ilcInsert()">삽입</button>
-    </div>
-  </div>`;
-  document.body.appendChild(m);
-  m.onclick=function(e){if(e.target===m)m.remove();};
-  window._ilcImgSrc='';
-  window._ilcMode='internal';
-  /* 게시글 선택 시 제목 자동 입력 */
-  setTimeout(()=>{
-    const sel=document.getElementById('_ilcPostId');
-    if(sel) sel.onchange=function(){
-      const pid=this.value;
-      const post=S.posts.find(p=>p.id===pid);
-      if(post){
-        document.getElementById('_ilcTitle').value=post.title;
-        document.getElementById('_ilcDesc').value=post.subCat||'';
-      }
-    };
-  },50);
+  // 단순 링크 카드 삽입 (내부 게시글 참조 제거)
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:440px;max-width:90vw;font-family:inherit;box-shadow:0 12px 40px rgba(0,0,0,.25)">'
+    +'<div style="font-size:15px;font-weight:700;color:#111;margin-bottom:14px">🔗 링크 카드</div>'
+    +'<div style="margin-bottom:10px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">카드 제목</div>'
+    +'<input id="_ilcTitle" placeholder="제목을 입력하세요" style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
+    +'<div style="margin-bottom:10px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">설명 (선택)</div>'
+    +'<input id="_ilcDesc" placeholder="설명을 입력하세요" style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
+    +'<div style="margin-bottom:16px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">링크 URL</div>'
+    +'<input id="_ilcUrl" type="url" placeholder="https://..." style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end">'
+    +'<button onclick="this.closest('[style*=inset]').remove()" style="padding:8px 18px;background:#F3F4F6;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">취소</button>'
+    +'<button id="_ilcOk" style="padding:8px 18px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">삽입</button>'
+    +'</div></div>';
+  document.body.appendChild(overlay);
+  document.getElementById('_ilcTitle').focus();
+  document.getElementById('_ilcOk').onclick=function(){
+    var title=document.getElementById('_ilcTitle').value.trim()||'링크';
+    var desc=document.getElementById('_ilcDesc').value.trim();
+    var url=document.getElementById('_ilcUrl').value.trim()||'#';
+    overlay.remove();
+    var html='<a href="'+url+'" target="_blank" contenteditable="false"'
+      +' style="display:flex;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin:10px 0;text-decoration:none;color:inherit;transition:box-shadow .15s">'
+      +'<div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;">'
+      +'<div style="font-size:14px;font-weight:600;color:#111;margin-bottom:4px">'+title+'</div>'
+      +(desc?'<div style="font-size:12px;color:#6B7280;line-height:1.4">'+desc+'</div>':'')
+      +'<div style="font-size:11px;color:#9CA3AF;margin-top:4px">'+url+'</div>'
+      +'</div></a><p><br></p>';
+    document.getElementById('guideEditBody').focus();
+    restoreRange();
+    document.execCommand('insertHTML',false,html);
+    saveRange();
+  };
+  overlay.addEventListener('keydown',function(e){
+    if(e.key==='Enter')document.getElementById('_ilcOk').click();
+    if(e.key==='Escape')overlay.remove();
+  });
 }\n\n        function _ilcSwitchTab(mode){
   window._ilcMode=mode;
   const intTab=document.getElementById('_ilcTabInt'),extTab=document.getElementById('_ilcTabExt');
@@ -10124,6 +10040,15 @@ document.addEventListener("click", function(e) {
 
         /* 기존 단순 insertCallout → RTE 버전 alias */
         function insertCallout(){ rteInsertCallout(); }
+        function openGalleryInline() {
+            saveRange();
+            document.getElementById('rteGalIn').click();
+        }
+
+        function openVideoInline() {
+            saveRange();
+            document.getElementById('rteVidIn').click();
+        }
     </script>
 
 </body>
