@@ -3552,19 +3552,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             </svg>
         </div>
         <div class="header-right" style="display:flex; align-items:center; gap:12px;">
-            <div id="admin-user-badge" style="
-                display: none;
-                align-items: center;
-                gap: 8px;
-                padding: 6px 14px;
-                background: #EFF6FF;
-                border-radius: 20px;
-                font-size: 13px;
-                font-weight: 600;
-                color: #2563EB;
-            ">
-                <span style="font-size:15px;">👤</span>
-                <span id="admin-user-name"></span>
+            <div id="admin-user-badge" style="display:none;align-items:center;gap:8px;padding:6px 14px;background:#EFF6FF;border-radius:20px;font-size:13px;font-weight:600;color:#2563EB;font-family:'Pretendard',-apple-system,sans-serif;">
+                <span style="font-size:13px;">👤</span>
+                <span id="admin-user-name" style="font-family:'Pretendard',-apple-system,sans-serif;font-size:13px;"></span>
             </div>
             <button onclick="adminLogout()" style="
                 padding: 6px 14px;
@@ -5702,6 +5692,26 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
     
 
     <script>
+        /* ─── toast 알림 ─── */
+        function toast(msg, dur, isSave) {
+            var el = document.getElementById('_guideToast');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = '_guideToast';
+                el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#1F2937;color:white;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.25);transform:translateY(8px);opacity:0;transition:all .22s;pointer-events:none;display:flex;align-items:center;gap:8px;min-width:160px;font-family:'Pretendard',-apple-system,sans-serif;';
+                document.body.appendChild(el);
+            }
+            el.textContent = msg;
+            if (isSave) el.style.background = '#059669';
+            else el.style.background = '#1F2937';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+            clearTimeout(el._timer);
+            el._timer = setTimeout(function(){
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(8px)';
+            }, dur || 2200);
+        }
         function showPage(index) {
             const pages = document.querySelectorAll('.page-content');
             pages.forEach((page, i) => {
@@ -9083,7 +9093,9 @@ document.addEventListener("click", function(e) {
 
         /* ═══ RTE 에디터 JS ═══ */
         function rteCmd(cmd,val){
-  document.getElementById('guideEditBody').focus();
+  const body=document.getElementById('guideEditBody');
+  if(!body)return;
+  body.focus();
   restoreRange();
   if(cmd==='formatBlock'&&val&&!val.startsWith('<')) val='<'+val+'>';
   document.execCommand(cmd,false,val||null);
@@ -9096,7 +9108,21 @@ document.addEventListener("click", function(e) {
     if(body&&body.contains(r.commonAncestorContainer))_savedRange=r.cloneRange();
   }
 }\n\n        function restoreRange(){
-  if(!_savedRange)return;
+  const body=document.getElementById('guideEditBody');
+  if(!_savedRange){
+    // 커서가 없으면 에디터 끝에 강제 위치
+    if(body){
+      body.focus();
+      const sel=window.getSelection();
+      const range=document.createRange();
+      range.selectNodeContents(body);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      _savedRange=range.cloneRange();
+    }
+    return;
+  }
   const sel=window.getSelection();
   sel.removeAllRanges();sel.addRange(_savedRange);
 }\n\n        function setFontSize(sz){
