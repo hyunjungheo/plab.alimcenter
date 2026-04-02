@@ -3195,6 +3195,23 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         .abody a{color:#3B82F6;text-decoration:underline}
         .abody .col-resize-handle{display:none!important}
         /* ═══ abody 뷰 CSS 끝 ═══ */
+        
+        /* ═══ RTE 추가 CSS (ref) ═══ */
+        ._tbl-ctx-menu{position:fixed;z-index:9999;background:#1C2030;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px;min-width:210px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+        .rte-body table td.selected-cell{background:rgba(59,130,246,.15)!important}
+        .rte-body table th.selected-cell{background:rgba(59,130,246,.25)!important}
+        /* 링크카드 미리보기 */
+        .img-link-card{display:flex;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin:10px 0;cursor:pointer;text-decoration:none;color:inherit;transition:box-shadow .15s;max-height:130px}
+        .img-link-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.12)}
+        .img-link-card-img{width:120px;min-width:120px;object-fit:cover;background:#F3F4F6}
+        .img-link-card-body{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+        .img-link-card-title{font-size:14px;font-weight:600;color:#111;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .img-link-card-desc{font-size:12px;color:#6B7280;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .img-link-card-url{font-size:11px;color:#9CA3AF;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        /* 동영상 */
+        .rte-video-wrap{margin:12px 0;border-radius:10px;overflow:hidden;background:#000;position:relative}
+        .rte-video-wrap video{width:100%;display:block}
+        /* ═══ RTE 추가 CSS 끝 ═══ */
         </style>
 <script>
         // Critical navigation functions
@@ -9688,44 +9705,78 @@ document.addEventListener("click", function(e) {
   });
 }\n\n        function rteInsertImgCard(){
   saveRange();
-  // 단순 링크 카드 삽입 (내부 게시글 참조 제거)
-  var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
-  overlay.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:440px;max-width:90vw;font-family:inherit;box-shadow:0 12px 40px rgba(0,0,0,.25)">'
-    +'<div style="font-size:15px;font-weight:700;color:#111;margin-bottom:14px">🔗 링크 카드</div>'
-    +'<div style="margin-bottom:10px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">카드 제목</div>'
-    +'<input id="_ilcTitle" placeholder="제목을 입력하세요" style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
-    +'<div style="margin-bottom:10px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">설명 (선택)</div>'
-    +'<input id="_ilcDesc" placeholder="설명을 입력하세요" style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
-    +'<div style="margin-bottom:16px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">링크 URL</div>'
-    +'<input id="_ilcUrl" type="url" placeholder="https://..." style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
-    +'<div style="display:flex;gap:8px;justify-content:flex-end">'
-    +'<button onclick="this.closest('[style*=inset]').remove()" style="padding:8px 18px;background:#F3F4F6;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">취소</button>'
-    +'<button id="_ilcOk" style="padding:8px 18px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">삽입</button>'
-    +'</div></div>';
-  document.body.appendChild(overlay);
-  document.getElementById('_ilcTitle').focus();
-  document.getElementById('_ilcOk').onclick=function(){
-    var title=document.getElementById('_ilcTitle').value.trim()||'링크';
-    var desc=document.getElementById('_ilcDesc').value.trim();
-    var url=document.getElementById('_ilcUrl').value.trim()||'#';
-    overlay.remove();
-    var html='<a href="'+url+'" target="_blank" contenteditable="false"'
-      +' style="display:flex;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin:10px 0;text-decoration:none;color:inherit;transition:box-shadow .15s">'
-      +'<div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;">'
-      +'<div style="font-size:14px;font-weight:600;color:#111;margin-bottom:4px">'+title+'</div>'
-      +(desc?'<div style="font-size:12px;color:#6B7280;line-height:1.4">'+desc+'</div>':'')
-      +'<div style="font-size:11px;color:#9CA3AF;margin-top:4px">'+url+'</div>'
-      +'</div></a><p><br></p>';
-    document.getElementById('guideEditBody').focus();
-    restoreRange();
-    document.execCommand('insertHTML',false,html);
-    saveRange();
-  };
-  overlay.addEventListener('keydown',function(e){
-    if(e.key==='Enter')document.getElementById('_ilcOk').click();
-    if(e.key==='Escape')overlay.remove();
-  });
+  /* 내부 게시글 옵션 빌드 */
+  const postOpts='';
+  const m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center';
+  m.innerHTML=`<div style="background:var(--ab,#fff);border-radius:14px;padding:24px;width:440px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.25);font-family:inherit">
+    <div style="font-size:15px;font-weight:700;color:var(--at,#111);margin-bottom:14px">🔗 이미지 링크 카드</div>
+    <!-- 탭 -->
+    <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--abdr,#ddd);border-radius:8px;overflow:hidden">
+      <button id="_ilcTabInt" style="flex:1;padding:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;background:var(--blue,#3b82f6);color:#fff;font-family:inherit" onclick="_ilcSwitchTab('internal')">📄 내부 게시글</button>
+      <button id="_ilcTabExt" style="flex:1;padding:8px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;background:var(--as,#f3f4f6);color:var(--am,#888);font-family:inherit" onclick="_ilcSwitchTab('external')">🌐 외부 링크</button>
+    </div>
+    <!-- 이미지 -->
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">이미지 (선택)</div>
+      <div id="_ilcImgPreview" style="width:100%;height:70px;border:1px dashed var(--abdr,#ddd);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--as,#f9f9f9);overflow:hidden" onclick="document.getElementById('_ilcFileIn').click()">
+        <span style="font-size:12px;color:var(--am,#aaa)">클릭하여 이미지 업로드</span>
+      </div>
+      <input type="file" id="_ilcFileIn" accept="image/*" style="display:none" onchange="_ilcOnFile(event)">
+    </div>
+    <!-- 내부 게시글 선택 -->
+    <div id="_ilcInternal">
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">게시글 선택 *</div>
+        <select id="_ilcPostId" class="fi" style="width:100%;padding:8px 10px;font-size:13px">
+          <option value="">-- 게시글 선택 --</option>
+          ${postOpts}
+        </select>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--am,#888)">
+          <input type="checkbox" id="_ilcSetChild" checked style="width:14px;height:14px;accent-color:var(--blue,#3b82f6)">
+          하위 글로 설정 <span style="font-size:10px;color:var(--am,#aaa)">(체크 시 해당 글은 링크 카드로만 접근 가능)</span>
+        </label>
+      </div>
+    </div>
+    <!-- 외부 링크 -->
+    <div id="_ilcExternal" style="display:none">
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">링크 URL *</div>
+        <input id="_ilcUrl" class="fi" style="width:100%;padding:8px 10px;font-size:13px" placeholder="https://example.com">
+      </div>
+    </div>
+    <!-- 공통: 제목/설명 -->
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">제목 * <span id="_ilcAutoHint" style="color:var(--blue,#3b82f6);font-size:10px">(게시글 선택 시 자동 입력)</span></div>
+      <input id="_ilcTitle" class="fi" style="width:100%;padding:8px 10px;font-size:13px" placeholder="카드 제목">
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--am,#888);margin-bottom:4px">설명 (선택)</div>
+      <input id="_ilcDesc" class="fi" style="width:100%;padding:8px 10px;font-size:13px" placeholder="짧은 설명">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-gh" style="padding:7px 16px;font-size:13px;border-radius:8px" onclick="this.closest('div[style*=fixed]').remove()">취소</button>
+      <button class="btn btn-bl" style="padding:7px 16px;font-size:13px;border-radius:8px" onclick="_ilcInsert()">삽입</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.onclick=function(e){if(e.target===m)m.remove();};
+  window._ilcImgSrc='';
+  window._ilcMode='internal';
+  /* 게시글 선택 시 제목 자동 입력 */
+  setTimeout(()=>{
+    const sel=document.getElementById('_ilcPostId');
+    if(sel) sel.onchange=function(){
+      const pid=this.value;
+      const post=S.posts.find(p=>p.id===pid);
+      if(post){
+        document.getElementById('_ilcTitle').value=post.title;
+        document.getElementById('_ilcDesc').value=post.subCat||'';
+      }
+    };
+  },50);
 }\n\n        function _ilcSwitchTab(mode){
   window._ilcMode=mode;
   const intTab=document.getElementById('_ilcTabInt'),extTab=document.getElementById('_ilcTabExt');
@@ -10048,16 +10099,110 @@ document.addEventListener("click", function(e) {
 
         /* 기존 단순 insertCallout → RTE 버전 alias */
         function insertCallout(){ rteInsertCallout(); }
-        function openGalleryInline() {
-            saveRange();
-            document.getElementById('rteGalIn').click();
-        }
+        function openGalleryInline(){
+  saveRange();
+  document.getElementById('rteGalIn').click();
+}
 
         function openVideoInline() {
             saveRange();
             document.getElementById('rteVidIn').click();
         }
-    </script>
+    
+
+        /* ═══ 표/링크카드 추가 함수 ═══ */
+        function _showTblCtx(mx,my){
+  let m=document.getElementById('_tblCtxMenu');if(m)m.remove();
+  m=document.createElement('div');m.id='_tblCtxMenu';
+  m.style.cssText='position:fixed;z-index:9999;background:#1C2030;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px;min-width:210px;box-shadow:0 8px 30px rgba(0,0,0,.35);font-family:inherit';
+  const tbl=_tblCtxTarget.tbl,firstRow=tbl.rows[0],hasHeader=firstRow&&firstRow.cells[0]&&firstRow.cells[0].tagName==='TH';
+  const items=[
+    {icon:'🔄',label:hasHeader?'제목행 해제':'제목행 설정',fn:'_tblToggleHeader'},
+    {icon:'🎨',label:'제목행 색상',fn:'_tblHeaderColorPick',sub:true},
+    {sep:true},
+    {icon:'🎨',label:'셀 배경색',fn:'_tblCellColorPick',sub:true},
+    {icon:'🎨',label:'행 배경색',fn:'_tblRowColorPick',sub:true},
+    {sep:true},
+    {icon:'⬅',label:'왼쪽 정렬',fn:'_tblAlignLeft'},
+    {icon:'⬛',label:'가운데 정렬',fn:'_tblAlignCenter'},
+    {icon:'➡',label:'오른쪽 정렬',fn:'_tblAlignRight'},
+    {icon:'☰',label:'행 전체 가운데 정렬',fn:'_tblAlignRowCenter'},
+    {icon:'▥',label:'열 전체 가운데 정렬',fn:'_tblAlignColCenter'},
+    {sep:true},
+    {icon:'➕',label:'위에 행 추가',fn:'_tblAddRowAbove'},
+    {icon:'➕',label:'아래에 행 추가',fn:'_tblAddRowBelow'},
+    {icon:'➕',label:'왼쪽에 열 추가',fn:'_tblAddColLeft'},
+    {icon:'➕',label:'오른쪽에 열 추가',fn:'_tblAddColRight'},
+    {sep:true},
+    {icon:'🗑️',label:'현재 행 삭제',fn:'_tblDelRow',danger:true},
+    {icon:'🗑️',label:'현재 열 삭제',fn:'_tblDelCol',danger:true},
+  ];
+  items.forEach(function(it){
+    if(it.sep){const d=document.createElement('div');d.style.cssText='height:1px;background:rgba(255,255,255,.08);margin:4px 0';m.appendChild(d);return;}
+    const btn=document.createElement('button');
+    btn.style.cssText='display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border:none;background:none;color:'+(it.danger?'#f87171':'#DDE3F0')+';font-size:12.5px;cursor:pointer;border-radius:6px;font-family:inherit;text-align:left;transition:background .1s';
+    btn.innerHTML='<span style="font-size:13px;width:20px;text-align:center">'+it.icon+'</span>'+it.label;
+    btn.onmouseover=function(){this.style.background='rgba(255,255,255,.06)';};
+    btn.onmouseout=function(){this.style.background='none';};
+    if(it.sub)btn.onclick=function(e){e.stopPropagation();window[it.fn](btn);};
+    else btn.onclick=function(){m.remove();window[it.fn]();};
+    m.appendChild(btn);
+  });
+  m.style.top=Math.min(my,window.innerHeight-500)+'px';
+  m.style.left=Math.min(mx,window.innerWidth-230)+'px';
+  document.body.appendChild(m);
+}
+
+        function _tblToggleHeader(){
+  const tbl=_tblCtxTarget?.tbl;if(!tbl||!tbl.rows[0])return;
+  const fr=tbl.rows[0],isH=fr.cells[0]?.tagName==='TH';
+  Array.from(fr.cells).forEach(function(c){
+    const n=document.createElement(isH?'td':'th');n.innerHTML=c.innerHTML;n.style.cssText=c.style.cssText;
+    if(!isH)n.style.fontWeight='600';else n.style.fontWeight='';
+    n.contentEditable='true';c.replaceWith(n);
+  });
+}
+
+        function _tblHeaderColorPick(btn){_showColorSub(btn,function(col){const t=_tblCtxTarget?.tbl;if(t&&t.rows[0])Array.from(t.rows[0].cells).forEach(function(c){c.style.background=col;});});}
+
+        function _tblCellColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)c.style.background=col;});}
+
+        function _tblRowColorPick(btn){_showColorSub(btn,function(col){const c=_tblCtxTarget?.cell;if(c)Array.from(c.parentElement.cells).forEach(function(td){td.style.background=col;});});}
+
+        function _tblAlignLeft(){const c=_tblCtxTarget?.cell;if(c)c.style.textAlign='left';}
+
+        function _tblAlignCenter(){const c=_tblCtxTarget?.cell;if(c)c.style.textAlign='center';}
+
+        function _tblAlignRight(){const c=_tblCtxTarget?.cell;if(c)c.style.textAlign='right';}
+
+        function _tblAlignRowCenter(){const c=_tblCtxTarget?.cell;if(c)Array.from(c.parentElement.cells).forEach(td=>td.style.textAlign='center');}
+
+        function _tblAlignColCenter(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;Array.from(t.rows).forEach(r=>{if(r.cells[ci])r.cells[ci].style.textAlign='center';});}
+
+        function _tblDelRow(){const c=_tblCtxTarget?.cell;if(!c)return;const t=_tblCtxTarget.tbl;if(t.rows.length<=1){t.remove();return;}c.parentElement.remove();}
+
+        function _tblDelCol(){const c=_tblCtxTarget?.cell;if(!c)return;const ci=c.cellIndex,t=_tblCtxTarget.tbl;if(t.rows[0]&&t.rows[0].cells.length<=1){t.remove();return;}Array.from(t.rows).forEach(function(r){if(r.cells[ci])r.cells[ci].remove();});}
+
+        function _ilcOnFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    window._ilcImgSrc=ev.target.result;
+    document.getElementById('_ilcImgPreview').innerHTML='<img src="'+ev.target.result+'" style="width:100%;height:100%;object-fit:cover">';
+  };r.readAsDataURL(file);
+}
+
+        function applyTableCellColor(color){
+  const sel=window.getSelection();
+  if(!sel.rangeCount)return;
+  let el=sel.getRangeAt(0).startContainer;
+  while(el&&el!==document.getElementById('guideEditBody')){
+    if(el.tagName==='TD'||el.tagName==='TH'){el.style.background=color;break;}
+    el=el.parentElement;
+  }
+}
+        /* ═══ 끝 ═══ */
+</script>
 
 </body>
 </html>
