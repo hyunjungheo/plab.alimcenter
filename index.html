@@ -3055,6 +3055,11 @@
                     p.style.display = 'none';
                 }
             });
+
+            // 가이드 페이지 진입 시 권한 버튼 즉시 갱신
+            if (typeof checkWritingTeamUI === 'function') {
+                setTimeout(function(){ checkWritingTeamUI(); }, 0);
+            }
         }
         
         function openModal(modalId) {
@@ -3082,6 +3087,7 @@
             if (modal) {
                 // style.display와 classList 모두 처리
                 modal.style.display = 'none';
+                modal.style.cssText = 'display:none';
                 modal.classList.remove('active');
                 document.body.style.overflow = 'auto';
                 if (modalId === 'simpleFormModal' && !window.isNavigating && typeof resetModalForm === 'function') {
@@ -3539,9 +3545,7 @@
                                     <span class="title-text">[경기확정] 경기가 확정되었습니다</span>
                                 </div>
                                 <div class="template-preview-tooltip">
-                                    <div style="background: linear-gradient(135deg, #FEE500 0%, #FFD93D 100%); height: 60px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">💬</div>
-                                    <div class="preview-header">📋 템플릿 상세 정보</div>
-                                    <div class="preview-field">
+                                                                        <div class="preview-field">
                                         <div class="preview-label">시점:</div>
                                         <div class="preview-value">경기 신청 완료 직후</div>
                                     </div>
@@ -3572,9 +3576,7 @@
                                     <span class="title-text">[신청완료] 경기 신청이 완료되었습니다</span>
                                 </div>
                                 <div class="template-preview-tooltip">
-                                    <div style="background: linear-gradient(135deg, #FEE500 0%, #FFD93D 100%); height: 60px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">💬</div>
-                                    <div class="preview-header">📋 템플릿 상세 정보</div>
-                                    <div class="preview-field">
+                                                                        <div class="preview-field">
                                         <div class="preview-label">시점:</div>
                                         <div class="preview-value">경기 신청 직후</div>
                                     </div>
@@ -3605,9 +3607,7 @@
                                     <span class="title-text">[결제완료] 참가비 결제가 완료되었습니다</span>
                                 </div>
                                 <div class="template-preview-tooltip">
-                                    <div style="background: linear-gradient(135deg, #FEE500 0%, #FFD93D 100%); height: 60px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">💬</div>
-                                    <div class="preview-header">📋 템플릿 상세 정보</div>
-                                    <div class="preview-field">
+                                                                        <div class="preview-field">
                                         <div class="preview-label">시점:</div>
                                         <div class="preview-value">결제 완료 직후</div>
                                     </div>
@@ -3638,9 +3638,7 @@
                                     <span class="title-text">[리마인더] 내일 경기가 있어요</span>
                                 </div>
                                 <div class="template-preview-tooltip">
-                                    <div style="background: linear-gradient(135deg, #FEE500 0%, #FFD93D 100%); height: 60px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔔</div>
-                                    <div class="preview-header">📋 템플릿 상세 정보</div>
-                                    <div class="preview-field">
+                                                                        <div class="preview-field">
                                         <div class="preview-label">시점:</div>
                                         <div class="preview-value">경기 1일 전</div>
                                     </div>
@@ -3671,8 +3669,6 @@
                                     <span class="title-text">[이벤트] 첫 경기 할인 이벤트</span>
                                 </div>
                                 <div class="template-preview-tooltip">
-                                    <div style="background: linear-gradient(135deg, #FEE500 0%, #FFD93D 100%); height: 60px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">🖼️</div>
-                                    <div class="preview-header">📋 템플릿 상세 정보</div>
                                     <div class="preview-field">
                                         <div class="preview-label">시점:</div>
                                         <div class="preview-value">앱 첫 접속 시</div>
@@ -3854,9 +3850,7 @@
                                     <span class="title-text">[리마인더] 내일 경기가 있어요</span>
                                 </div>
                                 <div class="template-preview-tooltip">
-                                    <div style="background: linear-gradient(135deg, #FEE500 0%, #FFD93D 100%); height: 60px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔔</div>
-                                    <div class="preview-header">📋 템플릿 상세 정보</div>
-                                    <div class="preview-field">
+                                                                        <div class="preview-field">
                                         <div class="preview-label">시점:</div>
                                         <div class="preview-value">경기 1일 전</div>
                                     </div>
@@ -3891,8 +3885,6 @@
                                     <span class="title-text">[이벤트] 첫 경기 할인 이벤트</span>
                                 </div>
                                 <div class="template-preview-tooltip">
-                                    <div style="background: linear-gradient(135deg, #FEE500 0%, #FFD93D 100%); height: 60px; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px;">🖼️</div>
-                                    <div class="preview-header">📋 템플릿 상세 정보</div>
                                     <div class="preview-field">
                                         <div class="preview-label">시점:</div>
                                         <div class="preview-value">앱 첫 접속 시</div>
@@ -5672,387 +5664,7 @@
     </div>
     
     <!-- Simple Form Modal (kept for non-alimtalk types from journey page) -->
-    <div class="modal" id="createModal" style="display: none;">
-        <div class="modal-content" style="max-width: 1400px;">
-            <div class="modal-header">
-                <div class="modal-title-section">
-                    <h2>새 알림톡 템플릿 만들기</h2>
-                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">카카오 비즈엠 알림톡 템플릿 양식</p>
-                </div>
-                <button class="close-btn" onclick="closeModal('createModal')">✕</button>
-            </div>
-            
-            <div class="modal-body">
-                <!-- Template Type Selection -->
-                <div class="section">
-                    <div class="section-title">알림톡 템플릿 유형 선택</div>
-                    <div class="form-sublabel" style="margin-bottom: 16px;">메시지 구조에 맞는 템플릿 유형을 선택하세요</div>
-                    <div class="template-types">
-                        <div class="template-type-card selected" onclick="selectTemplateType(0)">
-                            <div class="type-preview basic">
-                                <div class="preview-header"></div>
-                                <div class="preview-body">
-                                    <div class="preview-line"></div>
-                                    <div class="preview-line"></div>
-                                    <div class="preview-line"></div>
-                                </div>
-                            </div>
-                            <div class="type-name">1. 헤더 강조</div>
-                            <div class="type-desc">제목 강조형</div>
-                        </div>
-                        
-                        <div class="template-type-card" onclick="selectTemplateType(1)">
-                            <div class="type-preview image-text">
-                                <div class="img-box"></div>
-                                <div class="text-area">
-                                    <div class="text-line" style="width: 90%;"></div>
-                                    <div class="text-line" style="width: 70%;"></div>
-                                </div>
-                            </div>
-                            <div class="type-name">2. 이미지+아이템 리스트</div>
-                            <div class="type-desc">상품/이벤트 안내</div>
-                        </div>
-                        
-                        <div class="template-type-card" onclick="selectTemplateType(2)">
-                            <div class="type-preview item-list">
-                                <div class="item">
-                                    <div class="item-icon"></div>
-                                    <div class="item-text">
-                                        <div class="text-line" style="width: 80%;"></div>
-                                        <div class="text-line" style="width: 60%;"></div>
-                                    </div>
-                                </div>
-                                <div class="item">
-                                    <div class="item-icon"></div>
-                                    <div class="item-text">
-                                        <div class="text-line" style="width: 70%;"></div>
-                                        <div class="text-line" style="width: 50%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="type-name">3. 아이템 리스트</div>
-                            <div class="type-desc">항목별 정보 나열</div>
-                        </div>
-                        
-                        <div class="template-type-card" onclick="selectTemplateType(3)">
-                            <div class="type-preview basic">
-                                <div class="preview-body" style="padding-top: 12px;">
-                                    <div class="preview-line"></div>
-                                    <div class="preview-line"></div>
-                                    <div class="preview-line"></div>
-                                    <div class="preview-line" style="width: 70%;"></div>
-                                </div>
-                            </div>
-                            <div class="type-name">4. 이미지 강조</div>
-                            <div class="type-desc">비주얼 중심</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="preview-container">
-                    <!-- Left: Phone Preview -->
-                    <div class="phone-preview">
-                        <div class="phone-frame">
-                            <div class="phone-screen">
-                                <div class="kakao-header">
-                                    <div class="kakao-title">카카오톡</div>
-                                    <div class="kakao-icons">⚙️ 🔍</div>
-                                </div>
-                                <div class="chat-container">
-                                    <div class="message-date">2026년 1월 22일 수요일</div>
-                                    <div class="message-group">
-                                        <div class="sender-profile">
-                                            <div class="profile-image">⚽</div>
-                                            <div class="sender-name">플랩풋볼</div>
-                                        </div>
-                                        <div class="alimtalk-bubble">
-                                            <div class="alimtalk-header">
-                                                <div class="alimtalk-title">플랩풋볼</div>
-                                                <div class="alimtalk-badge">알림톡</div>
-                                            </div>
-                                            <div class="alimtalk-content">
-                                                <div class="content-title" id="preview-title">[경기확정] 경기가 확정되었습니다</div>
-                                                <div class="content-body" id="preview-body">
-                                                    매니저님이 등록한 경기가 최소인원이 달성되어 확정되었습니다.
-                                                </div>
-                                                <div class="content-highlight" id="preview-highlight">
-                                                    📍 장소: 서울 강남구 ○○풋살장<br>
-                                                    ⏰ 시간: 2026.01.22 (수) 17:00<br>
-                                                    👥 인원: 12명 / 12명
-                                                </div>
-                                            </div>
-                                            <div class="button-list" id="preview-buttons">
-                                                <button class="alimtalk-button primary">경기 상세보기</button>
-                                                <button class="alimtalk-button">참가자 확인하기</button>
-                                            </div>
-                                        </div>
-                                        <div class="message-time">오후 2:30</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Right: Form -->
-                    <div class="form-section">
-                        <div class="section">
-                            <div class="section-title">기본 정보</div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">템플릿 코드</label>
-                                <div class="form-sublabel">영문, 숫자, 언더스코어만 사용 가능 (예: PLAB_MATCH_01)</div>
-                                <input type="text" class="form-input" placeholder="PLAB_MATCH_01">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">템플릿명</label>
-                                <input type="text" class="form-input" placeholder="[경기확정] 경기가 확정되었습니다">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">버전 관리 (선택사항)</label>
-                                <div class="form-sublabel">기존 템플릿의 새 버전인 경우 선택하세요</div>
-                                <select class="form-input">
-                                    <option value="">새로운 템플릿 (V1.0)</option>
-                                    <option value="PLAB_MATCH_01">PLAB_MATCH_01 - [경기확정] 경기가 확정되었습니다 (V2.0)</option>
-                                    <option value="PLAB_APPLY_01">PLAB_APPLY_01 - [신청완료] 경기 신청이 완료되었습니다 (V2.0)</option>
-                                    <option value="PLAB_PAY_01">PLAB_PAY_01 - [결제완료] 참가비 결제가 완료되었습니다 (V2.0)</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">등록자</label>
-                                <div class="form-sublabel">이름과 소속을 입력하세요 (예: 김민수 (CX팀))</div>
-                                <input type="text" class="form-input" placeholder="김민수 (CX팀)">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">도메인 담당자</label>
-                                <div class="form-sublabel">라이팅 검토를 진행할 담당자를 선택하세요</div>
-                                <select class="form-input">
-                                    <option value="">담당자 선택</option>
-                                    <option value="아쿠">아쿠</option>
-                                    <option value="옐로">옐로</option>
-                                    <option value="피르">피르</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">대상 고객</label>
-                                <select class="form-input">
-                                    <option>매니저</option>
-                                    <option>플래버</option>
-                                    <option>구장주</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">카테고리</label>
-                                <select class="form-input">
-                                    <option>경기 관련</option>
-                                    <option>결제 관련</option>
-                                    <option>이벤트</option>
-                                    <option>공지사항</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">시점</label>
-                                <div class="form-sublabel">알림이 발송되는 시점을 선택하세요</div>
-                                <select class="form-input">
-                                    <option>경기 신청 완료 직후</option>
-                                    <option>경기 1일 전</option>
-                                    <option>경기 당일 아침</option>
-                                    <option>경기 종료 직후</option>
-                                    <option>결제 완료 직후</option>
-                                    <option>환불 처리 완료 시</option>
-                                    <option>기타</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">알림함 이동 페이지</label>
-                                <div class="form-sublabel">알림함에서 클릭 시 이동할 페이지 URL</div>
-                                <input type="text" class="form-input" placeholder="/match/detail/123">
-                            </div>
-                        </div>
-                        
-                        <div class="section">
-                            <div class="section-title">메시지 내용</div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">제목</label>
-                                <div class="form-sublabel">최대 50자 (필수)</div>
-                                <input type="text" class="form-input" id="input-title" placeholder="[경기확정] 경기가 확정되었습니다" oninput="updatePreview()">
-                                <div class="char-count">0 / 50자</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">강조 표기 내용</label>
-                                <div class="form-sublabel">회색 박스로 표시될 중요 정보 (선택사항, 변수 사용 가능: #{변수명})</div>
-                                <textarea class="form-input" id="input-highlight" placeholder="📍 장소: #{place_name}
-⏰ 시간: #{match_date} (#{match_day}) #{match_time}
-👥 인원: #{current_members}명 / #{max_members}명" oninput="updatePreview()"></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">본문 내용</label>
-                                <div class="form-sublabel">최대 1000자 (필수, 변수 사용 가능: #{변수명})</div>
-                                <textarea class="form-input" id="input-body" placeholder="매니저님이 등록한 경기가 최소인원이 달성되어 확정되었습니다." style="min-height: 150px;" oninput="updatePreview()"></textarea>
-                                <div class="char-count">0 / 1000자</div>
-                            </div>
-                        </div>
-                        
-                        <div class="section">
-                            <div class="section-title">버튼 설정</div>
-                            <div class="form-sublabel" style="margin-bottom: 16px;">최대 5개까지 추가 가능</div>
-                            
-                            <div id="button-container">
-                                <div class="button-group">
-                                    <div class="button-input-group">
-                                        <input type="text" class="form-input" placeholder="버튼명 (예: 경기 상세보기)" value="경기 상세보기" oninput="updatePreview()">
-                                        <select class="form-input">
-                                            <option>웹링크</option>
-                                            <option>앱링크</option>
-                                        </select>
-                                        <input type="text" class="form-input" placeholder="URL" style="flex: 1.5;">
-                                    </div>
-                                    <button class="btn-remove">삭제</button>
-                                </div>
-                                
-                                <div class="button-group">
-                                    <div class="button-input-group">
-                                        <input type="text" class="form-input" placeholder="버튼명" value="참가자 확인하기" oninput="updatePreview()">
-                                        <select class="form-input">
-                                            <option>웹링크</option>
-                                            <option>앱링크</option>
-                                        </select>
-                                        <input type="text" class="form-input" placeholder="URL" style="flex: 1.5;">
-                                    </div>
-                                    <button class="btn-remove">삭제</button>
-                                </div>
-                            </div>
-                            
-                            <button class="btn-add" onclick="addButton()">
-                                <span>+</span>
-                                <span>버튼 추가</span>
-                            </button>
-                        </div>
-                        
-                        <div class="section">
-                            <div class="section-title">수정 내역 (히스토리용)</div>
-                            <div style="background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 13px;">
-                                <strong>💡 이 필드의 역할:</strong><br>
-                                여기에 입력한 내용이 상세보기의 "수정 히스토리"에 표시됩니다.<br>
-                                예: "v2.1 김민수 (CX팀) - <span style="background: #FFE812; padding: 2px 6px; border-radius: 3px;">버튼 텍스트를 '경기 확인하기'에서 '경기 상세보기'로 수정...</span>"
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">이번 수정 사항 요약</label>
-                                <div class="form-sublabel">템플릿을 수정한 이유와 변경 내용을 간단히 작성하세요 (100자 이내 권장)</div>
-                                <textarea class="form-input" placeholder="예: 버튼 텍스트를 '경기 확인하기'에서 '경기 상세보기'로 수정하여 액션을 더 명확하게 표현했습니다." style="min-height: 80px;"></textarea>
-                                <div class="char-count">0 / 100자</div>
-                            </div>
-                        </div>
-                        
-        
-                <!-- 부가정보 섹션 (부가정보형, 복합형에만 표시) -->
-                <div class="section" id="extraInfoSection" style="display: none;">
-                    <div class="section-title">부가정보</div>
-                    <div class="form-sublabel" style="color: #EF4444; font-size: 13px; margin-bottom: 8px;">
-                        ⚠️ 최대 500자 / 변수 사용 불가 / URL 포함 가능
-                    </div>
-                    <div class="form-sublabel" style="margin-bottom: 12px;">
-                        본문 하단에 고정 안내 영역으로 표시됩니다 (본문보다 작은 폰트)
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">부가정보 내용</label>
-                        <textarea id="extraInfoContent" class="form-input" rows="5" maxlength="500" placeholder="예시:
-문의사항이 있으시면 고객센터로 연락주세요.
-고객센터: 02-1234-5678
-운영시간: 평일 09:00-18:00
-홈페이지: https://example.com" oninput="updatePreview(); updateCharCount('extraInfo'); updateAlimtalkExtraInfoPreview()"></textarea>
-                        <div class="char-counter" id="extraInfoCounter">0 / 500자</div>
-                    </div>
-                </div>
-
-                <!-- 강조표기 섹션 (강조표기형에만 표시) -->
-                <div class="section section-content" id="emphasisSection" style="display: none;">
-                    <div class="section-title">강조 표기</div>
-                    <div class="form-sublabel" style="margin-bottom: 12px;">
-                        메시지 상단에 강조할 내용을 입력하세요
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">강조 제목</label>
-                        <div class="form-sublabel">굵은 글씨로 표시될 제목</div>
-                        <input type="text" class="form-input" id="emphasisTitle" placeholder="예: 🎉 특별 할인 이벤트" oninput="updateAlimtalkEmphasisPreview()">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">강조 내용</label>
-                        <div class="form-sublabel">제목 아래 표시될 부가 설명</div>
-                        <input type="text" class="form-input" id="emphasisSubtitle" placeholder="예: 지금 바로 확인하세요!" oninput="updateAlimtalkEmphasisPreview()">
-                    </div>
-                </div>
-
-                <!-- 채널추가 섹션 (채널추가형, 복합형에만 표시) -->
-                <div class="section" id="channelSection" style="display: none;">
-                    <div class="section-title">채널 추가</div>
-                    <div class="form-sublabel" style="margin-bottom: 12px;">
-                        메시지 하단에 카카오톡 채널 추가 버튼이 자동으로 삽입됩니다
-                    </div>
-                    
-                    <div style="padding: 16px; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
-                        <div style="font-size: 13px; color: #6B7280; margin-bottom: 8px;">
-                            ℹ️ 채널 추가 영역은 자동으로 생성되며 문구 수정이 불가합니다.
-                        </div>
-                        <div style="font-size: 14px; font-weight: 500; color: #1F2937;">
-                            표시 내용: "플랩풋볼 채널을 추가하고 소식을 받아보세요"
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 버튼 섹션 (모든 유형에 표시) -->
-                <div class="section" id="buttonSection" style="display: none;">
-                    <div class="section-title">버튼</div>
-                    <div class="form-sublabel" style="color: #EF4444; font-size: 13px; margin-bottom: 8px;">
-                        ⚠️ 버튼명 최대 14자 / 변수 사용 불가 / 최대 5개
-                    </div>
-                    
-                    <div id="buttonContainer">
-                        <!-- 버튼 1 (기본) -->
-                        <div class="button-item" style="margin-bottom: 12px; padding: 16px; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600; font-size: 14px;">버튼 1</span>
-                                <span class="char-counter" style="font-size: 12px;">0 / 14자</span>
-                            </div>
-                            <input type="text" class="form-input button-name" maxlength="14" placeholder="버튼명 (예: 경기 상세보기)" oninput="updatePreview(); updateButtonCharCount(this); updateAlimtalkButtonPreview()" style="margin-bottom: 8px;">
-                            <select class="form-input button-type" onchange="updatePreview(); toggleLinkField(this)" style="margin-bottom: 8px;">
-                                <option value="">링크 유형 선택</option>
-                                <option value="WL">웹링크 (Web Link)</option>
-                                <option value="AL">앱링크 (App Link)</option>
-                                <option value="BK">봇키워드 (Bot Keyword)</option>
-                                <option value="MD">메시지전달 (Message Delivery)</option>
-                            </select>
-                            <input type="text" class="form-input button-link" placeholder="링크 URL (웹링크/앱링크 선택 시)" style="display: none;" oninput="updatePreview()">
-                        </div>
-                    </div>
-                    
-                    <button type="button" onclick="addButton()" id="addButtonBtn" style="width: 100%; padding: 12px; background: white; border: 2px dashed #D1D5DB; border-radius: 8px; color: #6B7280; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                        + 버튼 추가 (최대 5개)
-                    </button>
-                </div>
-
-                <div class="form-actions">
-                            <button class="btn btn-secondary" onclick="closeModal('createModal')">취소</button>
-                            <button class="btn btn-primary">카카오 검수 요청</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
 
     <script>
         function showPage(index) {
@@ -6072,8 +5684,11 @@
         }
         
         function openDetailModal(id) {
-            // 발송현황·고객여정 모두 viewOnlyModal로 통일
-            openModal('viewOnlyModal');
+            var modal = document.getElementById('viewOnlyModal');
+            if (modal) {
+                modal.style.cssText = 'display:flex !important; align-items:center; justify-content:center; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:1000; overflow-y:auto;';
+                document.body.style.overflow = 'hidden';
+            }
         }
         
         
@@ -9134,6 +8749,19 @@ document.addEventListener("click", function(e) {
                 option.textContent = member;
                 requesterSelect.appendChild(option);
             });
+        }
+
+        // ── 라이팅팀 권한 UI (메인 스크립트에서도 정의) ───────────
+        function checkWritingTeamUI() {
+            var WRITING_TEAM = [
+                'jongsa.kim@plabfootball.com',
+                'seonyoung.lim@plabfootball.com',
+                'hyunjung.heo@plabfootball.com'
+            ];
+            var email = (sessionStorage.getItem('admin_email') || '').toLowerCase();
+            var isWritingTeam = WRITING_TEAM.includes(email);
+            var btn = document.getElementById('guideEditBtn');
+            if (btn) btn.style.display = isWritingTeam ? 'flex' : 'none';
         }
 
     </script>
