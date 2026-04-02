@@ -2902,7 +2902,112 @@
             margin: 0 auto !important;
         }
 
-    </style>
+    
+        /* ══════════════════════════════════════
+           RTE EDITOR (ref_editor 스타일 이식)
+        ══════════════════════════════════════ */
+        .rte-toolbar{
+          background:#F9FAFB;border-bottom:1px solid #E5E7EB;
+          padding:8px 12px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;
+          position:sticky;top:0;z-index:10;border-radius:10px 10px 0 0;
+        }
+        .rte-sep{width:1px;height:18px;background:#E5E7EB;margin:0 4px;flex-shrink:0}
+        .rtb{
+          background:none;border:none;color:#6B7280;cursor:pointer;
+          padding:4px 6px;border-radius:5px;font-size:13px;font-family:inherit;
+          transition:all .12s;line-height:1;display:flex;align-items:center;justify-content:center;
+          min-width:26px;height:26px;font-weight:500;
+        }
+        .rtb:hover{background:#F3F4F6;color:#111827}
+        .rtb.on{background:#3B82F6;color:#fff}
+        .rtb-fs{
+          width:90px;background:#fff;border:1px solid #E5E7EB;
+          border-radius:5px;padding:2px 6px;font-size:12px;color:#374151;
+          outline:none;font-family:inherit;cursor:pointer;height:26px;
+        }
+        .rtb-color{width:20px;height:20px;border-radius:50%;border:2px solid #E5E7EB;cursor:pointer;padding:0}
+        .rte-wrap{border:1px solid #E5E7EB;border-radius:10px;background:#fff;overflow:hidden;}
+        .rte-body{
+          min-height:50vh;font-size:14px;color:#1F2937;line-height:1.75;
+          outline:none;font-weight:400;box-sizing:border-box;
+          padding:24px 28px;width:100%;
+        }
+        .rte-body:empty::before{content:'내용을 입력하세요...';color:#9CA3AF;pointer-events:none}
+        .rte-body h1{font-size:24px;font-weight:800;margin:16px 0 8px}
+        .rte-body h2{font-size:19px;font-weight:700;margin:14px 0 6px}
+        .rte-body h3{font-size:16px;font-weight:700;margin:12px 0 5px}
+        .rte-body p{margin:4px 0}
+        .rte-body ul,.rte-body ol{margin:4px 0;padding-left:24px}
+        .rte-body li{margin:1px 0;line-height:1.7}
+        .rte-body ul li{list-style-type:disc}
+        .rte-body ul ul li{list-style-type:circle}
+        .rte-body ul ul ul li{list-style-type:square}
+        .rte-body ul ul,.rte-body ol ol{margin:2px 0;padding-left:22px}
+        .rte-body blockquote{border-left:3px solid #3B82F6;padding:8px 14px;color:#6B7280;margin:10px 0;font-style:italic}
+        .rte-body table{border-collapse:collapse;width:100%;margin:12px 0}
+        .rte-body table td,.rte-body table th{border:1px solid #E5E7EB;padding:8px 10px;font-size:13px;min-width:60px;vertical-align:top}
+        .rte-body table th{font-weight:600;background:#F9FAFB;font-size:12.5px}
+        .rte-body a{color:#3B82F6;text-decoration:underline}
+        .rte-body code{background:rgba(135,131,120,.15);color:#e03e3e;padding:2px 5px;border-radius:4px;font-family:monospace;font-size:.88em}
+        .rte-body pre{background:#F3F4F6;border-radius:6px;padding:12px 16px;font-family:monospace;font-size:12.5px;overflow-x:auto;margin:8px 0}
+        .rte-body hr{border:none;border-top:2px solid #E5E7EB;margin:18px 0;cursor:pointer}
+        .rte-body hr:hover{border-top-color:#3B82F6}
+        .rte-body hr.hr-selected{border-top:2px solid #3B82F6;outline:2px solid rgba(59,130,246,.3);outline-offset:4px;border-radius:2px}
+        /* 다단 컬럼 */
+        .rte-body .col-layout{display:grid;gap:16px;margin:12px 0;width:100%}
+        .rte-body .col-layout.cols-2{grid-template-columns:repeat(2,1fr)}
+        .rte-body .col-layout.cols-3{grid-template-columns:repeat(3,1fr)}
+        .rte-body .col-layout.cols-4{grid-template-columns:repeat(4,1fr)}
+        .rte-body .col-layout.cols-5{grid-template-columns:repeat(5,1fr)}
+        .rte-body .col-layout.cols-6{grid-template-columns:repeat(6,1fr)}
+        .rte-body .col-item{min-height:80px;padding:10px 12px;border:1.5px dashed #E5E7EB;border-radius:8px;outline:none;position:relative}
+        .rte-body .col-item:focus{border-color:#3B82F6;border-style:solid}
+        .rte-body .col-item::before{content:attr(data-ph);color:#9CA3AF;opacity:.6;pointer-events:none;position:absolute;top:10px;left:12px;font-size:13px}
+        .rte-body .col-item:not(:empty)::before{display:none}
+        .col-layout-wrap{position:relative}
+        .col-layout-del{position:absolute;top:-10px;right:-6px;background:#fff;border:1px solid #E5E7EB;border-radius:50%;width:20px;height:20px;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:11px;z-index:10;color:#6B7280}
+        .col-layout-wrap:hover .col-layout-del{display:flex}
+        /* 콜아웃 */
+        .rte-body .callout{border-radius:6px;padding:14px 16px;margin:6px 0 10px;display:flex;gap:10px;align-items:flex-start;position:relative}
+        .rte-body .callout-icon{font-size:18px;flex-shrink:0;line-height:1.6;width:24px;text-align:center;cursor:pointer;border-radius:3px;user-select:none}
+        .rte-body .callout-icon:hover{background:rgba(55,53,47,.08)}
+        .rte-body .callout-text{flex:1;min-width:0;outline:none}
+        .rte-body .callout-text p{margin:0;font-size:14px;line-height:1.75}
+        .callout-color-btn{position:absolute;top:6px;right:6px;font-size:14px;cursor:pointer;opacity:0;transition:opacity .15s;user-select:none}
+        .rte-body .callout:hover .callout-color-btn{opacity:.6}
+        /* 이미지 */
+        .rte-body img{max-width:100%;border-radius:8px;margin:8px 0;display:block;cursor:pointer}
+        .rte-body img.img-selected{outline:2px solid #3B82F6;outline-offset:2px}
+        .img-resize-bar{display:none;align-items:center;gap:8px;padding:6px 12px;background:#fff;border:1px solid #E5E7EB;border-radius:8px;position:fixed;z-index:2000;font-size:12px;color:#374151;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+        .img-resize-bar.show{display:flex}
+        /* 링크 팝업 */
+        .link-popup{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;display:none;flex-direction:column;gap:8px;width:280px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+        .link-popup.open{display:flex}
+        .link-popup input{padding:7px 10px;border:1px solid #E5E7EB;border-radius:6px;font-size:13px;outline:none;font-family:inherit;color:#111;width:100%;box-sizing:border-box}
+        /* 색상 팝업 */
+        .color-popup{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px;display:none;flex-direction:column;gap:6px;width:228px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+        .color-popup.open{display:flex}
+        .cp-swatch{cursor:pointer;transition:transform .12s,box-shadow .12s;border-radius:4px;width:22px;height:22px}
+        .cp-swatch:hover{transform:scale(1.2);box-shadow:0 0 0 2px #3B82F6}
+        /* 표 빌더 팝업 */
+        .tbl-builder{position:fixed;z-index:9999;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px;display:none;flex-direction:column;gap:0;width:280px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+        .tbl-builder.open{display:flex}
+        /* 표 리사이즈 핸들 */
+        ._rh{transition:background .1s}
+        ._rh:hover,._rh.dragging{background:rgba(59,130,246,.55)!important;border-radius:2px}
+        /* 이미지 링크 카드 */
+        .img-link-card{display:flex;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin:10px 0;cursor:pointer;text-decoration:none;color:inherit;transition:box-shadow .15s;max-height:130px}
+        .img-link-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.12)}
+        .img-link-card-img{width:120px;min-width:120px;object-fit:cover;background:#F3F4F6}
+        .img-link-card-body{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+        .img-link-card-title{font-size:14px;font-weight:600;color:#111;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .img-link-card-desc{font-size:12px;color:#6B7280;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .img-link-card-url{font-size:11px;color:#9CA3AF;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        /* 동영상 */
+        .rte-video-wrap{margin:12px 0;border-radius:10px;overflow:hidden;background:#000}
+        .rte-video-wrap video{width:100%;display:block;border-radius:10px}
+
+</style>
 <script>
         // Critical navigation functions
         function navigateTo(page) {
@@ -3183,7 +3288,81 @@
     }
 </script>
 
-    <!-- ========== 메인 콘텐츠 시작 ========== -->
+    
+    <!-- ══ RTE 팝업들 ══ -->
+    <!-- COLOR POPUP -->
+    <div class="color-popup" id="colorPopup">
+      <div style="font-size:11px;font-weight:600;color:#9CA3AF;margin-bottom:4px" id="cpLabel">글자 색 선택</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap">
+        <div class="cp-swatch" style="background:#FFFFFF;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#FFFFFF')"></div><div class="cp-swatch" style="background:#F3F4F6;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#F3F4F6')"></div><div class="cp-swatch" style="background:#E5E7EB;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#E5E7EB')"></div><div class="cp-swatch" style="background:#9CA3AF;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#9CA3AF')"></div><div class="cp-swatch" style="background:#6B7280;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#6B7280')"></div><div class="cp-swatch" style="background:#374151;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#374151')"></div><div class="cp-swatch" style="background:#111827;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#111827')"></div><div class="cp-swatch" style="background:#FEE2E2;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#FEE2E2')"></div><div class="cp-swatch" style="background:#FCA5A5;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#FCA5A5')"></div><div class="cp-swatch" style="background:#F87171;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#F87171')"></div><div class="cp-swatch" style="background:#EF4444;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#EF4444')"></div><div class="cp-swatch" style="background:#DC2626;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#DC2626')"></div><div class="cp-swatch" style="background:#B91C1C;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#B91C1C')"></div><div class="cp-swatch" style="background:#FEF3C7;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#FEF3C7')"></div><div class="cp-swatch" style="background:#FCD34D;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#FCD34D')"></div><div class="cp-swatch" style="background:#F59E0B;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#F59E0B')"></div><div class="cp-swatch" style="background:#D97706;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#D97706')"></div><div class="cp-swatch" style="background:#B45309;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#B45309')"></div><div class="cp-swatch" style="background:#D1FAE5;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#D1FAE5')"></div><div class="cp-swatch" style="background:#6EE7B7;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#6EE7B7')"></div><div class="cp-swatch" style="background:#10B981;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#10B981')"></div><div class="cp-swatch" style="background:#059669;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#059669')"></div><div class="cp-swatch" style="background:#047857;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#047857')"></div><div class="cp-swatch" style="background:#DBEAFE;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#DBEAFE')"></div><div class="cp-swatch" style="background:#93C5FD;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#93C5FD')"></div><div class="cp-swatch" style="background:#3B82F6;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#3B82F6')"></div><div class="cp-swatch" style="background:#2563EB;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#2563EB')"></div><div class="cp-swatch" style="background:#1D4ED8;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#1D4ED8')"></div><div class="cp-swatch" style="background:#EDE9FE;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#EDE9FE')"></div><div class="cp-swatch" style="background:#C4B5FD;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#C4B5FD')"></div><div class="cp-swatch" style="background:#8B5CF6;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#8B5CF6')"></div><div class="cp-swatch" style="background:#7C3AED;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#7C3AED')"></div><div class="cp-swatch" style="background:#6D28D9;border:1px solid rgba(0,0,0,.1)" onclick="applyColor('#6D28D9')"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid #E5E7EB">
+        <label style="font-size:11px;color:#9CA3AF;white-space:nowrap">직접 입력</label>
+        <input type="color" id="cpCustom" style="width:28px;height:24px;border:1px solid #E5E7EB;border-radius:4px;cursor:pointer;padding:1px" onchange="applyColor(this.value)">
+        <input type="text" id="cpHex" placeholder="#000000" style="flex:1;font-size:11px;padding:3px 6px;border:1px solid #E5E7EB;border-radius:4px;font-family:monospace;color:#111;outline:none" onchange="applyColor(this.value)" oninput="document.getElementById('cpCustom').value=this.value">
+      </div>
+      <div id="cpOpacityRow" style="display:none;align-items:center;gap:6px;margin-top:6px">
+        <label style="font-size:11px;color:#9CA3AF;white-space:nowrap">투명도</label>
+        <input type="range" id="cpOpacity" min="10" max="100" value="100" style="flex:1" oninput="document.getElementById('cpOpacityVal').textContent=this.value+'%'">
+        <span id="cpOpacityVal" style="font-size:11px;font-weight:600;min-width:32px">100%</span>
+      </div>
+      <div id="cpClearRow" style="display:none;margin-top:6px">
+        <button onclick="clearBgColor()" style="width:100%;padding:5px 0;font-size:11px;font-weight:600;color:#6B7280;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:5px;cursor:pointer;font-family:inherit">🚫 배경색 제거</button>
+      </div>
+    </div>
+
+    <!-- LINK POPUP -->
+    <div class="link-popup" id="linkPopup">
+      <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:2px">링크 삽입</div>
+      <input id="linkUrl" placeholder="https://..." type="url" onkeydown="if(event.key==='Enter')insertLink()">
+      <input id="linkText" placeholder="링크 텍스트 (선택)" onkeydown="if(event.key==='Enter')insertLink()">
+      <div style="display:flex;gap:6px">
+        <button onclick="insertLink()" style="flex:1;padding:6px 0;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">삽입</button>
+        <button onclick="closeLinkPopup()" style="padding:6px 12px;background:#F3F4F6;color:#374151;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">취소</button>
+      </div>
+    </div>
+
+    <!-- TABLE BUILDER -->
+    <div class="tbl-builder" id="tblBuilder">
+      <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:10px">표 삽입</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">행</div>
+        <input id="tblRowInp" type="number" min="1" max="30" value="3" style="width:100%;padding:5px 8px;font-size:13px;border:1px solid #E5E7EB;border-radius:6px;outline:none"></div>
+        <div style="flex:1"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">열</div>
+        <input id="tblColInp" type="number" min="1" max="20" value="3" style="width:100%;padding:5px 8px;font-size:13px;border:1px solid #E5E7EB;border-radius:6px;outline:none"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#6B7280;cursor:pointer;margin-bottom:10px">
+        <input type="checkbox" id="tblHasHeader" checked style="width:14px;height:14px">
+        <span>첫 번째 행을 헤더로 설정</span>
+      </label>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:#9CA3AF;margin-bottom:6px">헤더 배경색</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+          <div onclick="selectTblHeaderColor('#1E2840')" data-color="#1E2840" style="width:22px;height:22px;border-radius:5px;background:#1E2840;cursor:pointer;border:2px solid #3B82F6" id="tblHdrSel0"></div>
+          <div onclick="selectTblHeaderColor('#374151')" data-color="#374151" style="width:22px;height:22px;border-radius:5px;background:#374151;cursor:pointer;border:2px solid transparent"></div>
+          <div onclick="selectTblHeaderColor('#1D4ED8')" data-color="#1D4ED8" style="width:22px;height:22px;border-radius:5px;background:#1D4ED8;cursor:pointer;border:2px solid transparent"></div>
+          <div onclick="selectTblHeaderColor('#047857')" data-color="#047857" style="width:22px;height:22px;border-radius:5px;background:#047857;cursor:pointer;border:2px solid transparent"></div>
+          <div onclick="selectTblHeaderColor('#7C3AED')" data-color="#7C3AED" style="width:22px;height:22px;border-radius:5px;background:#7C3AED;cursor:pointer;border:2px solid transparent"></div>
+          <input type="color" id="tblHeaderColorPicker" value="#1E2840" style="width:22px;height:22px;border:none;padding:0;cursor:pointer;border-radius:5px;border:2px solid transparent" onchange="selectTblHeaderColor(this.value)">
+        </div>
+      </div>
+      <button onclick="insertTableAdv()" style="width:100%;padding:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">표 삽입</button>
+    </div>
+
+    <!-- IMAGE RESIZE BAR -->
+    <div class="img-resize-bar" id="imgResizeBar">
+      <span id="imgResizeInfo" style="color:#9CA3AF;font-size:11px">-</span>
+      <input type="range" id="imgResizeSlider" min="10" max="100" value="100" style="width:110px" oninput="onImgResize(this.value)">
+      <span id="imgResizePct" style="min-width:32px;font-weight:600;font-size:12px">100%</span>
+      <span style="width:1px;height:14px;background:#E5E7EB;margin:0 4px;flex-shrink:0"></span>
+      <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 5px" onclick="imgAlign('left')" title="왼쪽">⬅</button>
+      <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 5px" onclick="imgAlign('center')" title="가운데">⬛</button>
+      <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 5px" onclick="imgAlign('right')" title="오른쪽">➡</button>
+      <span style="width:1px;height:14px;background:#E5E7EB;margin:0 4px;flex-shrink:0"></span>
+      <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 5px" onclick="closeImgResize()">✕</button>
+    </div>
+
+<!-- ========== 메인 콘텐츠 시작 ========== -->
     <div id="main-content" style="display:none;">
     <div class="header">
         <div class="logo">
@@ -3893,102 +4072,81 @@
                     <button onclick="saveGuide()" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">💾 저장</button>
                 </div>
                 
-                <!-- Admin 풀 에디터 -->
-                <div style="background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden;">
-                    <!-- 풀 툴바 (이미지와 동일) -->
-                    <div style="background: #FAFAFA; border-bottom: 1px solid var(--border-color); padding: 8px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px;">
-                        <!-- 본문/크기 드롭다운 -->
-                        <select onchange="execCmd('formatBlock', this.value)" style="padding: 6px 10px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 13px; background: white; cursor: pointer;">
-                            <option value="p">본문</option>
-                            <option value="h1">제목 1</option>
-                            <option value="h2">제목 2</option>
-                            <option value="h3">제목 3</option>
-                        </select>
-                        <select onchange="execCmd('fontSize', this.value)" style="padding: 6px 10px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; margin-left: 4px;">
-                            <option value="3">크기</option>
-                            <option value="1">작게</option>
-                            <option value="3">보통</option>
-                            <option value="5">크게</option>
-                            <option value="7">아주 크게</option>
-                        </select>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 텍스트 서식 -->
-                        <button onclick="execCmd('bold')" title="굵게" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 700; color: #374151;">B</button>
-                        <button onclick="execCmd('italic')" title="기울임" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-style: italic; color: #374151;">I</button>
-                        <button onclick="execCmd('underline')" title="밑줄" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; text-decoration: underline; color: #374151;">U</button>
-                        <button onclick="execCmd('strikeThrough')" title="취소선" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; text-decoration: line-through; color: #374151;">S</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 색상 -->
-                        <button onclick="showColorPicker('fore')" title="글자색" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151; position: relative;">A<span style="position: absolute; bottom: 4px; left: 8px; right: 8px; height: 3px; background: #EF4444; border-radius: 1px;"></span></button>
-                        <button onclick="showColorPicker('back')" title="배경색" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;"><span style="width: 18px; height: 18px; background: #FEF3C7; border: 1px solid #E5E7EB; border-radius: 3px;"></span></button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 정렬 -->
-                        <button onclick="execCmd('justifyLeft')" title="왼쪽 정렬" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: #374151;">≡</button>
-                        <button onclick="execCmd('justifyCenter')" title="가운데 정렬" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: #374151;">≡</button>
-                        <button onclick="execCmd('justifyRight')" title="오른쪽 정렬" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: #374151;">≡</button>
-                        <button onclick="execCmd('justifyFull')" title="양쪽 정렬" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: #374151;">≡</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 목록 -->
-                        <button onclick="execCmd('insertUnorderedList')" title="글머리 기호" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;">•≡</button>
-                        <button onclick="execCmd('insertOrderedList')" title="번호 매기기" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: #374151;">1.≡</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 링크, 구분선, 코드 -->
-                        <button onclick="insertLink()" title="링크" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;">🔗</button>
-                        <button onclick="execCmd('insertHorizontalRule')" title="구분선" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;">—</button>
-                        <button onclick="insertCode()" title="코드" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: monospace; color: #374151;">코드</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 표 -->
-                        <button onclick="insertTable()" title="표 삽입" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;">⊞</button>
-                        
-                        <!-- 컬럼 레이아웃 -->
-                        <button onclick="insertColumns(2)" title="2단" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; color: #374151;">∥2</button>
-                        <button onclick="insertColumns(3)" title="3단" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; color: #374151;">∥3</button>
-                        <button onclick="insertColumns(4)" title="4단" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; color: #374151;">∥4</button>
-                        <button onclick="insertColumns(5)" title="5단" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; color: #374151;">∥5</button>
-                        <button onclick="insertColumns(6)" title="6단" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; color: #374151;">∥6</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 이미지 -->
-                        <button onclick="insertImage()" title="이미지" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;">🖼️</button>
-                        <button onclick="insertImagePlus()" title="이미지+" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: #374151;">🖼️+</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 되돌리기 -->
-                        <button onclick="execCmd('undo')" title="실행취소" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;">↩</button>
-                        <button onclick="execCmd('redo')" title="다시실행" style="width: 32px; height: 32px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;">↪</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <!-- 콜아웃, 전체화면 -->
-                        <button onclick="insertCallout()" title="콜아웃" style="padding: 6px 12px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: #374151; display: flex; align-items: center; gap: 4px;">💡 콜아웃</button>
-                        <button onclick="toggleFullscreen()" title="전체화면" style="padding: 6px 12px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: #374151; display: flex; align-items: center; gap: 4px;">⛶ 전체화면</button>
-                        
-                        <div style="width: 1px; height: 24px; background: #E5E7EB; margin: 0 8px;"></div>
-                        
-                        <button onclick="insertDetailPageButton()" title="상세 페이지 버튼" style="padding: 6px 12px; border: 1px solid #3B82F6; background: #EFF6FF; border-radius: 6px; cursor: pointer; font-size: 13px; color: #3B82F6; font-weight: 600;">🔗 상세페이지 버튼</button>
-                    </div>
-                    
-                    <!-- 에디터 본문 -->
-                    <div id="guideEditBody" contenteditable="true" 
-                         style="min-height: 600px; padding: 32px; font-size: 15px; color: var(--text-primary); line-height: 1.8; outline: none; background: white;"
-                         onkeydown="handleEditorKey(event)">
+                <!-- RTE 에디터 (ref_editor 이식) -->
+                <div class="rte-wrap" id="guideRteWrap">
+                  <!-- 툴바 -->
+                  <div class="rte-toolbar" id="guideRteToolbar">
+                    <!-- 서식 -->
+                    <select class="rtb-fs" onchange="rteCmd('formatBlock',this.value);this.value=''">
+                      <option value="">서식</option>
+                      <option value="p">본문</option>
+                      <option value="h1">제목 1</option>
+                      <option value="h2">제목 2</option>
+                      <option value="h3">제목 3</option>
+                      <option value="blockquote">인용</option>
+                      <option value="pre">코드블록</option>
+                    </select>
+                    <div class="rte-sep"></div>
+                    <!-- 텍스트 서식 -->
+                    <button class="rtb" title="굵게 (Ctrl+B)" onclick="rteCmd('bold')"><b>B</b></button>
+                    <button class="rtb" title="기울임 (Ctrl+I)" onclick="rteCmd('italic')"><i>I</i></button>
+                    <button class="rtb" title="밑줄 (Ctrl+U)" onclick="rteCmd('underline')"><u>U</u></button>
+                    <button class="rtb" title="취소선" onclick="rteCmd('strikeThrough')"><s>S</s></button>
+                    <button class="rtb" title="인라인 코드 (`)" onclick="rteInlineCode()">코드</button>
+                    <div class="rte-sep"></div>
+                    <!-- 색상 -->
+                    <button class="rtb" title="글자색" onclick="openColorPopup('fore',this)" style="position:relative">
+                      A<span id="colorBar" style="position:absolute;bottom:2px;left:4px;right:4px;height:3px;background:#EF4444;border-radius:1px"></span>
+                    </button>
+                    <button class="rtb" title="배경색" onclick="openColorPopup('back',this)">
+                      <span style="width:16px;height:16px;background:#FEF3C7;border:1px solid #E5E7EB;border-radius:3px;display:block"></span>
+                    </button>
+                    <div class="rte-sep"></div>
+                    <!-- 정렬 -->
+                    <button class="rtb" title="왼쪽" onclick="rteCmd('justifyLeft')">≡</button>
+                    <button class="rtb" title="가운데" onclick="rteCmd('justifyCenter')">≡</button>
+                    <button class="rtb" title="오른쪽" onclick="rteCmd('justifyRight')">≡</button>
+                    <div class="rte-sep"></div>
+                    <!-- 목록 -->
+                    <button class="rtb" title="글머리 기호" onclick="rteCmd('insertUnorderedList')">•≡</button>
+                    <button class="rtb" title="번호 매기기" onclick="rteCmd('insertOrderedList')">1.≡</button>
+                    <button class="rtb" title="들여쓰기" onclick="rteIndent()">→|</button>
+                    <button class="rtb" title="내어쓰기" onclick="rteOutdent()">|←</button>
+                    <div class="rte-sep"></div>
+                    <!-- 링크 / 구분선 -->
+                    <button class="rtb" title="링크 삽입" onclick="openLinkPopup(this)">🔗</button>
+                    <button class="rtb" title="구분선" onclick="rteCmd('insertHorizontalRule')">—</button>
+                    <div class="rte-sep"></div>
+                    <!-- 표 -->
+                    <button class="rtb" title="표 삽입" onclick="openTblBuilder(this)">⊞ 표</button>
+                    <div class="rte-sep"></div>
+                    <!-- 컬럼 -->
+                    <button class="rtb" title="2단 컬럼" onclick="insertColumns(2)">⫿2</button>
+                    <button class="rtb" title="3단 컬럼" onclick="insertColumns(3)">⫿3</button>
+                    <button class="rtb" title="4단 컬럼" onclick="insertColumns(4)">⫿4</button>
+                    <div class="rte-sep"></div>
+                    <!-- 이미지 / 갤러리 / 동영상 -->
+                    <input type="file" id="rteImgIn" accept="image/*" style="display:none" multiple onchange="rteInsertImages(event)">
+                    <input type="file" id="rteGalIn" accept="image/*" style="display:none" multiple onchange="rteInsertGallery(event)">
+                    <input type="file" id="rteVidIn" accept="video/*,image/gif" style="display:none" onchange="rteInsertVideo(event)">
+                    <button class="rtb" title="이미지 업로드" onclick="saveRange();document.getElementById('rteImgIn').click()">🖼️</button>
+                    <button class="rtb" title="갤러리 삽입" onclick="saveRange();document.getElementById('rteGalIn').click()">⊞🖼</button>
+                    <button class="rtb" title="동영상/GIF" onclick="saveRange();document.getElementById('rteVidIn').click()">▶️</button>
+                    <div class="rte-sep"></div>
+                    <!-- 콜아웃 / 링크카드 -->
+                    <button class="rtb" title="콜아웃 블록" onclick="rteInsertCallout()">💡 콜아웃</button>
+                    <button class="rtb" title="이미지 링크 카드" onclick="rteInsertImgCard()">🔗 링크카드</button>
+                    <div class="rte-sep"></div>
+                    <!-- 실행취소 / 다시실행 / 전체화면 -->
+                    <button class="rtb" title="실행취소" onclick="rteCmd('undo')">↩</button>
+                    <button class="rtb" title="다시실행" onclick="rteCmd('redo')">↪</button>
+                    <button class="rtb" title="전체화면" onclick="toggleEditorFullscreen()">⛶</button>
+                  </div>
+                  <!-- 에디터 본문 -->
+                  <div class="rte-body" id="guideEditBody" contenteditable="true" spellcheck="false" onkeydown="rteKeyDown(event)" onmouseup="saveRange()" onkeyup="saveRange()" onclick="onRteImgClick(event)" ondrop="rteDropHandler(event)" ondragover="event.preventDefault()" onpaste="rtePasteHandler(event)">
                         <p><br></p>
                     </div>
-                </div>
+                </div><!-- /rte-wrap -->
             </div>
         </div>
 
@@ -6986,9 +7144,10 @@ document.addEventListener("click", function(e) {
         function enterEditMode() {
             document.getElementById('guideViewMode').style.display = 'none';
             document.getElementById('guideEditMode').style.display = 'block';
-            
             var viewContent = document.getElementById('guideViewContent').innerHTML;
-            document.getElementById('guideEditBody').innerHTML = viewContent;
+            var body = document.getElementById('guideEditBody');
+            if(body) { body.innerHTML = viewContent; body.focus(); }
+            setTimeout(function(){ initTableResize(); }, 100);
         }
         
         function cancelEdit() {
@@ -6996,6 +7155,431 @@ document.addEventListener("click", function(e) {
             document.getElementById('guideViewMode').style.display = 'block';
         }
         
+
+        /* ════════════════════════════════════
+           RTE CORE JS (ref_editor 이식)
+        ════════════════════════════════════ */
+        var _savedRange = null;
+        var _selImg = null;
+        var _colorMode = 'fore';
+        var _linkRange = null;
+        var _tblHeaderColor = '#1E2840';
+        var _rszAbort = null;
+
+        function rteCmd(cmd, val) {
+            var body = document.getElementById('guideEditBody');
+            if(!body) return;
+            body.focus();
+            restoreRange();
+            if(cmd==='formatBlock' && val && !val.startsWith('<')) val='<'+val+'>';
+            document.execCommand(cmd, false, val||null);
+            saveRange();
+        }
+
+        function saveRange() {
+            var sel = window.getSelection();
+            if(sel && sel.rangeCount) {
+                var r = sel.getRangeAt(0);
+                var body = document.getElementById('guideEditBody');
+                if(body && body.contains(r.commonAncestorContainer)) _savedRange = r.cloneRange();
+            }
+        }
+
+        function restoreRange() {
+            if(!_savedRange) return;
+            var sel = window.getSelection();
+            sel.removeAllRanges(); sel.addRange(_savedRange);
+        }
+
+        function setFontSize(sz) {
+            if(!sz) return;
+            var body = document.getElementById('guideEditBody');
+            body.focus(); restoreRange();
+            document.execCommand('fontSize',false,'7');
+            body.querySelectorAll('[size="7"]').forEach(function(el){ el.removeAttribute('size'); el.style.fontSize=sz; });
+            saveRange();
+        }
+
+        function insertColumns(n) {
+            var body = document.getElementById('guideEditBody');
+            if(!body) return;
+            body.focus(); restoreRange();
+            var items = Array.from({length:n}, function(_,i){
+                return '<div class="col-item" contenteditable="true" data-ph="컬럼 '+(i+1)+'" onkeydown="rteKeyDown(event)"></div>';
+            }).join('');
+            var html = '<div class="col-layout-wrap" contenteditable="false">'
+                + '<div class="col-layout cols-'+n+'">' + items + '</div>'
+                + '<span class="col-layout-del" onclick="removeColLayout(this)" title="컬럼 삭제">✕</span>'
+                + '</div><p><br></p>';
+            document.execCommand('insertHTML', false, html);
+            saveRange();
+            setTimeout(function(){ var first=body.querySelector('.col-item'); if(first) first.focus(); }, 50);
+        }
+
+        function removeColLayout(btn) {
+            var wrap = btn.closest('.col-layout-wrap');
+            if(wrap) wrap.remove();
+        }
+
+        function rteInlineCode() {
+            var body = document.getElementById('guideEditBody');
+            if(!body) return;
+            body.focus(); restoreRange();
+            var sel = window.getSelection();
+            if(!sel || !sel.rangeCount) return;
+            var range = sel.getRangeAt(0);
+            var selected = range.toString();
+            if(selected.length > 0) {
+                var parent = range.startContainer.parentElement;
+                if(parent && parent.tagName==='CODE') {
+                    var text = document.createTextNode(parent.textContent);
+                    parent.parentNode.replaceChild(text, parent);
+                } else {
+                    document.execCommand('insertHTML',false,'<code>'+selected.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>');
+                }
+            } else {
+                document.execCommand('insertHTML',false,'<code>\u200B</code>');
+                var codes=body.querySelectorAll('code'), last=codes[codes.length-1];
+                if(last){var r=document.createRange();r.setStart(last,0);r.collapse(true);sel.removeAllRanges();sel.addRange(r);}
+            }
+            saveRange();
+        }
+
+        function rteKeyDown(e) {
+            if(window._selHr && (e.key==='Backspace'||e.key==='Delete')) {
+                e.preventDefault();
+                var hr=window._selHr, next=hr.nextElementSibling||hr.previousElementSibling;
+                hr.remove(); window._selHr=null;
+                if(next){var sel=window.getSelection(),range=document.createRange();range.selectNodeContents(next);range.collapse(true);sel.removeAllRanges();sel.addRange(range);}
+                return;
+            }
+            if(e.key==='`'){e.preventDefault();rteInlineCode();return;}
+            if(e.key==='Tab'){
+                e.preventDefault();
+                var sel=window.getSelection(); if(!sel.rangeCount)return;
+                var node=sel.anchorNode, el=node?.nodeType===3?node.parentElement:node;
+                var li=el?.closest('li'), td=el?.closest('td,th');
+                if(li){if(e.shiftKey)document.execCommand('outdent',false);else document.execCommand('insertHTML',false,'&nbsp;&nbsp;&nbsp;&nbsp;');}
+                else if(td){
+                    var cells=Array.from(td.closest('table').querySelectorAll('td,th')), idx=cells.indexOf(td);
+                    var target=e.shiftKey?cells[idx-1]:cells[idx+1];
+                    if(target){target.focus();var r=document.createRange();r.selectNodeContents(target);r.collapse(false);sel.removeAllRanges();sel.addRange(r);}
+                } else {
+                    var body=document.getElementById('guideEditBody');
+                    var block=el?.closest('p,div,h1,h2,h3,h4,h5,h6,blockquote');
+                    var t=(block&&block!==body)?block:el;
+                    if(t&&t!==body){var cur=parseInt(t.style.paddingLeft)||0;t.style.paddingLeft=(e.shiftKey?Math.max(0,cur-24):cur+24)+'px';}
+                }
+                return;
+            }
+        }
+
+        function rteIndent(){document.getElementById('guideEditBody')?.focus();restoreRange();var sel=window.getSelection();var li=sel?.anchorNode?.nodeType===3?sel.anchorNode.parentElement?.closest('li'):sel?.anchorNode?.closest?.('li');if(li)document.execCommand('indent',false);else document.execCommand('insertHTML',false,'&nbsp;&nbsp;&nbsp;&nbsp;');saveRange();}
+        function rteOutdent(){document.getElementById('guideEditBody')?.focus();restoreRange();document.execCommand('outdent',false);saveRange();}
+
+        /* 이미지 삽입 */
+        function insertImage() {
+            saveRange();
+            var url = prompt('이미지 URL을 입력하세요:');
+            if(url) { document.getElementById('guideEditBody').focus(); restoreRange(); document.execCommand('insertHTML',false,'<img src="'+url+'" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block">'); saveRange(); }
+        }
+        function insertImagePlus() { saveRange(); document.getElementById('rteImgIn').click(); }
+
+        function rteInsertImages(e){
+            Array.from(e.target.files).forEach(function(f){
+                var r=new FileReader(); r.onload=function(ev){
+                    document.getElementById('guideEditBody').focus(); restoreRange();
+                    document.execCommand('insertHTML',false,'<img src="'+ev.target.result+'" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block">');
+                    saveRange();
+                }; r.readAsDataURL(f);
+            }); e.target.value='';
+        }
+        function rteInsertGallery(e){
+            var files=Array.from(e.target.files); if(!files.length)return;
+            var readers=files.map(function(f){return new Promise(function(res){var r=new FileReader();r.onload=function(ev){res(ev.target.result);};r.readAsDataURL(f);});});
+            Promise.all(readers).then(function(srcs){
+                var imgs=srcs.map(function(src){return '<img src="'+src+'" style="border-radius:6px;aspect-ratio:4/3;object-fit:cover;width:100%">';}).join('');
+                var cols=srcs.length===1?1:srcs.length<=4?2:3;
+                var html='<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:6px;margin:10px 0">'+imgs+'</div>';
+                document.getElementById('guideEditBody').focus(); restoreRange();
+                document.execCommand('insertHTML',false,html); saveRange();
+            }); e.target.value='';
+        }
+        function rteInsertVideo(e){
+            var file=e.target.files[0]; if(!file)return;
+            var r=new FileReader(); r.onload=function(ev){
+                var src=ev.target.result, html='';
+                if(file.type==='image/gif'){html='<img src="'+src+'" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block" data-type="gif">';}
+                else{html='<div class="rte-video-wrap" contenteditable="false"><video src="'+src+'" controls playsinline preload="metadata" style="width:100%;display:block;border-radius:10px"></video></div>';}
+                document.getElementById('guideEditBody').focus(); restoreRange();
+                document.execCommand('insertHTML',false,html+'<p><br></p>'); saveRange();
+            }; r.readAsDataURL(file); e.target.value='';
+        }
+        function rteDropHandler(e){
+            e.preventDefault();
+            Array.from(e.dataTransfer.files).forEach(function(f){
+                if(f.type.startsWith('image/')){var r=new FileReader();r.onload=function(ev){document.getElementById('guideEditBody').focus();restoreRange();document.execCommand('insertHTML',false,'<img src="'+ev.target.result+'" style="max-width:100%;width:100%;height:auto;border-radius:8px;margin:12px 0;display:block">');saveRange();};r.readAsDataURL(f);}
+            });
+        }
+        function rtePasteHandler(e){
+            var cd=e.clipboardData; if(!cd)return;
+            var html=cd.getData('text/html'); if(!html)return;
+            if(/<table/i.test(html)){
+                e.preventDefault();
+                var tmp=document.createElement('div'); tmp.innerHTML=html;
+                tmp.querySelectorAll('table').forEach(function(tbl){ _normalizeTable(tbl); });
+                document.getElementById('guideEditBody').focus(); restoreRange();
+                document.execCommand('insertHTML',false,tmp.innerHTML); saveRange();
+                setTimeout(function(){initTableResize();},100);
+            }
+        }
+
+        /* 이미지 리사이즈 */
+        function onRteImgClick(e){
+            var lc=e.target.closest('.img-link-card'); if(lc){e.preventDefault();e.stopPropagation();return;}
+            if(e.target.tagName==='HR'){e.preventDefault();e.stopPropagation();document.querySelectorAll('#guideEditBody hr.hr-selected').forEach(function(h){h.classList.remove('hr-selected');});e.target.classList.add('hr-selected');window._selHr=e.target;return;}
+            if(window._selHr){document.querySelectorAll('#guideEditBody hr.hr-selected').forEach(function(h){h.classList.remove('hr-selected');});window._selHr=null;}
+            var img=e.target; if(img.tagName!=='IMG')return;
+            document.querySelectorAll('#guideEditBody img.img-selected').forEach(function(i){i.classList.remove('img-selected');});
+            img.classList.add('img-selected'); _selImg=img;
+            var parentW=img.closest('.rte-body')?.offsetWidth||600;
+            var curW=img.offsetWidth||parentW; var pct=Math.round((curW/parentW)*100);
+            var bar=document.getElementById('imgResizeBar');
+            var rect=img.getBoundingClientRect();
+            bar.style.top=(rect.bottom+8)+'px'; bar.style.left=Math.max(8,rect.left)+'px';
+            document.getElementById('imgResizeSlider').value=Math.min(100,pct);
+            document.getElementById('imgResizePct').textContent=Math.min(100,pct)+'%';
+            document.getElementById('imgResizeInfo').textContent=(img.naturalWidth||'?')+'×'+(img.naturalHeight||'?')+'px';
+            bar.classList.add('show'); e.stopPropagation();
+        }
+        function onImgResize(val){if(!_selImg)return;_selImg.style.width=val+'%';_selImg.style.maxWidth='100%';_selImg.style.height='auto';_selImg.style.display='block';_selImg.style.margin='12px auto';document.getElementById('imgResizePct').textContent=val+'%';}
+        function imgAlign(dir){if(!_selImg)return;if(dir==='left')_selImg.style.margin='12px auto 12px 0';else if(dir==='right')_selImg.style.margin='12px 0 12px auto';else _selImg.style.margin='12px auto';_selImg.style.display='block';}
+        function closeImgResize(){document.getElementById('imgResizeBar').classList.remove('show');if(_selImg)_selImg.classList.remove('img-selected');_selImg=null;}
+        document.addEventListener('click',function(e){var bar=document.getElementById('imgResizeBar');if(bar&&!bar.contains(e.target)&&!e.target.matches('#guideEditBody img'))closeImgResize();});
+
+        /* 색상 팝업 */
+        function openColorPopup(mode,btn){
+            _colorMode=mode; saveRange();
+            var popup=document.getElementById('colorPopup');
+            var lbl=document.getElementById('cpLabel'); if(lbl) lbl.textContent=mode==='fore'?'글자 색 선택':'배경 색 선택';
+            var opRow=document.getElementById('cpOpacityRow'); if(opRow) opRow.style.display=mode==='back'?'flex':'none';
+            var clrRow=document.getElementById('cpClearRow'); if(clrRow) clrRow.style.display=mode==='back'?'block':'none';
+            var rect=btn.getBoundingClientRect(); var pw=228;
+            popup.style.top=(rect.bottom+6)+'px'; popup.style.left=Math.min(rect.left,window.innerWidth-pw-8)+'px';
+            popup.classList.add('open');
+            setTimeout(function(){document.addEventListener('click',function(){popup.classList.remove('open');},{once:true});},50);
+        }
+        function applyColor(c){
+            document.getElementById('guideEditBody').focus(); restoreRange();
+            if(_colorMode==='fore'){document.execCommand('foreColor',false,c);var cb=document.getElementById('colorBar');if(cb)cb.style.background=c;}
+            else{var opSlider=document.getElementById('cpOpacity');var opacity=opSlider?parseInt(opSlider.value)/100:1;if(opacity<1){var hex=c.replace('#','');var r2=parseInt(hex.substring(0,2),16)||0;var g=parseInt(hex.substring(2,4),16)||0;var b2=parseInt(hex.substring(4,6),16)||0;var rgba='rgba('+r2+','+g+','+b2+','+opacity.toFixed(2)+')';var sel=window.getSelection();if(sel.rangeCount){var range=sel.getRangeAt(0);var span=document.createElement('span');span.style.backgroundColor=rgba;try{range.surroundContents(span);}catch(err){}}}else{document.execCommand('hiliteColor',false,c);}}
+            saveRange();
+        }
+        function clearBgColor(){document.getElementById('guideEditBody').focus();restoreRange();document.execCommand('hiliteColor',false,'transparent');saveRange();document.getElementById('colorPopup').classList.remove('open');}
+
+        /* 링크 팝업 */
+        function openLinkPopup(btn){
+            saveRange(); _linkRange=_savedRange;
+            var popup=document.getElementById('linkPopup'); var rect=btn.getBoundingClientRect();
+            popup.style.top=(rect.bottom+6)+'px'; popup.style.left=rect.left+'px';
+            popup.classList.add('open'); document.getElementById('linkUrl').focus();
+            setTimeout(function(){document.addEventListener('mousedown',function(e){if(!popup.contains(e.target))popup.classList.remove('open');},{once:true});},50);
+        }
+        function closeLinkPopup(){document.getElementById('linkPopup').classList.remove('open');}
+        function insertLink(){
+            var url=document.getElementById('linkUrl').value.trim();
+            var text=document.getElementById('linkText').value.trim();
+            if(!url)return;
+            document.getElementById('guideEditBody').focus();
+            if(_linkRange){var sel=window.getSelection();sel.removeAllRanges();sel.addRange(_linkRange);}
+            if(text)document.execCommand('insertHTML',false,'<a href="'+url+'" target="_blank">'+text+'</a>');
+            else document.execCommand('createLink',false,url);
+            closeLinkPopup();
+            document.getElementById('linkUrl').value=''; document.getElementById('linkText').value=''; saveRange();
+        }
+
+        /* 표 빌더 */
+        function selectTblHeaderColor(c){
+            _tblHeaderColor=c;
+            document.querySelectorAll('#tblBuilder [data-color]').forEach(function(el){el.style.borderColor=el.dataset.color===c?'#3B82F6':'transparent';});
+            var picker=document.getElementById('tblHeaderColorPicker'); if(picker) picker.value=c;
+        }
+        function openTblBuilder(btn){
+            var builder=document.getElementById('tblBuilder');
+            var rect=btn.getBoundingClientRect();
+            var left=Math.min(rect.left,window.innerWidth-300);
+            builder.style.top=(rect.bottom+6)+'px'; builder.style.left=left+'px';
+            builder.classList.add('open'); saveRange();
+            setTimeout(function(){document.addEventListener('click',function(e){if(!builder.contains(e.target))builder.classList.remove('open');},{once:true});},50);
+        }
+        function insertTableAdv(){
+            var rows=parseInt(document.getElementById('tblRowInp')?.value)||3;
+            var cols=parseInt(document.getElementById('tblColInp')?.value)||3;
+            var hasHeader=document.getElementById('tblHasHeader')?.checked;
+            var pct=Math.round(100/cols);
+            var colgroup='<colgroup>'+Array.from({length:cols},function(){return '<col style="width:'+pct+'%">';}).join('')+'</colgroup>';
+            var headerRow='';
+            if(hasHeader){headerRow='<tr>'+Array.from({length:cols},function(){return '<th contenteditable="true" style="border:1px solid #E5E7EB;padding:8px 10px;font-size:13px;min-width:60px;font-weight:600;text-align:left;background:'+_tblHeaderColor+';color:#fff">&nbsp;</th>';}).join('')+'</tr>';}
+            var bodyRows=Array.from({length:hasHeader?rows-1:rows},function(){return '<tr>'+Array.from({length:cols},function(){return '<td contenteditable="true" style="border:1px solid #E5E7EB;padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top">&nbsp;</td>';}).join('')+'</tr>';}).join('');
+            var html='<table style="border-collapse:collapse;width:100%;margin:12px 0;table-layout:fixed">'+colgroup+'<tbody>'+headerRow+bodyRows+'</tbody></table><p><br></p>';
+            document.getElementById('guideEditBody').focus(); restoreRange();
+            document.execCommand('insertHTML',false,html); saveRange();
+            document.getElementById('tblBuilder').classList.remove('open');
+            setTimeout(function(){initTableResize();},100);
+        }
+
+        /* 콜아웃 */
+        function rteInsertCallout(){
+            document.getElementById('guideEditBody').focus(); restoreRange();
+            var html='<div class="callout" data-callout="1" style="background:#f1f1ef"><span class="callout-icon" title="클릭하여 이모지 변경" onclick="pickCalloutEmoji(this)">💡</span><div class="callout-text" contenteditable="true"><p>여기에 내용을 입력하세요</p></div><span class="callout-color-btn" title="배경색 변경" contenteditable="false" style="position:absolute;top:6px;right:6px;font-size:14px;cursor:pointer;opacity:.4;transition:opacity .15s;user-select:none">🎨</span></div><p><br></p>';
+            document.execCommand('insertHTML',false,html);
+            _patchCalloutColorBtns(); saveRange();
+        }
+        function insertCallout(){rteInsertCallout();}
+
+        function pickCalloutEmoji(iconEl){
+            var emojis=['💡','⚠️','✅','❌','📌','🔔','💬','ℹ️','🚫','⭐','📝','🎯','💎','🔥','👀','✏️'];
+            var existing=document.getElementById('_emojiPicker'); if(existing){existing.remove();return;}
+            var picker=document.createElement('div'); picker.id='_emojiPicker';
+            picker.style.cssText='position:fixed;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px;display:flex;flex-wrap:wrap;gap:4px;width:196px;box-shadow:0 4px 16px rgba(0,0,0,.14);z-index:9999';
+            emojis.forEach(function(em){var sp=document.createElement('span');sp.textContent=em;sp.style.cssText='font-size:20px;cursor:pointer;padding:4px;border-radius:4px;line-height:1.2';sp.onmouseover=function(){this.style.background='#f3f4f6';};sp.onmouseout=function(){this.style.background='';};sp.onclick=function(){iconEl.textContent=em;picker.remove();};picker.appendChild(sp);});
+            var r=iconEl.getBoundingClientRect(); picker.style.top=(r.bottom+4)+'px'; picker.style.left=r.left+'px';
+            document.body.appendChild(picker);
+            setTimeout(function(){document.addEventListener('click',function rm(ev){if(!picker.contains(ev.target)&&!ev.target.closest('.callout-icon')){picker.remove();document.removeEventListener('click',rm);}});},200);
+        }
+        var _calloutColors=[{l:'없음',v:'transparent'},{l:'회색',v:'#f1f1ef'},{l:'노랑',v:'#fef9c3'},{l:'파랑',v:'#dbeafe'},{l:'초록',v:'#dcfce7'},{l:'분홍',v:'#fce7f3'},{l:'보라',v:'#ede9fe'},{l:'주황',v:'#ffedd5'},{l:'빨강',v:'#fee2e2'},{l:'민트',v:'#ccfbf1'}];
+        function pickCalloutColor(calloutEl){
+            if(!calloutEl||!calloutEl.classList.contains('callout'))return;
+            var existing=document.getElementById('_calloutColorPicker');if(existing){existing.remove();return;}
+            var p=document.createElement('div');p.id='_calloutColorPicker';p.style.cssText='position:fixed;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px;box-shadow:0 6px 20px rgba(0,0,0,.16);z-index:9999;width:200px';
+            p.innerHTML='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:8px">배경색 선택</div>';
+            var grid=document.createElement('div');grid.style.cssText='display:flex;flex-wrap:wrap;gap:5px';
+            _calloutColors.forEach(function(c){var sw=document.createElement('div');sw.style.cssText='width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid #e5e7eb;transition:all .12s';sw.style.background=c.v==='transparent'?'repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 12px 12px':c.v;sw.title=c.l;sw.onmouseover=function(){this.style.transform='scale(1.15)';};sw.onmouseout=function(){this.style.transform='';};sw.onclick=function(e2){e2.stopPropagation();calloutEl.style.background=c.v;p.remove();};grid.appendChild(sw);});
+            p.appendChild(grid);
+            var ci=document.createElement('input');ci.type='color';ci.value='#fef9c3';ci.style.cssText='width:28px;height:28px;border:none;padding:0;cursor:pointer;border-radius:5px;margin-top:8px';ci.onchange=function(){calloutEl.style.background=this.value;p.remove();};p.appendChild(ci);
+            var rect=calloutEl.getBoundingClientRect();p.style.top=Math.min(rect.top,window.innerHeight-260)+'px';p.style.left=Math.min(rect.right+8,window.innerWidth-220)+'px';
+            document.body.appendChild(p);
+            setTimeout(function(){document.addEventListener('click',function rm2(e3){if(!p.contains(e3.target)&&!e3.target.closest('.callout-color-btn')){p.remove();document.removeEventListener('click',rm2);}},{capture:true});},200);
+        }
+        function _patchCalloutColorBtns(){
+            document.querySelectorAll('#guideEditBody .callout').forEach(function(el){
+                el.style.position='relative';
+                var existing=el.querySelector('.callout-color-btn');
+                if(!existing){
+                    var btn=document.createElement('span');btn.className='callout-color-btn';btn.contentEditable='false';btn.textContent='🎨';btn.title='배경색 변경';btn.style.cssText='position:absolute;top:6px;right:6px;font-size:14px;cursor:pointer;opacity:.4;transition:opacity .15s;user-select:none';el.appendChild(btn);
+                }
+            });
+            // 이벤트 위임으로 콜아웃 색/아이콘 처리
+            var body=document.getElementById('guideEditBody');
+            if(body && !body._calloutEvt){
+                body._calloutEvt=true;
+                body.addEventListener('click',function(e){
+                    if(e.target.classList.contains('callout-color-btn')){var c=e.target.closest('.callout');if(c)pickCalloutColor(c);}
+                    if(e.target.classList.contains('callout-icon')){pickCalloutEmoji(e.target);}
+                });
+            }
+        }
+
+        /* 링크카드 */
+        function rteInsertImgCard(){
+            saveRange();
+            var overlay=document.createElement('div');
+            overlay.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center';
+            overlay.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:440px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.25);font-family:inherit">'
+                +'<div style="font-size:15px;font-weight:700;color:#111;margin-bottom:14px">🔗 이미지 링크 카드</div>'
+                +'<div style="margin-bottom:10px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">카드 제목</div><input id="_ilcTitle" placeholder="제목을 입력하세요" style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
+                +'<div style="margin-bottom:10px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">설명 (선택)</div><input id="_ilcDesc" placeholder="설명을 입력하세요" style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
+                +'<div style="margin-bottom:16px"><div style="font-size:11px;color:#9CA3AF;margin-bottom:4px">링크 URL</div><input id="_ilcUrl" type="url" placeholder="https://..." style="width:100%;padding:8px 10px;border:1px solid #E5E7EB;border-radius:7px;font-size:13px;outline:none;box-sizing:border-box"></div>'
+                +'<div style="display:flex;gap:8px;justify-content:flex-end">'
+                +'<button onclick="this.closest('[style*=inset]').remove()" style="padding:8px 18px;background:#F3F4F6;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">취소</button>'
+                +'<button id="_ilcOk" style="padding:8px 18px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">삽입</button>'
+                +'</div></div>';
+            document.body.appendChild(overlay);
+            document.getElementById('_ilcTitle').focus();
+            document.getElementById('_ilcOk').onclick=function(){
+                var title=document.getElementById('_ilcTitle').value.trim()||'링크';
+                var desc=document.getElementById('_ilcDesc').value.trim();
+                var url=document.getElementById('_ilcUrl').value.trim()||'#';
+                overlay.remove();
+                var html='<a href="'+url+'" target="_blank" class="img-link-card" style="display:flex;border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin:10px 0;text-decoration:none;color:inherit;transition:box-shadow .15s" contenteditable="false">'
+                    +'<div class="img-link-card-body" style="flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center">'
+                    +'<div class="img-link-card-title" style="font-size:14px;font-weight:600;color:#111;margin-bottom:4px">'+title+'</div>'
+                    +(desc?'<div class="img-link-card-desc" style="font-size:12px;color:#6B7280;line-height:1.4">'+desc+'</div>':'')
+                    +'<div class="img-link-card-url" style="font-size:11px;color:#9CA3AF;margin-top:4px">'+url+'</div>'
+                    +'</div></a><p><br></p>';
+                document.getElementById('guideEditBody').focus(); restoreRange();
+                document.execCommand('insertHTML',false,html); saveRange();
+            };
+            overlay.addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('_ilcOk').click();if(e.key==='Escape')overlay.remove();});
+        }
+
+        /* 표 노말라이즈 */
+        function _normalizeTable(tbl){
+            tbl.style.cssText='border-collapse:collapse;width:100%;margin:10px 0;table-layout:fixed';
+            tbl.querySelectorAll('colgroup').forEach(function(cg){cg.remove();});
+            var firstRow=tbl.rows[0]; if(!firstRow)return;
+            var n=firstRow.cells.length; if(!n)return;
+            var newCg=document.createElement('colgroup');
+            var pct=Math.round(100/n);
+            for(var i=0;i<n;i++){var col=document.createElement('col');col.style.width=pct+'%';newCg.appendChild(col);}
+            tbl.insertBefore(newCg,tbl.firstChild);
+            Array.from(tbl.querySelectorAll('td,th')).forEach(function(cell){
+                var isHeader=cell.tagName==='TH';
+                cell.contentEditable='true';
+                cell.style.cssText='border:1px solid #E5E7EB;padding:8px 10px;font-size:13px;min-width:60px;text-align:left;vertical-align:top';
+                if(isHeader)cell.style.fontWeight='600';
+            });
+            if(!tbl.querySelector('tbody')){var tbody=document.createElement('tbody');while(tbl.rows.length)tbody.appendChild(tbl.rows[0]);tbl.appendChild(tbody);}
+        }
+
+        /* 표 리사이즈 핸들 */
+        function initTableResize(){
+            _patchCalloutColorBtns();
+            if(_rszAbort){_rszAbort.abort();_rszAbort=null;}
+            clearRH();
+            var ed=document.getElementById('guideEditBody'); if(!ed)return;
+            _rszAbort=new AbortController(); var sig={signal:_rszAbort.signal};
+            var activeTbl=null;
+            ed.addEventListener('mousemove',function(e){if(window._rhActive)return;var tbl=e.target.closest('table');if(tbl===activeTbl)return;clearRH();activeTbl=tbl;if(tbl)makeRH(tbl);},sig);
+            document.addEventListener('mousemove',function(e){if(window._rhActive)return;var onRH=e.target.classList&&e.target.classList.contains('_rh');var inEd=ed.contains(e.target);if(!onRH&&!inEd){clearRH();activeTbl=null;}},sig);
+        }
+        function clearRH(){document.querySelectorAll('._rh').forEach(function(n){n.remove();});}
+        function makeRH(tbl){
+            clearRH(); if(!tbl||!document.contains(tbl))return;
+            tbl.style.tableLayout='fixed'; if(!tbl.style.width||tbl.style.width==='100%')tbl.style.width=tbl.offsetWidth+'px';
+            var firstRow=tbl.rows[0]; var cols=tbl.querySelectorAll('colgroup col');
+            if(firstRow&&cols.length){for(var ci2=0;ci2<cols.length;ci2++){var cell2=firstRow.cells[ci2];if(cell2)cols[ci2].style.width=cell2.offsetWidth+'px';}}
+            var n=firstRow?firstRow.cells.length:0; if(!n)return;
+            for(var i=0;i<n;i++){(function(ci){
+                var isLast=(ci===n-1); var h=document.createElement('div'); h.className='_rh';
+                h.style.cssText='position:fixed;width:7px;cursor:col-resize;z-index:9999;border-radius:3px;background:transparent;';
+                document.body.appendChild(h);
+                function pos(){if(!document.contains(tbl)){h.remove();return;}var cell=tbl.rows[0]&&tbl.rows[0].cells[ci];if(!cell){h.remove();return;}var cr=cell.getBoundingClientRect();var tr=tbl.getBoundingClientRect();h.style.left=(cr.right-3.5)+'px';h.style.top=tr.top+'px';h.style.height=tr.height+'px';}
+                pos(); h._pos=pos;
+                h.addEventListener('mouseenter',function(){h.style.background='rgba(59,130,246,.45)';pos();});
+                h.addEventListener('mouseleave',function(){if(!window._rhActive)h.style.background='transparent';});
+                h.addEventListener('mousedown',function(e){
+                    e.preventDefault();e.stopPropagation();window._rhActive=true;h.style.background='rgba(59,130,246,.85)';
+                    var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:9998;cursor:col-resize;';document.body.appendChild(ov);
+                    var sx=e.clientX;var fr=tbl.rows[0];var cellL=fr?fr.cells[ci]:null;var cellR=fr?fr.cells[ci+1]:null;var startL=cellL?cellL.offsetWidth:80;var startR=cellR?cellR.offsetWidth:80;var snapW=tbl.offsetWidth;
+                    var cls=tbl.querySelectorAll('colgroup col');var colL=cls[ci]||null;var colR=cls[ci+1]||null;
+                    function mv(e2){var dx=e2.clientX-sx;if(isLast){var nW=Math.max(100,snapW+dx);tbl.style.width=nW+'px';var nL=Math.max(40,startL+dx);if(colL)colL.style.width=nL+'px';if(cellL)cellL.style.width=nL+'px';}else{var nL2=Math.max(40,startL+dx);var nR=Math.max(40,startR-dx);if(colL)colL.style.width=nL2+'px';if(colR)colR.style.width=nR+'px';if(cellL)cellL.style.width=nL2+'px';if(cellR)cellR.style.width=nR+'px';}pos();}
+                    function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);ov.remove();window._rhActive=false;h.style.background='rgba(59,130,246,.4)';document.querySelectorAll('._rh').forEach(function(rh){if(rh._pos)rh._pos();});}
+                    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+                });
+            })(i);}
+        }
+
+        /* 전체화면 */
+        function toggleEditorFullscreen(){
+            var wrap=document.getElementById('guideRteWrap');
+            if(!wrap)return;
+            if(wrap._fullscreen){wrap._fullscreen=false;wrap.style.cssText='';document.body.style.overflow='';}
+            else{wrap._fullscreen=true;wrap.style.cssText='position:fixed;inset:0;z-index:2000;background:#fff;display:flex;flex-direction:column;overflow:hidden;border-radius:0;border:none;';var tb=document.getElementById('guideRteToolbar');if(tb){tb.style.position='sticky';tb.style.top='0';}var body=document.getElementById('guideEditBody');if(body){body.style.flex='1';body.style.overflowY='auto';body.style.maxWidth='780px';body.style.margin='0 auto';body.style.width='100%';}document.body.style.overflow='hidden';}
+        }
+
+        /* insertDetailPageButton - URL 포함 버전으로 유지 */
+
         function saveGuide() {
             var content = document.getElementById('guideEditBody').innerHTML;
 
@@ -7027,8 +7611,7 @@ document.addEventListener("click", function(e) {
         }
         
         function execCmd(cmd, value) {
-            document.execCommand(cmd, false, value || null);
-            document.getElementById('guideEditBody').focus();
+            rteCmd(cmd, value);
         }
         
         function insertLink() {
@@ -7046,59 +7629,41 @@ document.addEventListener("click", function(e) {
             execCmd('insertHTML', html);
         }
         
-        function insertColumns(num) {
-            var cols = '';
-            var width = Math.floor(100 / num);
-            for (var i = 0; i < num; i++) {
-                cols += '<div style="flex: 1; padding: 12px; border: 1px dashed #E5E7EB; border-radius: 8px; min-height: 100px;">컬럼 ' + (i+1) + '</div>';
-            }
-            var html = '<div style="display: flex; gap: 12px; margin: 16px 0;">' + cols + '</div><p><br></p>';
+
+            var html = '<div style="display: grid; grid-template-columns: repeat(' + num + ', 1fr); gap: 12px; margin: 16px 0;" contenteditable="false">' + cols + '</div><p><br></p>';
             execCmd('insertHTML', html);
+            // grid 내부 컬럼을 contenteditable로 설정
+            setTimeout(function() {
+                var editors = document.querySelectorAll('#guideEditBody [style*="grid-template-columns"]');
+                editors.forEach(function(grid) {
+                    grid.querySelectorAll('div').forEach(function(col) {
+                        col.contentEditable = 'true';
+                    });
+                    grid.contentEditable = 'false';
+                });
+            }, 50);
         }
         
-        function insertCallout() {
-            var html = '<div style="background: #FEF3C7; border-radius: 8px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; margin: 16px 0;"><span style="font-size: 20px; cursor: pointer;" onclick="cycleCalloutIcon(this)">💡</span><div style="flex: 1;" contenteditable="true">여기에 내용을 입력하세요</div></div><p><br></p>';
-            execCmd('insertHTML', html);
+
+        
+
+        
+
+
+;
+            input.click();
+        }
+
+, 80);
         }
         
-        function cycleCalloutIcon(el) {
-            var icons = ['💡', '⚠️', '✅', '❌', '📌', '🔥', '💬', '📝', 'ℹ️'];
-            var idx = icons.indexOf(el.textContent);
-            el.textContent = icons[(idx + 1) % icons.length];
-        }
-        
-        function insertImage() {
-            var url = prompt('이미지 URL을 입력하세요:');
-            if (url) {
-                var html = '<img src="' + url + '" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;"><p><br></p>';
-                execCmd('insertHTML', html);
-            }
-        }
-        
-        function insertImagePlus() {
-            alert('이미지 업로드 기능은 서버 연동이 필요합니다.');
-        }
-        
-        function showColorPicker(type) {
-            var color = prompt('색상 코드를 입력하세요 (예: #FF0000):');
-            if (color) {
-                if (type === 'fore') {
-                    execCmd('foreColor', color);
-                } else {
+ else {
                     execCmd('hiliteColor', color);
                 }
             }
         }
         
-        function toggleFullscreen() {
-            var editMode = document.getElementById('guideEditMode');
-            if (editMode.style.position === 'fixed') {
-                editMode.style.position = '';
-                editMode.style.inset = '';
-                editMode.style.zIndex = '';
-                editMode.style.background = '';
-                editMode.style.padding = '';
-            } else {
+ else {
                 editMode.style.position = 'fixed';
                 editMode.style.inset = '0';
                 editMode.style.zIndex = '9999';
@@ -7108,33 +7673,49 @@ document.addEventListener("click", function(e) {
             }
         }
         
-        function handleEditorKey(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                execCmd('insertHTML', '&nbsp;&nbsp;&nbsp;&nbsp;');
-            }
+
         }
 
     
         // 상세 페이지 버튼 삽입
         function insertDetailPageButton() {
-            var buttonText = prompt('버튼 텍스트를 입력하세요:', '자세히 보기');
-            if (buttonText) {
-                // 고유 ID 생성
+            // 텍스트 + URL 동시 입력 모달
+            var overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML =
+                '<div style="background:white;border-radius:16px;padding:32px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">' +
+                  '<h3 style="font-size:17px;font-weight:700;margin-bottom:20px;color:#111;">버튼 추가</h3>' +
+                  '<label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">버튼 텍스트</label>' +
+                  '<input id="_dBtnText" type="text" value="자세히 보기" style="width:100%;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;font-size:14px;margin-bottom:16px;box-sizing:border-box;" />' +
+                  '<label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">이동할 URL <span style="font-weight:400;color:#9CA3AF;">(선택)</span></label>' +
+                  '<input id="_dBtnUrl" type="text" placeholder="https://example.com" style="width:100%;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;font-size:14px;margin-bottom:24px;box-sizing:border-box;" />' +
+                  '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+                    '<button onclick="this.closest('div[style*=inset]').remove()" style="padding:10px 20px;background:#F3F4F6;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;">취소</button>' +
+                    '<button id="_dBtnOk" style="padding:10px 20px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">삽입</button>' +
+                  '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            document.getElementById('_dBtnText').focus();
+
+            document.getElementById('_dBtnOk').onclick = function() {
+                var txt = document.getElementById('_dBtnText').value.trim() || '자세히 보기';
+                var url = document.getElementById('_dBtnUrl').value.trim();
+                overlay.remove();
                 var btnId = 'detailBtn_' + Date.now();
-                var html = '<div style="margin: 16px 0; text-align: center;"><button id="' + btnId + '" class="detail-page-btn" style="background: #3B82F6; color: white; padding: 14px 32px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">' + buttonText + '</button></div><p><br></p>';
+                var linkStart = url ? '<a href="' + url + '" target="_blank" style="text-decoration:none;">' : '';
+                var linkEnd  = url ? '</a>' : '';
+                var html = '<div style="margin:16px 0;text-align:center;" contenteditable="false">' +
+                    linkStart +
+                    '<button id="' + btnId + '" class="detail-page-btn" style="background:#3B82F6;color:white;padding:14px 32px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(59,130,246,0.3);">' + txt + '</button>' +
+                    linkEnd +
+                    '</div><p><br></p>';
                 execCmd('insertHTML', html);
-                
-                // 버튼에 클릭 이벤트 추가
-                setTimeout(function() {
-                    var btn = document.getElementById(btnId);
-                    if (btn) {
-                        btn.onclick = function() {
-                            showDetailPageEditor(btnId);
-                        };
-                    }
-                }, 100);
-            }
+            };
+            // Enter 키 지원
+            overlay.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') document.getElementById('_dBtnOk').click();
+                if (e.key === 'Escape') overlay.remove();
+            });
         }
         
         // 상세 페이지 에디터 표시
