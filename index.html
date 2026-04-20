@@ -5094,7 +5094,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
                 <div class="form-actions">
                     <button class="btn-secondary" onclick="closeModal('reviewComparisonModal')">취소</button>
-                    <button class="btn-primary" onclick="alert('수정본이 저장되었습니다. 도메인 담당자에게 알림이 전송됩니다.')">저장하기</button>
+                    <button class="btn-primary" onclick="completeReview()">검토 완료</button>
                 </div>
             </div>
         </div>
@@ -5783,15 +5783,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         function openReviewModal(e) {
             e.stopPropagation();
-            // 행의 템플릿명 가져와서 모달 제목에 반영
+            // 행 저장 (검토 완료 후 step 변경에 사용)
             var row = e.target.closest('tr');
-            var titleEl = row ? row.querySelector('.title-text') : null;
-            var title = titleEl ? titleEl.textContent.trim() : '템플릿';
-            var subtitleEl = document.querySelector('#reviewActionModal .modal-title-section p');
-            if (subtitleEl) subtitleEl.textContent = title;
-            // 현재 행 저장
             window._reviewTargetRow = row;
-            openModal('reviewActionModal');
+            // 기존 reviewComparisonModal 열기
+            openModal('reviewComparisonModal');
         }
 
         function completeReview() {
@@ -5799,16 +5795,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var row = window._reviewTargetRow;
             if (row) {
                 row.setAttribute('data-step', '3');
-                // 상태 뱃지 변경
                 var badge = row.querySelector('.status-badge');
                 if (badge) {
                     badge.className = 'status-badge status-waiting';
                     badge.textContent = '등록 대기';
                 }
-                // 액션 버튼 재렌더링
                 renderTemplateActions();
             }
-            closeModal('reviewActionModal');
+            closeModal('reviewComparisonModal');
             toast('✅ 검토 완료되었습니다. 등록 대기로 이동했습니다.', 3000, true);
         }
 
