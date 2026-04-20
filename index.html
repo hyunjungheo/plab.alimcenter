@@ -1357,6 +1357,21 @@
             border-color: var(--error);
         }
         
+        .btn-review {
+            background: #EDE9FE;
+            color: #7C3AED;
+            border-color: #C4B5FD;
+            font-weight: 600;
+        }
+        .btn-review:hover { background: #DDD6FE; }
+        
+        .btn-view {
+            background: #EFF6FF;
+            color: #2563EB;
+            border-color: #BFDBFE;
+        }
+        .btn-view:hover { background: #DBEAFE; }
+        
         /* Modal */
         .modal {
             display: none;
@@ -3232,7 +3247,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             
             switch(page) {
                 case 'status': pageIndex = 0; if(pageTitle) pageTitle.textContent = '발송 현황'; break;
-                case 'template': pageIndex = 1; if(pageTitle) pageTitle.textContent = '템플릿 관리'; break;
+                case 'template': pageIndex = 1; if(pageTitle) pageTitle.textContent = '템플릿 관리'; setTimeout(renderTemplateActions, 0); break;
                 case 'journey': pageIndex = 2; if(pageTitle) pageTitle.textContent = '고객 여정 별 메세지'; break;
                 case 'bot': pageIndex = 3; if(pageTitle) pageTitle.textContent = '라이팅 봇'; break;
                 case 'guide': pageIndex = 4; if(pageTitle) pageTitle.textContent = '플랩 라이팅 가이드: 플랩답게 말하기'; break;
@@ -3411,6 +3426,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var badge  = document.getElementById('admin-user-badge');
             if (nameEl) nameEl.textContent = sessionStorage.getItem('admin_email') || '';
             if (badge)  badge.style.display = 'flex';
+            renderTemplateActions();
         }
     });
     </script>
@@ -3848,7 +3864,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         </div>
                     </div>
                     <div class="controls-right">
-                        <button class="btn-new" onclick="openTemplateSelection()">
+                        <button class="btn-new" id="btnNewTemplate" onclick="openTemplateSelection()">
                             <span>+</span>
                             <span>새 템플릿 등록</span>
                         </button>
@@ -3865,8 +3881,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <th>작업</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
+                    <tbody id="templateTableBody">
+                        <tr data-step="1">
                             <td>
                                 <div class="notification-title">
                                     <span class="channel-badge badge-alimtalk">알림톡</span>
@@ -3876,14 +3892,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <td><span class="date-text">PLAB_REFUND_01</span></td>
                             <td><span class="date-text">2026.01.21 09:30<br><span style="font-size: 11px; color: var(--text-tertiary);">@김민수 (CX팀)</span></span></td>
                             <td><span class="status-badge status-pending">내용 등록</span></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-small btn-edit" onclick="openEditModal(event)">수정</button>
-                                    <button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>
-                                </div>
-                            </td>
+                            <td class="action-cell"></td>
                         </tr>
-                        <tr>
+                        <tr data-step="2">
                             <td>
                                 <div class="notification-title">
                                     <span class="channel-badge badge-alimtalk">알림톡</span>
@@ -3893,14 +3904,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <td><span class="date-text">PLAB_EVENT_01</span></td>
                             <td><span class="date-text">2026.01.20 16:45<br><span style="font-size: 11px; color: var(--text-tertiary);">@이지은 (마케팅팀)</span></span></td>
                             <td><span class="status-badge status-review">라이팅 검토</span></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-small btn-edit" onclick="openEditModal(event)">수정</button>
-                                    <button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>
-                                </div>
-                            </td>
+                            <td class="action-cell"></td>
                         </tr>
-                        <tr>
+                        <tr data-step="3">
                             <td>
                                 <div class="notification-title">
                                     <span class="channel-badge badge-alimtalk">알림톡</span>
@@ -3910,14 +3916,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <td><span class="date-text">PLAB_CHANGE_01</span></td>
                             <td><span class="date-text">2026.01.19 14:20<br><span style="font-size: 11px; color: var(--text-tertiary);">@박서준 (운영팀)</span></span></td>
                             <td><span class="status-badge status-waiting">등록 대기</span></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-small btn-edit" onclick="openEditModal(event)">수정</button>
-                                    <button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>
-                                </div>
-                            </td>
+                            <td class="action-cell"></td>
                         </tr>
-                        <tr>
+                        <tr data-step="4">
                             <td>
                                 <div class="notification-title">
                                     <span class="channel-badge badge-alimtalk">알림톡</span>
@@ -3927,14 +3928,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <td><span class="date-text">PLAB_REMIND_01</span></td>
                             <td><span class="date-text">2026.01.18 11:00<br><span style="font-size: 11px; color: var(--text-tertiary);">@최유진 (CX팀)</span></span></td>
                             <td><span class="status-badge status-completed">등록 완료</span></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-small btn-edit" onclick="openEditModal(event)">상세보기</button>
-                                    <button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>
-                                </div>
-                            </td>
+                            <td class="action-cell"></td>
                         </tr>
-                        <tr>
+                        <tr data-step="4">
                             <td>
                                 <div class="notification-title">
                                     <span class="channel-badge badge-push">푸시</span>
@@ -3944,14 +3940,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <td><span class="date-text">PLAB_PUSH_01</span></td>
                             <td><span class="date-text">2026.01.17 15:30<br><span style="font-size: 11px; color: var(--text-tertiary);">@정수현 (운영팀)</span></span></td>
                             <td><span class="status-badge status-completed">등록 완료</span></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-small btn-edit" onclick="openEditModal(event)">상세보기</button>
-                                    <button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>
-                                </div>
-                            </td>
+                            <td class="action-cell"></td>
                         </tr>
-                        <tr>
+                        <tr data-step="4">
                             <td>
                                 <div class="notification-title">
                                     <span class="channel-badge badge-modal">모달</span>
@@ -3961,12 +3952,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <td><span class="date-text">PLAB_MODAL_EVENT_01</span></td>
                             <td><span class="date-text">2026.01.15 10:00<br><span style="font-size: 11px; color: var(--text-tertiary);">@김태희 (마케팅팀)</span></span></td>
                             <td><span class="status-badge status-completed">등록 완료</span></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-small btn-edit" onclick="openEditModal(event)">상세보기</button>
-                                    <button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>
-                                </div>
-                            </td>
+                            <td class="action-cell"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -5732,6 +5718,105 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 page.classList.toggle('active', i === index);
             });
         }
+
+        /* =====================================================
+           템플릿 관리 권한별 액션 버튼 렌더링
+           ===================================================== */
+        var WRITING_TEAM = [
+            'jongsa.kim@plabfootball.com',
+            'seonyoung.lim@plabfootball.com',
+            'hyunjung.heo@plabfootball.com'
+        ];
+
+        function isWritingTeam() {
+            var email = (sessionStorage.getItem('admin_email') || '').toLowerCase();
+            return WRITING_TEAM.includes(email);
+        }
+
+        function renderTemplateActions() {
+            var tbody = document.getElementById('templateTableBody');
+            if (!tbody) return;
+            var isWT = isWritingTeam();
+            var rows = tbody.querySelectorAll('tr[data-step]');
+
+            rows.forEach(function(row) {
+                var step = parseInt(row.getAttribute('data-step'));
+                var cell = row.querySelector('.action-cell');
+                if (!cell) return;
+                cell.innerHTML = buildActionButtons(step, isWT);
+            });
+
+            // [새 템플릿 등록] 버튼은 step1만 해당 → 항상 노출 (step 필터링은 버튼 자체에서)
+            // 실제로는 항상 보임 (모든 유저 등록 가능)
+            var btnNew = document.getElementById('btnNewTemplate');
+            if (btnNew) btnNew.style.display = 'flex';
+        }
+
+        function buildActionButtons(step, isWT) {
+            var html = '<div class="action-buttons">';
+
+            if (step === 1) {
+                // Step1: 내용 등록
+                // 모든 계정: 수정 + 삭제
+                html += '<button class="btn-small btn-edit" onclick="openEditModal(event)">수정</button>';
+                html += '<button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>';
+            } else if (step === 2) {
+                // Step2: 라이팅 검토
+                // 라이팅팀: [검토] 버튼
+                // 타 계정: [상세] 버튼만
+                if (isWT) {
+                    html += '<button class="btn-small btn-review" onclick="openReviewModal(event)">검토</button>';
+                } else {
+                    html += '<button class="btn-small btn-view" onclick="openDetailViewModal(event)">상세</button>';
+                }
+            } else if (step === 3) {
+                // Step3: 등록 대기 - 모든 계정: 상세보기만
+                html += '<button class="btn-small btn-view" onclick="openDetailViewModal(event)">상세보기</button>';
+            } else if (step === 4) {
+                // Step4: 등록 완료 - 모든 계정: 상세보기만 (삭제 없음)
+                html += '<button class="btn-small btn-view" onclick="openDetailViewModal(event)">상세보기</button>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function openReviewModal(e) {
+            e.stopPropagation();
+            // 행의 템플릿명 가져와서 모달 제목에 반영
+            var row = e.target.closest('tr');
+            var titleEl = row ? row.querySelector('.title-text') : null;
+            var title = titleEl ? titleEl.textContent.trim() : '템플릿';
+            var subtitleEl = document.querySelector('#reviewActionModal .modal-title-section p');
+            if (subtitleEl) subtitleEl.textContent = title;
+            // 현재 행 저장
+            window._reviewTargetRow = row;
+            openModal('reviewActionModal');
+        }
+
+        function completeReview() {
+            // 검토 완료: 해당 행을 step3으로 변경
+            var row = window._reviewTargetRow;
+            if (row) {
+                row.setAttribute('data-step', '3');
+                // 상태 뱃지 변경
+                var badge = row.querySelector('.status-badge');
+                if (badge) {
+                    badge.className = 'status-badge status-waiting';
+                    badge.textContent = '등록 대기';
+                }
+                // 액션 버튼 재렌더링
+                renderTemplateActions();
+            }
+            closeModal('reviewActionModal');
+            toast('✅ 검토 완료되었습니다. 등록 대기로 이동했습니다.', 3000, true);
+        }
+
+        function openDetailViewModal(e) {
+            e.stopPropagation();
+            openDetailModal(1);
+        }
+
         
 
         
@@ -8933,7 +9018,40 @@ document.addEventListener("click", function(e) {
             </div>
         </div>
     </div>
-    <!-- 플랩답게 말하기 라이팅봇 모달 -->
+    
+    <!-- 라이팅 검토 모달 (Step2 전용) -->
+    <div id="reviewActionModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h2>라이팅 검토</h2>
+                    <p style="font-size:14px;color:var(--text-secondary);margin-top:4px;">[이벤트] 친구 초대 이벤트 참여하세요</p>
+                </div>
+                <button class="close-btn" onclick="closeModal('reviewActionModal')">✕</button>
+            </div>
+            <div class="modal-body" style="padding:32px;">
+                <div style="background:#FEF3C7;border-radius:12px;padding:20px;margin-bottom:24px;border-left:4px solid #F59E0B;">
+                    <div style="font-size:14px;font-weight:600;color:#92400E;margin-bottom:8px;">📋 검토 안내</div>
+                    <div style="font-size:13px;color:#78350F;line-height:1.6;">
+                        플랩 라이팅 가이드에 맞는지 확인 후 검토 완료를 선택하세요.<br>
+                        검토 완료된 템플릿은 <strong>등록 대기(Step 3)</strong>로 이동합니다.
+                    </div>
+                </div>
+
+                <div style="background:#F9FAFB;border-radius:12px;padding:20px;margin-bottom:24px;">
+                    <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">✏️ 검토 의견 (선택)</div>
+                    <textarea id="reviewComment" rows="4" class="form-input" placeholder="수정 사항이나 검토 의견을 입력하세요&#10;예: 톤앤매너 수정, 용어 표기 통일 등"></textarea>
+                </div>
+
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <button onclick="closeModal('reviewActionModal')" style="padding:12px 24px;background:#F3F4F6;color:#374151;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;">취소</button>
+                    <button onclick="completeReview()" style="padding:12px 28px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">✅ 검토 완료</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- 플랩답게 말하기 라이팅봇 모달 -->
     <div id="aiWritingModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 700px; max-height: 90vh; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
             <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 24px 32px; color: white; flex-shrink: 0;">
