@@ -785,7 +785,6 @@
         
         .stage-header {
             background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
-            border-left: 4px solid var(--primary);
             padding: 16px 20px;
             border-radius: 8px;
             margin-bottom: 16px;
@@ -3636,6 +3635,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <span class="menu-icon">🗺️</span>
                     <span>고객 여정 별 메세지</span>
                 </div>
+                <div class="menu-item" onclick="navigateTo('push')">
+                    <span class="menu-icon">🔔</span>
+                    <span>매니저 푸시</span>
+                </div>
             </div>
             
             <div class="sidebar-section">
@@ -3647,10 +3650,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 <div class="menu-item" onclick="navigateTo('guide')">
                     <span class="menu-icon">📖</span>
                     <span>라이팅 가이드</span>
-                </div>
-                <div class="menu-item" onclick="navigateTo('push')">
-                    <span class="menu-icon">🔔</span>
-                    <span>매니저 푸시</span>
                 </div>
             </div>
 
@@ -4169,6 +4168,67 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             <!-- 매니저 탭 -->
             <div id="journey-manager" class="journey-tab-content" style="display:none;">
                 <div class="journey-container">
+                <!-- 매니저 고객 여정 맵 -->
+                <div class="journey-timeline">
+                    <div class="timeline-title">📍 고객 여정 맵</div>
+                    <div class="timeline-graph">
+                        <svg width="100%" height="160" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid meet">
+                            <!-- 채용 그룹 레이블 -->
+                            <text x="200" y="18" text-anchor="middle" fill="#6B7280" font-size="11" font-weight="600">채용</text>
+                            <line x1="60" y1="22" x2="340" y2="22" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,3"/>
+                            <!-- 활동 그룹 레이블 -->
+                            <text x="780" y="18" text-anchor="middle" fill="#6B7280" font-size="11" font-weight="600">활동</text>
+                            <line x1="440" y1="22" x2="1140" y2="22" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,3"/>
+
+                            <!-- 연결선 -->
+                            <line x1="60" y1="75" x2="1140" y2="75" stroke="#E5E7EB" stroke-width="3"/>
+
+                            <!-- 채용 1: 지원 시작 -->
+                            <circle cx="60" cy="75" r="22" fill="#3B82F6" stroke="white" stroke-width="3"/>
+                            <text x="60" y="80" text-anchor="middle" fill="white" font-size="11" font-weight="700">지원</text>
+                            <text x="60" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">지원 시작</text>
+
+                            <!-- 채용 2: 실습 완료 -->
+                            <circle cx="200" cy="75" r="22" fill="#3B82F6" stroke="white" stroke-width="3"/>
+                            <text x="200" y="80" text-anchor="middle" fill="white" font-size="11" font-weight="700">실습</text>
+                            <text x="200" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">실습 완료</text>
+
+                            <!-- 채용 3: 채용 완료 -->
+                            <circle cx="340" cy="75" r="22" fill="#3B82F6" stroke="white" stroke-width="3"/>
+                            <text x="340" y="80" text-anchor="middle" fill="white" font-size="11" font-weight="700">채용</text>
+                            <text x="340" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">채용 완료</text>
+
+                            <!-- 구분점 -->
+                            <circle cx="440" cy="75" r="6" fill="#E5E7EB"/>
+
+                            <!-- 활동 1: 0회 -->
+                            <circle cx="540" cy="75" r="22" fill="#F59E0B" stroke="white" stroke-width="3"/>
+                            <text x="540" y="80" text-anchor="middle" fill="white" font-size="11" font-weight="700">0회</text>
+                            <text x="540" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">미활동</text>
+
+                            <!-- 활동 2: 1~5회 -->
+                            <circle cx="700" cy="75" r="22" fill="#10B981" stroke="white" stroke-width="3"/>
+                            <text x="700" y="77" text-anchor="middle" fill="white" font-size="10" font-weight="700">1~5</text>
+                            <text x="700" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">1~5회</text>
+
+                            <!-- 활동 3: 6~11회 -->
+                            <circle cx="860" cy="75" r="22" fill="#3B82F6" stroke="white" stroke-width="3"/>
+                            <text x="860" y="77" text-anchor="middle" fill="white" font-size="10" font-weight="700">6~11</text>
+                            <text x="860" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">6~11회</text>
+
+                            <!-- 활동 4: 12~24회 -->
+                            <circle cx="1000" cy="75" r="22" fill="#7C3AED" stroke="white" stroke-width="3"/>
+                            <text x="1000" y="77" text-anchor="middle" fill="white" font-size="10" font-weight="700">12~24</text>
+                            <text x="1000" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">12~24회</text>
+
+                            <!-- 활동 5: 25회+ -->
+                            <circle cx="1140" cy="75" r="22" fill="#BE123C" stroke="white" stroke-width="3"/>
+                            <text x="1140" y="77" text-anchor="middle" fill="white" font-size="10" font-weight="700">25+</text>
+                            <text x="1140" y="115" text-anchor="middle" fill="#1F2937" font-size="12" font-weight="600">25회 이상</text>
+                        </svg>
+                    </div>
+                </div>
+
                     <!-- 채용 중분류 -->
                     <div class="journey-stage">
                         <div class="stage-header">
@@ -4335,7 +4395,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             <!-- 게시글 보기 모드 (기본) -->
             <div id="guideViewMode">
                 <!-- 가이드 본문 (Firebase에서 불러온 내용) -->
-                <div id="guideViewContent" class="abody" style="min-height:200px;font-size:14px;line-height:1.75;color:#111827;">
+                <div id="guideViewContent" class="abody" style="min-height:200px;font-size:14px;line-height:1.75;color:#111827;padding:0 40px;max-width:860px;margin:0 auto;">
                     <p style="color:#9CA3AF;font-style:italic;">가이드를 불러오는 중...</p>
                 </div>
 
@@ -5878,25 +5938,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         async function initPushDashboard() {
             if (_pushDashboardInited) return;
             hidePushError();
-            // 테이블 구조 먼저 탐색
-            var tables = await pushQuery('SHOW TABLES');
-            if (!tables) return;
-            var tableNames = tables.map(function(r) { return Object.values(r)[0]; });
-            console.log('사용 가능한 테이블:', tableNames);
-
-            // push 관련 테이블 찾기
-            var pushTable = tableNames.find(function(n) {
-                return /push|notification|fcm|알림/i.test(n);
-            });
-
-            if (!pushTable) {
-                // 테이블 목록을 에러 메시지로 표시해 PM이 확인할 수 있게
-                showPushError('푸시 관련 테이블을 찾지 못했습니다. 발견된 테이블: ' + tableNames.join(', '));
-                renderMockDashboard();
-                return;
-            }
-
+            var pushTable = 'app_push_apppushhistory';
             _pushDashboardInited = true;
+            // 테이블 컬럼 구조 먼저 확인
+            var desc = await pushQuery('DESCRIBE ' + pushTable);
+            if (desc) {
+                window._pushTableCols = desc.map(function(r){ return r.Field || Object.values(r)[0]; });
+                console.log('푸시 테이블 컬럼:', window._pushTableCols);
+            }
             await Promise.all([loadDashboard(pushTable), loadPushList(pushTable)]);
         }
 
@@ -6024,16 +6073,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var el = document.getElementById('push-table-body');
             if (el) el.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>';
 
-            // 테이블명이 없으면 재탐색
             if (!tbl || typeof tbl !== 'string') {
-                var tables = await pushQuery('SHOW TABLES');
-                if (!tables) return;
-                var tableNames = tables.map(function(r) { return Object.values(r)[0]; });
-                tbl = tableNames.find(function(n) { return /push|notification|fcm|알림/i.test(n); });
-                if (!tbl) {
-                    if (el) el.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">테이블을 찾을 수 없습니다</td></tr>';
-                    return;
-                }
+                tbl = 'app_push_apppushhistory';
             }
 
             var days = document.getElementById('push-filter-period');
