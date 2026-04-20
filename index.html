@@ -4560,9 +4560,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         <div style="font-size:12px;color:#6B7280;margin-top:4px;" id="kpi-week-sub">-</div>
                     </div>
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
-                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">활성 템플릿</div>
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">카테고리 수</div>
                         <div id="kpi-templates" style="font-size:28px;font-weight:800;color:#F59E0B;">-</div>
-                        <div style="font-size:12px;color:#6B7280;margin-top:4px;">발송 중인 템플릿 수</div>
+                        <div style="font-size:12px;color:#6B7280;margin-top:4px;">notification_category 기준</div>
                     </div>
                 </div>
 
@@ -4626,15 +4626,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         <thead>
                             <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
                                 <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">발송일시</th>
-                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">템플릿명</th>
-                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">제목</th>
-                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">유형</th>
-                                <th style="padding:12px 16px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;">발송 수</th>
+                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">제목 (title)</th>
+                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">내용 (body)</th>
+                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">카테고리</th>
                                 <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;">상태</th>
                             </tr>
                         </thead>
                         <tbody id="push-table-body">
-                            <tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>
+                            <tr><td colspan="5" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>
                         </tbody>
                     </table>
                     <!-- 페이지네이션 -->
@@ -5938,14 +5937,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         async function initPushDashboard() {
             if (_pushDashboardInited) return;
             hidePushError();
-            var pushTable = 'app_push_apppushhistory';
+            var pushTable = 'app_pushs_apppushhistory';
             _pushDashboardInited = true;
-            // 테이블 컬럼 구조 먼저 확인
-            var desc = await pushQuery('DESCRIBE ' + pushTable);
-            if (desc) {
-                window._pushTableCols = desc.map(function(r){ return r.Field || Object.values(r)[0]; });
-                console.log('푸시 테이블 컬럼:', window._pushTableCols);
-            }
             await Promise.all([loadDashboard(pushTable), loadPushList(pushTable)]);
         }
 
@@ -5969,8 +5962,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 document.getElementById('kpi-week').textContent = Number(week[0].cnt || 0).toLocaleString();
             }
 
-            // 활성 템플릿 수
-            var tmpl = await pushQuery('SELECT COUNT(DISTINCT template_id) as cnt FROM ' + tbl);
+            // 활성 카테고리 수 (notification_category 기준)
+            var tmpl = await pushQuery('SELECT COUNT(DISTINCT notification_category) as cnt FROM ' + tbl);
             if (tmpl && tmpl[0]) {
                 document.getElementById('kpi-templates').textContent = Number(tmpl[0].cnt || 0).toLocaleString();
             }
@@ -5982,15 +5975,17 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             );
             if (daily) renderDailyChart(daily);
 
-            // 유형별 비율
+            // 카테고리별 비율 (notification_category 기준)
             var byType = await pushQuery(
-                'SELECT template_type, COUNT(*) as cnt FROM ' + tbl + ' GROUP BY template_type ORDER BY cnt DESC LIMIT 8'
+                'SELECT notification_category, COUNT(*) as cnt FROM ' + tbl +
+                ' GROUP BY notification_category ORDER BY cnt DESC LIMIT 8'
             );
             if (byType) renderTypeChart(byType);
 
-            // TOP 템플릿
+            // TOP 제목 (title 기준)
             var topTmpl = await pushQuery(
-                'SELECT template_name, COUNT(*) as cnt FROM ' + tbl + ' GROUP BY template_name ORDER BY cnt DESC LIMIT 10'
+                'SELECT title, COUNT(*) as cnt FROM ' + tbl +
+                ' GROUP BY title ORDER BY cnt DESC LIMIT 10'
             );
             if (topTmpl) renderTopTemplates(topTmpl);
         }
@@ -6037,7 +6032,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var barRows = data.map(function(d, i) {
                 var pct = total > 0 ? Math.round((parseInt(d.cnt)||0) / total * 100) : 0;
                 return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
-                    '<div style="font-size:12px;color:#6B7280;min-width:80px;overflow:hidden;text-overflow:ellipsis;">' + (d.template_type || '미분류') + '</div>' +
+                    '<div style="font-size:12px;color:#6B7280;min-width:80px;overflow:hidden;text-overflow:ellipsis;">' + (d.notification_category || d.template_type || '미분류') + '</div>' +
                     '<div style="flex:1;height:16px;background:#F3F4F6;border-radius:8px;overflow:hidden;">' +
                     '<div style="height:100%;width:' + pct + '%;background:' + colors[i % colors.length] + ';border-radius:8px;transition:width .4s;"></div>' +
                     '</div>' +
@@ -6071,16 +6066,17 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         /* ── 전체 목록 로드 ── */
         async function loadPushList(tbl) {
             var el = document.getElementById('push-table-body');
-            if (el) el.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>';
+            if (el) el.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>';
 
             if (!tbl || typeof tbl !== 'string') {
-                tbl = 'app_push_apppushhistory';
+                tbl = 'app_pushs_apppushhistory';
             }
 
             var days = document.getElementById('push-filter-period');
             var period = days ? (parseInt(days.value) || 30) : 30;
             var data = await pushQuery(
-                'SELECT * FROM ' + tbl + ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) ORDER BY created_at DESC LIMIT 500',
+                'SELECT id, title, body, notification_category, created_at FROM ' + tbl +
+                ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) ORDER BY created_at DESC LIMIT 500',
                 [period]
             );
             if (!data) return;
@@ -6094,8 +6090,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var search = (document.getElementById('push-search') || {}).value || '';
             var typeFilter = (document.getElementById('push-filter-type') || {}).value || '';
             var filtered = _pushAllData.filter(function(r) {
-                var nameMatch = !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase());
-                var typeMatch = !typeFilter || (r.template_type || '').toLowerCase().includes(typeFilter);
+                var nameMatch = !search || (r.title||'').toLowerCase().includes(search.toLowerCase()) || (r.body||'').toLowerCase().includes(search.toLowerCase());
+                var typeMatch = !typeFilter || (r.notification_category || '').toLowerCase().includes(typeFilter);
                 return nameMatch && typeMatch;
             });
             var total = filtered.length;
@@ -6106,7 +6102,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var el = document.getElementById('push-table-body');
             if (!el) return;
             if (!pageData.length) {
-                el.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">데이터 없음</td></tr>';
+                el.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">데이터 없음</td></tr>';
             } else {
                 el.innerHTML = pageData.map(function(r) {
                     var ts = r.created_at || r.sent_at || r.date || '-';
@@ -6115,12 +6111,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     var statusBadge = status === 'active' || status === 'sent'
                         ? '<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">발송완료</span>'
                         : '<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' + status + '</span>';
-                    return '<tr style="border-bottom:1px solid #F3F4F6;cursor:pointer;">' +
+                    return '<tr style="border-bottom:1px solid #F3F4F6;">' +
                         '<td style="padding:12px 16px;font-size:13px;color:#6B7280;white-space:nowrap;">' + ts + '</td>' +
-                        '<td style="padding:12px 16px;font-size:13px;font-weight:500;color:#111827;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.template_name || r.name || '-') + '</td>' +
-                        '<td style="padding:12px 16px;font-size:13px;color:#374151;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.title || r.message || r.body || '-') + '</td>' +
-                        '<td style="padding:12px 16px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' + (r.template_type || r.type || '일반') + '</span></td>' +
-                        '<td style="padding:12px 16px;font-size:13px;font-weight:600;color:#111827;text-align:right;">' + Number(parseInt(r.send_count || r.count || 1)||1).toLocaleString() + '</td>' +
+                        '<td style="padding:12px 16px;font-size:13px;font-weight:600;color:#111827;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.title || '-') + '</td>' +
+                        '<td style="padding:12px 16px;font-size:13px;color:#374151;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.body || '-') + '</td>' +
+                        '<td style="padding:12px 16px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' + (r.notification_category || '기타') + '</span></td>' +
                         '<td style="padding:12px 16px;text-align:center;">' + statusBadge + '</td>' +
                         '</tr>';
                 }).join('');
