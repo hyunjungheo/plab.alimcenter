@@ -4988,9 +4988,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <div class="form-group">
                                 <label class="form-label">검토자</label>
                                 <select class="form-input">
-                                    <option value="아쿠">아쿠 (라이팅팀)</option>
-                                    <option value="옐로">옐로 (라이팅팀)</option>
-                                    <option value="피르">피르 (라이팅팀)</option>
+                                    <option value="아쿠">아쿠</option>
+                                    <option value="라미">라미</option>
+                                    <option value="제리">제리</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -5102,7 +5102,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
     
     <!-- Read-only View Modal for Completed Templates -->
     <div class="modal" id="viewOnlyModal" style="display: none;">
-        <div class="modal-content" style="max-width: 800px;max-height:80vh;overflow-y:auto;">
+        <div class="modal-content" style="max-width: 1400px;max-height:90vh;overflow-y:auto;">
             <div class="modal-header">
                 <div class="modal-title-section">
                     <h2>알림톡 템플릿 상세</h2>
@@ -5116,40 +5116,60 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <!-- Left: Phone Preview -->
                     <div class="preview-column">
                         <div class="section-title">알림톡 미리보기</div>
-                        <div class="phone-frame">
-                            <div class="phone-screen">
-                                <div class="kakao-header">
-                                    <div class="kakao-title">카카오톡</div>
-                                    <div class="kakao-icons">⚙️ 🔍</div>
+                        <!-- 카카오 알림톡 실제 스타일 미리보기 -->
+                        <div style="width:320px;margin:0 auto;font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;">
+                            <!-- 알림톡 카드 -->
+                            <div style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.12);border:1px solid #E8E8E8;">
+                                <!-- 노란 헤더 -->
+                                <div style="background:#FAE100;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:13px;font-weight:700;color:#191919;">알림톡 도착</span>
                                 </div>
-                                <div class="chat-container">
-                                    <div class="message-date">2026년 1월 22일 수요일</div>
-                                    <div class="message-group">
-                                        <div class="sender-profile">
-                                            <div class="profile-image">⚽</div>
-                                            <div class="sender-name">플랩풋볼</div>
+                                <!-- 본문 영역 -->
+                                <div style="padding:16px;">
+                                    <!-- 타이틀 + 이미지 썸네일 행 -->
+                                    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;">
+                                        <div style="font-size:17px;font-weight:700;color:#191919;line-height:1.4;flex:1;">
+                                            구장 예약이<br>확정됐어요
                                         </div>
-                                        <div class="alimtalk-bubble">
-                                            <div class="alimtalk-header">
-                                                <div class="alimtalk-title">플랩풋볼</div>
-                                                <div class="alimtalk-badge">알림톡</div>
-                                            </div>
-                                            <div class="alimtalk-content">
-                                                <div class="content-title">[경기확정] 경기가 확정되었습니다</div>
-                                                <div class="content-body">
-                                                    안녕하세요, 플랩풋볼입니다.
-                                                    
-                                                    신청하신 #{경기명} 경기가 확정되었습니다.
-                                                </div>
-                                                <div class="highlight-box">
-                                                    📅 일시: #{경기일시}
-                                                    📍 장소: #{구장명}
-                                                </div>
-                                                <div class="button-container">
-                                                    <button class="kakao-btn">경기 상세보기</button>
-                                                </div>
+                                        <div style="width:52px;height:52px;background:#F5F5F5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;">
+                                            <span style="font-size:28px;">📅</span>
+                                            <div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;background:#1A73E8;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                                                <span style="color:white;font-size:10px;font-weight:700;">✓</span>
                                             </div>
                                         </div>
+                                    </div>
+                                    <!-- 구분선 -->
+                                    <div style="height:1px;background:#F0F0F0;margin-bottom:14px;"></div>
+                                    <!-- 상세 정보 테이블 -->
+                                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                                        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                                            <span style="font-size:13px;color:#888;min-width:48px;">일시</span>
+                                            <span style="font-size:13px;color:#191919;font-weight:500;text-align:right;">#{경기일시}</span>
+                                        </div>
+                                        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                                            <span style="font-size:13px;color:#888;min-width:48px;">구장</span>
+                                            <span style="font-size:13px;color:#191919;font-weight:500;text-align:right;">#{구장명}</span>
+                                        </div>
+                                        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                                            <span style="font-size:13px;color:#888;min-width:48px;">면</span>
+                                            <span style="font-size:13px;color:#191919;font-weight:500;text-align:right;">#{면명}</span>
+                                        </div>
+                                        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                                            <span style="font-size:13px;color:#888;min-width:48px;">예약자</span>
+                                            <span style="font-size:13px;color:#191919;font-weight:500;text-align:right;">#{예약자명}</span>
+                                        </div>
+                                    </div>
+                                    <!-- 본문 안내 -->
+                                    <div style="font-size:13px;color:#333;line-height:1.6;margin-bottom:10px;">
+                                        자세한 예약 내역은 '구장 관리 사이트'에서 확인할 수 있어요.
+                                    </div>
+                                    <!-- 부가정보 (작은 회색 글씨) -->
+                                    <div style="font-size:12px;color:#999;line-height:1.5;margin-bottom:14px;">
+                                        취소·변경은 예약자와 소통 후 진행해 주세요.
+                                    </div>
+                                    <!-- 버튼 -->
+                                    <div style="border-top:1px solid #F0F0F0;padding-top:12px;">
+                                        <button style="width:100%;padding:12px;background:white;border:1px solid #DCDCDC;border-radius:6px;font-size:14px;font-weight:500;color:#191919;cursor:pointer;letter-spacing:-0.3px;">구장 관리 사이트</button>
                                     </div>
                                 </div>
                             </div>
@@ -5757,8 +5777,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             if (step === 1) {
                 // Step1: 내용 등록
-                // 모든 계정: 수정 + 삭제
-                html += '<button class="btn-small btn-edit" onclick="openEditModal(event)">수정</button>';
+                // 수정(상세보기) + 라이팅 검토 요청 + 삭제
+                html += '<button class="btn-small btn-view" onclick="openDetailViewModal(event)">수정</button>';
+                html += '<button class="btn-small btn-review" onclick="requestReview(event)">라이팅 검토 요청</button>';
                 html += '<button class="btn-small btn-delete" onclick="deleteItem(event)">삭제</button>';
             } else if (step === 2) {
                 // Step2: 라이팅 검토
@@ -5783,11 +5804,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         function openReviewModal(e) {
             e.stopPropagation();
-            // 행 저장 (검토 완료 후 step 변경에 사용)
             var row = e.target.closest('tr');
             window._reviewTargetRow = row;
-            // 기존 reviewComparisonModal 열기
             openModal('reviewComparisonModal');
+        }
+
+        function requestReview(e) {
+            e.stopPropagation();
+            var row = e.target.closest('tr');
+            if (!row) return;
+            if (!confirm('라이팅 검토를 요청할까요? 해당 템플릿이 Step 2(라이팅 검토)로 이동합니다.')) return;
+            row.setAttribute('data-step', '2');
+            var badge = row.querySelector('.status-badge');
+            if (badge) {
+                badge.className = 'status-badge status-review';
+                badge.textContent = '라이팅 검토';
+            }
+            renderTemplateActions();
+            toast('✅ 라이팅 검토 요청이 완료되었습니다.', 3000, true);
         }
 
         function completeReview() {
@@ -5808,6 +5842,33 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         function openDetailViewModal(e) {
             e.stopPropagation();
+            var row = e.target.closest('tr');
+            var step = row ? parseInt(row.getAttribute('data-step')) : 4;
+            if (step === 3) {
+                // Step3: 발송통계/차트 숨기고 열기
+                openViewOnlyModalNoStats();
+            } else {
+                openDetailModal(1);
+            }
+        }
+
+        function openViewOnlyModalNoStats() {
+            // 발송 통계 및 추이, 최근 10일 발송 추이 섹션 숨김
+            var modal = document.getElementById('viewOnlyModal');
+            if (!modal) return;
+            // 통계 섹션 숨기기
+            var sections = modal.querySelectorAll('.section');
+            sections.forEach(function(sec) {
+                var title = sec.querySelector('.section-title');
+                if (title) {
+                    var t = title.textContent.trim();
+                    if (t === '발송 통계 및 추이' || t === '최근 10일 발송 추이') {
+                        sec.style.display = 'none';
+                    } else {
+                        sec.style.display = '';
+                    }
+                }
+            });
             openDetailModal(1);
         }
 
@@ -5824,6 +5885,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function openDetailModal(id) {
             var m = document.getElementById('viewOnlyModal');
             if (!m) return;
+            // 통계 섹션 기본 복원 (step4용)
+            m.querySelectorAll('.section').forEach(function(sec) {
+                sec.style.display = '';
+            });
             m.removeAttribute('style');
             m.classList.remove('active');
             m.style.cssText = 'display:flex;position:fixed;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;background:rgba(15,23,42,0.6);z-index:9999;overflow-y:auto;';
@@ -6050,7 +6115,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function applyFilters() {
             const typeFilter = window.currentTypeFilter || 'all';
             const customerFilter = window.currentCustomerFilter || 'all';
-            const rows = document.querySelectorAll('.page-content.active tbody tr');
+            // templateTableBody 우선, 없으면 active page tbody
+            const tbody = document.getElementById('templateTableBody');
+            const rows = tbody
+                ? tbody.querySelectorAll('tr[data-step]')
+                : document.querySelectorAll('.page-content.active tbody tr');
             
             rows.forEach(row => {
                 let showRow = true;
