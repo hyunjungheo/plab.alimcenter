@@ -1248,6 +1248,10 @@
             top: 20px;
         }
         
+        .view-only-grid .preview-column {
+            position: static;
+        }
+        
         .form-column {
             min-width: 0;
         }
@@ -3285,6 +3289,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             modal.style.alignItems = 'center';
             modal.style.justifyContent = 'center';
             document.body.style.overflow = 'hidden';
+            // 외부 클릭 시 닫기 (한 번만 등록)
+            if (!modal._backdropBound) {
+                modal._backdropBound = true;
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) closeModal(modalId);
+                });
+            }
             if (modalId === 'createModal') {
                 setTimeout(function() {
                     if (typeof currentStep !== 'undefined') { currentStep = 1; selectedType = ''; }
@@ -3399,9 +3410,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var badge  = document.getElementById('admin-user-badge');
                 var nameEl = document.getElementById('admin-user-name');
                 if (badge && nameEl) {
+                    // 이메일만 표시 (이름 한글 깨짐 방지)
                     nameEl.textContent = email;
                     badge.style.display = 'flex';
                 }
+                // 세션 값도 email로 통일
+                sessionStorage.setItem('admin_display', email);
             } else {
                 var err = document.getElementById('login-error');
                 if (err) { err.textContent = email + ' 계정은 접근 권한이 없습니다. plabfootball.com 이메일로 로그인해주세요.'; err.style.display = 'block'; }
@@ -3424,7 +3438,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             checkWritingTeamUI();
             var nameEl = document.getElementById('admin-user-name');
             var badge  = document.getElementById('admin-user-badge');
-            if (nameEl) nameEl.textContent = sessionStorage.getItem('admin_email') || '';
+            // 이메일만 표시 (이름은 한글 깨짐 가능성)
+            // admin_display(순수 ASCII email) 우선, 없으면 admin_email
+            var storedEmail = sessionStorage.getItem('admin_display') || sessionStorage.getItem('admin_email') || '';
+            if (nameEl) nameEl.textContent = storedEmail;
             if (badge)  badge.style.display = 'flex';
             renderTemplateActions();
         }
@@ -5117,7 +5134,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <div class="preview-column">
                         <div class="section-title">알림톡 미리보기</div>
                         <!-- 카카오 알림톡 실제 스타일 미리보기 -->
-                        <div style="width:320px;margin:0 auto;font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;">
+                        <div style="width:320px;margin:0 auto;font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;position:relative;">
                             <!-- 알림톡 카드 -->
                             <div style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.12);border:1px solid #E8E8E8;">
                                 <!-- 노란 헤더 -->
@@ -5310,95 +5327,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </div>
                 </div>
                 
-
-                <!-- 부가정보 섹션 (부가정보형, 복합형에만 표시) -->
-                <div class="section" id="extraInfoSection" style="display: none;">
-                    <div class="section-title">부가정보</div>
-                    <div class="form-sublabel" style="color: #EF4444; font-size: 13px; margin-bottom: 8px;">
-                        ⚠️ 최대 500자 / 변수 사용 불가 / URL 포함 가능
-                    </div>
-                    <div class="form-sublabel" style="margin-bottom: 12px;">
-                        본문 하단에 고정 안내 영역으로 표시됩니다 (본문보다 작은 폰트)
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">부가정보 내용</label>
-                        <textarea id="extraInfoContent" class="form-input" rows="5" maxlength="500" placeholder="예시:
-문의사항이 있으시면 고객센터로 연락주세요.
-고객센터: 02-1234-5678
-운영시간: 평일 09:00-18:00
-홈페이지: https://example.com" oninput="updatePreview(); updateCharCount('extraInfo'); updateAlimtalkExtraInfoPreview()"></textarea>
-                        <div class="char-counter" id="extraInfoCounter">0 / 500자</div>
-                    </div>
-                </div>
-
-                <!-- 강조표기 섹션 (강조표기형에만 표시) -->
-                <div class="section section-content" id="emphasisSection" style="display: none;">
-                    <div class="section-title">강조 표기</div>
-                    <div class="form-sublabel" style="margin-bottom: 12px;">
-                        메시지 상단에 강조할 내용을 입력하세요
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">강조 제목</label>
-                        <div class="form-sublabel">굵은 글씨로 표시될 제목</div>
-                        <input type="text" class="form-input" id="emphasisTitle" placeholder="예: 🎉 특별 할인 이벤트" oninput="updateAlimtalkEmphasisPreview()">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">강조 내용</label>
-                        <div class="form-sublabel">제목 아래 표시될 부가 설명</div>
-                        <input type="text" class="form-input" id="emphasisSubtitle" placeholder="예: 지금 바로 확인하세요!" oninput="updateAlimtalkEmphasisPreview()">
-                    </div>
-                </div>
-
-                <!-- 채널추가 섹션 (채널추가형, 복합형에만 표시) -->
-                <div class="section" id="channelSection" style="display: none;">
-                    <div class="section-title">채널 추가</div>
-                    <div class="form-sublabel" style="margin-bottom: 12px;">
-                        메시지 하단에 카카오톡 채널 추가 버튼이 자동으로 삽입됩니다
-                    </div>
-                    
-                    <div style="padding: 16px; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
-                        <div style="font-size: 13px; color: #6B7280; margin-bottom: 8px;">
-                            ℹ️ 채널 추가 영역은 자동으로 생성되며 문구 수정이 불가합니다.
-                        </div>
-                        <div style="font-size: 14px; font-weight: 500; color: #1F2937;">
-                            표시 내용: "플랩풋볼 채널을 추가하고 소식을 받아보세요"
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 버튼 섹션 (모든 유형에 표시) -->
-                <div class="section" id="buttonSection" style="display: none;">
-                    <div class="section-title">버튼</div>
-                    <div class="form-sublabel" style="color: #EF4444; font-size: 13px; margin-bottom: 8px;">
-                        ⚠️ 버튼명 최대 14자 / 변수 사용 불가 / 최대 5개
-                    </div>
-                    
-                    <div id="buttonContainer">
-                        <!-- 버튼 1 (기본) -->
-                        <div class="button-item" style="margin-bottom: 12px; padding: 16px; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600; font-size: 14px;">버튼 1</span>
-                                <span class="char-counter" style="font-size: 12px;">0 / 14자</span>
-                            </div>
-                            <input type="text" class="form-input button-name" maxlength="14" placeholder="버튼명 (예: 경기 상세보기)" oninput="updatePreview(); updateButtonCharCount(this); updateAlimtalkButtonPreview()" style="margin-bottom: 8px;">
-                            <select class="form-input button-type" onchange="updatePreview(); toggleLinkField(this)" style="margin-bottom: 8px;">
-                                <option value="">링크 유형 선택</option>
-                                <option value="WL">웹링크 (Web Link)</option>
-                                <option value="AL">앱링크 (App Link)</option>
-                                <option value="BK">봇키워드 (Bot Keyword)</option>
-                                <option value="MD">메시지전달 (Message Delivery)</option>
-                            </select>
-                            <input type="text" class="form-input button-link" placeholder="링크 URL (웹링크/앱링크 선택 시)" style="display: none;" oninput="updatePreview()">
-                        </div>
-                    </div>
-                    
-                    <button type="button" onclick="addButton()" id="addButtonBtn" style="width: 100%; padding: 12px; background: white; border: 2px dashed #D1D5DB; border-radius: 8px; color: #6B7280; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                        + 버튼 추가 (최대 5개)
-                    </button>
-                </div>
 
                 <!-- 수정 히스토리 -->
                 <div class="section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px;">
@@ -5893,6 +5821,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             m.classList.remove('active');
             m.style.cssText = 'display:flex;position:fixed;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;background:rgba(15,23,42,0.6);z-index:9999;overflow-y:auto;';
             document.body.style.overflow = 'hidden';
+            // 외부 클릭 시 닫기
+            if (!m._backdropBound) {
+                m._backdropBound = true;
+                m.addEventListener('click', function(e) {
+                    if (e.target === m) closeModal('viewOnlyModal');
+                });
+            }
         }
         
         
@@ -6113,35 +6048,47 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
         
         function applyFilters() {
-            const typeFilter = window.currentTypeFilter || 'all';
-            const customerFilter = window.currentCustomerFilter || 'all';
-            // templateTableBody 우선, 없으면 active page tbody
-            const tbody = document.getElementById('templateTableBody');
-            const rows = tbody
-                ? tbody.querySelectorAll('tr[data-step]')
-                : document.querySelectorAll('.page-content.active tbody tr');
+            var typeFilter = window.currentTypeFilter || 'all';
+            var customerFilter = window.currentCustomerFilter || 'all';
             
-            rows.forEach(row => {
-                let showRow = true;
-                
-                // Type filter
-                if (typeFilter !== 'all') {
-                    const badge = row.querySelector('.channel-badge');
-                    const badgeText = badge ? badge.textContent.trim() : '';
-                    
-                    if (typeFilter === 'alimtalk' && badgeText !== '알림톡') showRow = false;
-                    if (typeFilter === 'push' && badgeText !== '푸시') showRow = false;
-                    if (typeFilter === 'modal' && badgeText !== '모달') showRow = false;
-                }
-                
-                // Customer filter
-                if (customerFilter !== 'all' && showRow) {
-                    const customerType = row.getAttribute('data-customer-type');
-                    if (customerType !== customerFilter) showRow = false;
-                }
-                
-                row.style.display = showRow ? '' : 'none';
-            });
+            // 템플릿 관리 페이지 (page2) 필터
+            var templateTbody = document.getElementById('templateTableBody');
+            if (templateTbody) {
+                var tRows = templateTbody.querySelectorAll('tr[data-step]');
+                tRows.forEach(function(row) {
+                    var showRow = true;
+                    if (typeFilter !== 'all') {
+                        var badge = row.querySelector('.channel-badge');
+                        var badgeText = badge ? badge.textContent.trim() : '';
+                        if (typeFilter === 'alimtalk' && badgeText !== '알림톡') showRow = false;
+                        if (typeFilter === 'push' && badgeText !== '푸시') showRow = false;
+                        if (typeFilter === 'modal' && badgeText !== '모달') showRow = false;
+                    }
+                    row.style.display = showRow ? '' : 'none';
+                });
+            }
+            
+            // 발송 현황 페이지 (page1) 필터
+            var statusPage = document.querySelector('.page-content.active');
+            if (statusPage) {
+                var sRows = statusPage.querySelectorAll('tbody tr');
+                sRows.forEach(function(row) {
+                    if (row.closest('#templateTableBody')) return; // 이미 처리됨
+                    var showRow = true;
+                    if (typeFilter !== 'all') {
+                        var badge = row.querySelector('.channel-badge');
+                        var badgeText = badge ? badge.textContent.trim() : '';
+                        if (typeFilter === 'alimtalk' && badgeText !== '알림톡') showRow = false;
+                        if (typeFilter === 'push' && badgeText !== '푸시') showRow = false;
+                        if (typeFilter === 'modal' && badgeText !== '모달') showRow = false;
+                    }
+                    if (customerFilter !== 'all' && showRow) {
+                        var customerType = row.getAttribute('data-customer-type');
+                        if (customerType !== customerFilter) showRow = false;
+                    }
+                    row.style.display = showRow ? '' : 'none';
+                });
+            }
         }
         
         function filterByStatus(status) {
