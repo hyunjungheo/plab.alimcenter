@@ -3255,6 +3255,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 case 'journey': pageIndex = 2; if(pageTitle) pageTitle.textContent = '고객 여정 별 메세지'; break;
                 case 'bot': pageIndex = 3; if(pageTitle) pageTitle.textContent = '라이팅 봇'; break;
                 case 'guide': pageIndex = 4; if(pageTitle) pageTitle.textContent = '플랩 라이팅 가이드: 플랩답게 말하기'; break;
+                case 'push': pageIndex = 5; if(pageTitle) pageTitle.textContent = '매니저 푸시'; setTimeout(initPushDashboard, 100); break;
                 
             }
             
@@ -3263,7 +3264,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     (page === 'template' && item.textContent.includes('템플릿 관리')) ||
                     (page === 'journey' && item.textContent.includes('고객 여정')) ||
                     (page === 'bot' && item.textContent.includes('라이팅 봇')) ||
-                    (page === 'guide' && item.textContent.includes('라이팅 가이드'))) {
+                    (page === 'guide' && item.textContent.includes('라이팅 가이드')) ||
+                    (page === 'push' && item.textContent.includes('매니저 푸시'))) {
                     item.classList.add('active');
                 }
             });
@@ -3646,6 +3648,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <span class="menu-icon">📖</span>
                     <span>라이팅 가이드</span>
                 </div>
+                <div class="menu-item" onclick="navigateTo('push')">
+                    <span class="menu-icon">🔔</span>
+                    <span>매니저 푸시</span>
+                </div>
             </div>
 
         </div>
@@ -3978,6 +3984,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         
         <!-- Page 3: Customer Journey -->
         <div class="page-content">
+            <!-- 탭 네비게이션 -->
+            <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #E5E7EB;">
+                <button class="journey-tab active" onclick="switchJourneyTab(this,'player')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid #3B82F6;margin-bottom:-2px;font-size:14px;font-weight:600;color:#3B82F6;cursor:pointer;">참가자</button>
+                <button class="journey-tab" onclick="switchJourneyTab(this,'manager')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">매니저</button>
+                <button class="journey-tab" onclick="switchJourneyTab(this,'owner')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">구장주</button>
+            </div>
+
+            <!-- 참가자 탭 -->
+            <div id="journey-player" class="journey-tab-content">
             <div class="journey-container">
                 <!-- Journey Overview Graph -->
                 <div class="journey-timeline">
@@ -4149,6 +4164,148 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </div>
                 </div>
             </div>
+            </div>
+
+            <!-- 매니저 탭 -->
+            <div id="journey-manager" class="journey-tab-content" style="display:none;">
+                <div class="journey-container">
+                    <!-- 채용 중분류 -->
+                    <div class="journey-stage">
+                        <div class="stage-header">
+                            <div class="stage-title" style="font-size:16px;font-weight:700;color:#1F2937;margin-bottom:4px;">📋 채용</div>
+                        </div>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+                            <div style="flex:1;min-width:180px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">지원 시작</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-alimtalk">알림톡</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[지원완료] 플랩 매니저 지원이 접수되었습니다</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 지원 직후</span>
+                                        <span class="status-badge status-active">발송중</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="flex:1;min-width:180px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">실습 완료</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-alimtalk">알림톡</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[실습완료] 플랩 매니저 실습이 완료되었습니다</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 실습 완료 후</span>
+                                        <span class="status-badge status-active">발송중</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="flex:1;min-width:180px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">채용 완료</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-alimtalk">알림톡</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[채용확정] 플랩 매니저로 채용되셨습니다</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 채용 확정 후</span>
+                                        <span class="status-badge status-active">발송중</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 활동 횟수 중분류 -->
+                    <div class="journey-stage" style="margin-top:28px;">
+                        <div class="stage-header">
+                            <div class="stage-title" style="font-size:16px;font-weight:700;color:#1F2937;margin-bottom:4px;">⚽ 활동</div>
+                        </div>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <!-- 0회 -->
+                            <div style="flex:1;min-width:160px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#C2410C;margin-bottom:8px;">0회</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-push">푸시</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[첫경기] 아직 경기를 진행하지 않으셨어요</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 채용 후 미활동</span>
+                                        <span class="status-badge status-pending">등록 예정</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 1~5회 -->
+                            <div style="flex:1;min-width:160px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#15803D;margin-bottom:8px;">1~5회</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-alimtalk">알림톡</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[성장중] 경기 진행이 시작됐어요!</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 1회 활동 달성</span>
+                                        <span class="status-badge status-pending">등록 예정</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 6~11회 -->
+                            <div style="flex:1;min-width:160px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#1D4ED8;margin-bottom:8px;">6~11회</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-alimtalk">알림톡</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[활발한활동] 꾸준히 달리고 계시네요!</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 6회 달성</span>
+                                        <span class="status-badge status-pending">등록 예정</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 12~24회 -->
+                            <div style="flex:1;min-width:160px;background:#FAF5FF;border:1px solid #DDD6FE;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#6D28D9;margin-bottom:8px;">12~24회</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-alimtalk">알림톡</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[베테랑] 플랩의 핵심 매니저세요!</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 12회 달성</span>
+                                        <span class="status-badge status-pending">등록 예정</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 25회 이상 -->
+                            <div style="flex:1;min-width:160px;background:#FFF1F2;border:1px solid #FECDD3;border-radius:12px;padding:16px;">
+                                <div style="font-size:12px;font-weight:600;color:#BE123C;margin-bottom:8px;">25회 이상</div>
+                                <div class="journey-message-card" style="background:white;border:1px solid #E5E7EB;border-radius:8px;padding:12px;cursor:pointer;" onclick="openDetailModal(1)">
+                                    <div class="message-card-header" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <span class="channel-badge badge-alimtalk">알림톡</span>
+                                        <div style="font-size:13px;font-weight:500;color:#1F2937;flex:1;">[레전드] 플랩 레전드 매니저!</div>
+                                    </div>
+                                    <div class="message-card-meta" style="margin-top:8px;display:flex;gap:12px;font-size:12px;color:#6B7280;">
+                                        <span>⏰ 25회 달성</span>
+                                        <span class="status-badge status-pending">등록 예정</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 구장주 탭 -->
+            <div id="journey-owner" class="journey-tab-content" style="display:none;">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;color:#9CA3AF;">
+                    <div style="font-size:48px;margin-bottom:16px;">🏟️</div>
+                    <div style="font-size:16px;font-weight:600;color:#374151;margin-bottom:8px;">구장주 여정 맵</div>
+                    <div style="font-size:14px;color:#6B7280;">구장주 고객 여정 내용을 준비 중입니다.</div>
+                </div>
+            </div>
         </div>
         
         <!-- Page 4: Writing Bot -->
@@ -4309,6 +4466,120 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
           
         </div>
       </div>
+            </div>
+        </div>
+
+        <!-- Page 6: Manager Push Dashboard -->
+        <div class="page-content">
+            <!-- API 설정 배너 -->
+            <div id="pushApiError" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#92400E;"></div>
+
+            <!-- 탭 -->
+            <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #E5E7EB;">
+                <button class="push-tab active" onclick="switchPushTab(this,'dashboard')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid #3B82F6;margin-bottom:-2px;font-size:14px;font-weight:600;color:#3B82F6;cursor:pointer;">📊 대시보드</button>
+                <button class="push-tab" onclick="switchPushTab(this,'list')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">📋 전체 푸시 목록</button>
+            </div>
+
+            <!-- 대시보드 탭 -->
+            <div id="push-dashboard" class="push-tab-content">
+                <!-- KPI 카드 4개 -->
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">총 발송 건수</div>
+                        <div id="kpi-total" style="font-size:28px;font-weight:800;color:#111827;">-</div>
+                        <div style="font-size:12px;color:#10B981;margin-top:4px;" id="kpi-total-sub">불러오는 중...</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">오늘 발송</div>
+                        <div id="kpi-today" style="font-size:28px;font-weight:800;color:#3B82F6;">-</div>
+                        <div style="font-size:12px;color:#6B7280;margin-top:4px;" id="kpi-today-sub">-</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">이번 주 발송</div>
+                        <div id="kpi-week" style="font-size:28px;font-weight:800;color:#7C3AED;">-</div>
+                        <div style="font-size:12px;color:#6B7280;margin-top:4px;" id="kpi-week-sub">-</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">활성 템플릿</div>
+                        <div id="kpi-templates" style="font-size:28px;font-weight:800;color:#F59E0B;">-</div>
+                        <div style="font-size:12px;color:#6B7280;margin-top:4px;">발송 중인 템플릿 수</div>
+                    </div>
+                </div>
+
+                <!-- 차트 영역 -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+                    <!-- 일별 발송량 -->
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;">📈 일별 발송량 추이</div>
+                        <div style="font-size:12px;color:#6B7280;margin-bottom:16px;">최근 14일</div>
+                        <div id="chart-daily" style="height:200px;position:relative;">
+                            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:13px;">불러오는 중...</div>
+                        </div>
+                    </div>
+                    <!-- 템플릿 유형별 비율 -->
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;">🥧 템플릿 유형별 발송 비율</div>
+                        <div style="font-size:12px;color:#6B7280;margin-bottom:16px;">전체 기간</div>
+                        <div id="chart-type" style="height:200px;position:relative;">
+                            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:13px;">불러오는 중...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOP 템플릿 -->
+                <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                    <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;">🏆 발송량 TOP 템플릿</div>
+                    <div id="top-templates">
+                        <div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 전체 목록 탭 -->
+            <div id="push-list" class="push-tab-content" style="display:none;">
+                <!-- 검색/필터 -->
+                <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;">
+                    <div style="flex:1;position:relative;">
+                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9CA3AF;">🔍</span>
+                        <input id="push-search" type="text" placeholder="템플릿명, 제목으로 검색..." oninput="filterPushList()" style="width:100%;padding:10px 12px 10px 36px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;">
+                    </div>
+                    <select id="push-filter-type" onchange="filterPushList()" style="padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;color:#374151;background:white;cursor:pointer;outline:none;">
+                        <option value="">전체 유형</option>
+                        <option value="match">경기 관련</option>
+                        <option value="payment">결제 관련</option>
+                        <option value="remind">리마인더</option>
+                        <option value="event">이벤트</option>
+                        <option value="etc">기타</option>
+                    </select>
+                    <select id="push-filter-period" onchange="loadPushList()" style="padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;color:#374151;background:white;cursor:pointer;outline:none;">
+                        <option value="30">최근 30일</option>
+                        <option value="90">최근 90일</option>
+                        <option value="180">최근 180일</option>
+                        <option value="365">최근 1년</option>
+                    </select>
+                    <button onclick="loadPushList()" style="padding:10px 18px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">새로고침</button>
+                </div>
+
+                <!-- 테이블 -->
+                <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
+                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">발송일시</th>
+                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">템플릿명</th>
+                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">제목</th>
+                                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">유형</th>
+                                <th style="padding:12px 16px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;">발송 수</th>
+                                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="push-table-body">
+                            <tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>
+                        </tbody>
+                    </table>
+                    <!-- 페이지네이션 -->
+                    <div id="push-pagination" style="display:flex;justify-content:center;align-items:center;gap:8px;padding:16px;border-top:1px solid #E5E7EB;"></div>
+                </div>
             </div>
         </div>
 
@@ -5230,105 +5501,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             </div>
                         </div>
                         
-                        <!-- Stats -->
-                        <div class="section">
-                            <div class="section-title">발송 통계 및 추이</div>
-                            <div class="stats-grid-compact">
-                                <div class="stat-item-compact">
-                                    <div class="stat-label-compact">최초 발송일</div>
-                                    <div class="stat-value-compact">2024.03.15</div>
-                                </div>
-                                <div class="stat-item-compact">
-                                    <div class="stat-label-compact">최근 발송일</div>
-                                    <div class="stat-value-compact">2026.01.27</div>
-                                </div>
-                                <div class="stat-item-compact">
-                                    <div class="stat-label-compact">오늘 발송량</div>
-                                    <div class="stat-value-compact highlight">234건</div>
-                                </div>
-                                <div class="stat-item-compact">
-                                    <div class="stat-label-compact">이번 주</div>
-                                    <div class="stat-value-compact highlight">1,638건</div>
-                                </div>
-                                <div class="stat-item-compact">
-                                    <div class="stat-label-compact">총 발송량</div>
-                                    <div class="stat-value-compact highlight">45,892건</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Chart -->
-                        <div class="section">
-                            <div class="section-title">최근 10일 발송 추이</div>
-                            <div class="chart-container-compact">
-                                <svg class="chart-svg" viewBox="0 0 540 180" preserveAspectRatio="xMidYMid meet">
-                                    <defs>
-                                        <linearGradient id="gradient-detail" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.3" />
-                                            <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:0" />
-                                        </linearGradient>
-                                    </defs>
-                                    
-                                    <line class="chart-grid-line" x1="20" y1="50" x2="520" y2="50" />
-                                    <line class="chart-grid-line" x1="20" y1="90" x2="520" y2="90" />
-                                    <line class="chart-grid-line" x1="20" y1="130" x2="520" y2="130" />
-                                    
-                                    <path class="chart-area" d="M 20 105 L 75 85 L 130 115 L 185 75 L 240 95 L 295 80 L 350 100 L 405 65 L 460 90 L 520 55 L 520 170 L 20 170 Z" fill="url(#gradient-detail)" />
-                                    
-                                    <path class="chart-line" d="M 20 105 L 75 85 L 130 115 L 185 75 L 240 95 L 295 80 L 350 100 L 405 65 L 460 90 L 520 55" />
-                                    
-                                    <circle class="chart-point" cx="20" cy="105" r="4" />
-                                    <text class="chart-value-label" x="20" y="95">178</text>
-                                    
-                                    <circle class="chart-point" cx="75" cy="85" r="4" />
-                                    <text class="chart-value-label" x="75" y="75">201</text>
-                                    
-                                    <circle class="chart-point" cx="130" cy="115" r="4" />
-                                    <text class="chart-value-label" x="130" y="105">156</text>
-                                    
-                                    <circle class="chart-point" cx="185" cy="75" r="4" />
-                                    <text class="chart-value-label" x="185" y="65">218</text>
-                                    
-                                    <circle class="chart-point" cx="240" cy="95" r="4" />
-                                    <text class="chart-value-label" x="240" y="85">189</text>
-                                    
-                                    <circle class="chart-point" cx="295" cy="80" r="4" />
-                                    <text class="chart-value-label" x="295" y="70">209</text>
-                                    
-                                    <circle class="chart-point" cx="350" cy="100" r="4" />
-                                    <text class="chart-value-label" x="350" y="90">176</text>
-                                    
-                                    <circle class="chart-point" cx="405" cy="65" r="4" />
-                                    <text class="chart-value-label" x="405" y="55">234</text>
-                                    
-                                    <circle class="chart-point" cx="460" cy="90" r="4" />
-                                    <text class="chart-value-label" x="460" y="80">198</text>
-                                    
-                                    <circle class="chart-point" cx="520" cy="55" r="4" />
-                                    <text class="chart-value-label" x="520" y="45">245</text>
-                                </svg>
-                                <svg width="100%" height="30" style="margin-top: -10px;">
-                                    <text class="chart-x-label" x="3.7%" y="15">1/18</text>
-                                    <text class="chart-x-label" x="13.9%" y="15">1/19</text>
-                                    <text class="chart-x-label" x="24.1%" y="15">1/20</text>
-                                    <text class="chart-x-label" x="34.3%" y="15">1/21</text>
-                                    <text class="chart-x-label" x="44.4%" y="15">1/22</text>
-                                    <text class="chart-x-label" x="54.6%" y="15">1/23</text>
-                                    <text class="chart-x-label" x="64.8%" y="15">1/24</text>
-                                    <text class="chart-x-label" x="75%" y="15">1/25</text>
-                                    <text class="chart-x-label" x="85.2%" y="15">1/26</text>
-                                    <text class="chart-x-label" x="96.3%" y="15">1/27</text>
-                                </svg>
-                                <div class="chart-legend">
-                                    일별 발송 건수
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-
-                <!-- 수정 히스토리 -->
+                        <!-- 수정 히스토리 -->
                 <div class="section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px;">
                     <div class="section-title">수정 히스토리</div>
                     <div class="history-timeline">
@@ -5640,6 +5813,309 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
     
 
     <script>
+
+        /* =====================================================
+           매니저 푸시 대시보드 JS
+           ===================================================== */
+        var PUSH_API_URL = 'https://vibe.techin.pe.kr/api/query';
+        var PUSH_API_KEY = 'x-plab-8d2a15d27a8538c59730e13ce4cbc429209c2117b2a748e5318ac63e0d91ca06';
+        var _pushAllData = [];
+        var _pushCurrentPage = 1;
+        var _pushPageSize = 20;
+        var _pushDashboardInited = false;
+
+        async function pushQuery(sql, params) {
+            try {
+                var body = {query: sql};
+                if (params && params.length) body.params = params;
+                var res = await fetch(PUSH_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-API-Key': PUSH_API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                var json = await res.json();
+                if (!json.success) throw new Error(json.error || '쿼리 오류');
+                return json.data || [];
+            } catch(e) {
+                console.error('Push API error:', e);
+                showPushError('API 연결 오류: ' + e.message + ' — 테이블 구조를 먼저 확인해주세요.');
+                return null;
+            }
+        }
+
+        function showPushError(msg) {
+            var el = document.getElementById('pushApiError');
+            if (el) { el.style.display = 'block'; el.textContent = '⚠️ ' + msg; }
+        }
+
+        function hidePushError() {
+            var el = document.getElementById('pushApiError');
+            if (el) el.style.display = 'none';
+        }
+
+        /* ── 탭 전환 ── */
+        function switchPushTab(btn, tab) {
+            document.querySelectorAll('.push-tab').forEach(function(t) {
+                t.style.borderBottomColor = 'transparent';
+                t.style.color = '#6B7280';
+                t.style.fontWeight = '500';
+            });
+            btn.style.borderBottomColor = '#3B82F6';
+            btn.style.color = '#3B82F6';
+            btn.style.fontWeight = '600';
+            document.querySelectorAll('.push-tab-content').forEach(function(c) {
+                c.style.display = 'none';
+            });
+            var target = document.getElementById('push-' + tab);
+            if (target) target.style.display = 'block';
+            if (tab === 'list' && _pushAllData.length === 0) loadPushList();
+        }
+
+        /* ── 초기화 ── */
+        async function initPushDashboard() {
+            if (_pushDashboardInited) return;
+            hidePushError();
+            // 테이블 구조 먼저 탐색
+            var tables = await pushQuery('SHOW TABLES');
+            if (!tables) return;
+            var tableNames = tables.map(function(r) { return Object.values(r)[0]; });
+            console.log('사용 가능한 테이블:', tableNames);
+
+            // push 관련 테이블 찾기
+            var pushTable = tableNames.find(function(n) {
+                return /push|notification|fcm|알림/i.test(n);
+            });
+
+            if (!pushTable) {
+                // 테이블 목록을 에러 메시지로 표시해 PM이 확인할 수 있게
+                showPushError('푸시 관련 테이블을 찾지 못했습니다. 발견된 테이블: ' + tableNames.join(', '));
+                renderMockDashboard();
+                return;
+            }
+
+            _pushDashboardInited = true;
+            await Promise.all([loadDashboard(pushTable), loadPushList(pushTable)]);
+        }
+
+        /* ── 대시보드 데이터 로드 ── */
+        async function loadDashboard(tbl) {
+            // 총 발송 건수
+            var total = await pushQuery('SELECT COUNT(*) as cnt FROM ' + tbl);
+            if (total && total[0]) {
+                document.getElementById('kpi-total').textContent = Number(total[0].cnt || 0).toLocaleString();
+            }
+
+            // 오늘 발송
+            var today = await pushQuery('SELECT COUNT(*) as cnt FROM ' + tbl + ' WHERE DATE(created_at) = CURDATE()');
+            if (today && today[0]) {
+                document.getElementById('kpi-today').textContent = Number(today[0].cnt || 0).toLocaleString();
+            }
+
+            // 이번 주 발송
+            var week = await pushQuery('SELECT COUNT(*) as cnt FROM ' + tbl + ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)');
+            if (week && week[0]) {
+                document.getElementById('kpi-week').textContent = Number(week[0].cnt || 0).toLocaleString();
+            }
+
+            // 활성 템플릿 수
+            var tmpl = await pushQuery('SELECT COUNT(DISTINCT template_id) as cnt FROM ' + tbl);
+            if (tmpl && tmpl[0]) {
+                document.getElementById('kpi-templates').textContent = Number(tmpl[0].cnt || 0).toLocaleString();
+            }
+
+            // 일별 추이 (14일)
+            var daily = await pushQuery(
+                'SELECT DATE(created_at) as d, COUNT(*) as cnt FROM ' + tbl +
+                ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY) GROUP BY DATE(created_at) ORDER BY d'
+            );
+            if (daily) renderDailyChart(daily);
+
+            // 유형별 비율
+            var byType = await pushQuery(
+                'SELECT template_type, COUNT(*) as cnt FROM ' + tbl + ' GROUP BY template_type ORDER BY cnt DESC LIMIT 8'
+            );
+            if (byType) renderTypeChart(byType);
+
+            // TOP 템플릿
+            var topTmpl = await pushQuery(
+                'SELECT template_name, COUNT(*) as cnt FROM ' + tbl + ' GROUP BY template_name ORDER BY cnt DESC LIMIT 10'
+            );
+            if (topTmpl) renderTopTemplates(topTmpl);
+        }
+
+        /* ── 일별 차트 렌더링 (SVG 바 차트) ── */
+        function renderDailyChart(data) {
+            var el = document.getElementById('chart-daily');
+            if (!el || !data.length) {
+                el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding-top:80px;">데이터 없음</div>';
+                return;
+            }
+            var maxVal = Math.max.apply(null, data.map(function(d) { return parseInt(d.cnt) || 0; }));
+            var w = 100 / data.length;
+            var bars = data.map(function(d, i) {
+                var pct = maxVal > 0 ? ((parseInt(d.cnt) || 0) / maxVal * 160) : 0;
+                var dateStr = (d.d || '').toString().slice(5); // MM-DD
+                return '<g>' +
+                    '<rect x="' + (i * w + 1) + '%" y="' + (170 - pct) + '" width="' + (w - 2) + '%" height="' + pct + '" fill="#3B82F6" rx="3" opacity="0.85"/>' +
+                    '<text x="' + (i * w + w/2) + '%" y="190" text-anchor="middle" font-size="9" fill="#9CA3AF">' + dateStr + '</text>' +
+                    '<text x="' + (i * w + w/2) + '%" y="' + (165 - pct) + '" text-anchor="middle" font-size="9" fill="#374151">' + (parseInt(d.cnt)||0) + '</text>' +
+                    '</g>';
+            }).join('');
+            el.innerHTML = '<svg width="100%" height="200" viewBox="0 0 100 200" preserveAspectRatio="none">' + bars + '</svg>';
+        }
+
+        /* ── 유형별 도넛 차트 ── */
+        function renderTypeChart(data) {
+            var el = document.getElementById('chart-type');
+            if (!el || !data.length) {
+                el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding-top:80px;">데이터 없음</div>';
+                return;
+            }
+            var colors = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#14B8A6','#F97316'];
+            var total = data.reduce(function(s, d) { return s + (parseInt(d.cnt)||0); }, 0);
+            var legend = data.map(function(d, i) {
+                var pct = total > 0 ? Math.round((parseInt(d.cnt)||0) / total * 100) : 0;
+                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                    '<div style="width:10px;height:10px;border-radius:2px;background:' + colors[i % colors.length] + ';flex-shrink:0;"></div>' +
+                    '<div style="font-size:12px;color:#374151;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (d.template_type || '미분류') + '</div>' +
+                    '<div style="font-size:12px;font-weight:600;color:#111827;">' + pct + '%</div>' +
+                    '</div>';
+            }).join('');
+            // 간단 막대 형태
+            var barRows = data.map(function(d, i) {
+                var pct = total > 0 ? Math.round((parseInt(d.cnt)||0) / total * 100) : 0;
+                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+                    '<div style="font-size:12px;color:#6B7280;min-width:80px;overflow:hidden;text-overflow:ellipsis;">' + (d.template_type || '미분류') + '</div>' +
+                    '<div style="flex:1;height:16px;background:#F3F4F6;border-radius:8px;overflow:hidden;">' +
+                    '<div style="height:100%;width:' + pct + '%;background:' + colors[i % colors.length] + ';border-radius:8px;transition:width .4s;"></div>' +
+                    '</div>' +
+                    '<div style="font-size:12px;font-weight:600;color:#111827;min-width:36px;text-align:right;">' + pct + '%</div>' +
+                    '</div>';
+            }).join('');
+            el.innerHTML = '<div style="height:200px;overflow-y:auto;">' + barRows + '</div>';
+        }
+
+        /* ── TOP 템플릿 ── */
+        function renderTopTemplates(data) {
+            var el = document.getElementById('top-templates');
+            if (!el || !data.length) {
+                el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">데이터 없음</div>';
+                return;
+            }
+            var max = parseInt(data[0].cnt) || 1;
+            el.innerHTML = data.map(function(d, i) {
+                var pct = Math.round((parseInt(d.cnt)||0) / max * 100);
+                return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F3F4F6;">' +
+                    '<div style="font-size:13px;font-weight:700;color:#9CA3AF;min-width:20px;">' + (i+1) + '</div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (d.template_name || '이름 없음') + '</div>' +
+                    '<div style="height:6px;background:#F3F4F6;border-radius:3px;"><div style="height:100%;width:' + pct + '%;background:#3B82F6;border-radius:3px;"></div></div>' +
+                    '</div>' +
+                    '<div style="font-size:14px;font-weight:700;color:#374151;min-width:50px;text-align:right;">' + Number(parseInt(d.cnt)||0).toLocaleString() + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        /* ── 전체 목록 로드 ── */
+        async function loadPushList(tbl) {
+            var el = document.getElementById('push-table-body');
+            if (el) el.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>';
+
+            // 테이블명이 없으면 재탐색
+            if (!tbl || typeof tbl !== 'string') {
+                var tables = await pushQuery('SHOW TABLES');
+                if (!tables) return;
+                var tableNames = tables.map(function(r) { return Object.values(r)[0]; });
+                tbl = tableNames.find(function(n) { return /push|notification|fcm|알림/i.test(n); });
+                if (!tbl) {
+                    if (el) el.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">테이블을 찾을 수 없습니다</td></tr>';
+                    return;
+                }
+            }
+
+            var days = document.getElementById('push-filter-period');
+            var period = days ? (parseInt(days.value) || 30) : 30;
+            var data = await pushQuery(
+                'SELECT * FROM ' + tbl + ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) ORDER BY created_at DESC LIMIT 500',
+                [period]
+            );
+            if (!data) return;
+            _pushAllData = data;
+            _pushCurrentPage = 1;
+            renderPushTable();
+        }
+
+        /* ── 테이블 렌더링 ── */
+        function renderPushTable() {
+            var search = (document.getElementById('push-search') || {}).value || '';
+            var typeFilter = (document.getElementById('push-filter-type') || {}).value || '';
+            var filtered = _pushAllData.filter(function(r) {
+                var nameMatch = !search || JSON.stringify(r).toLowerCase().includes(search.toLowerCase());
+                var typeMatch = !typeFilter || (r.template_type || '').toLowerCase().includes(typeFilter);
+                return nameMatch && typeMatch;
+            });
+            var total = filtered.length;
+            var pages = Math.ceil(total / _pushPageSize);
+            var start = (_pushCurrentPage - 1) * _pushPageSize;
+            var pageData = filtered.slice(start, start + _pushPageSize);
+
+            var el = document.getElementById('push-table-body');
+            if (!el) return;
+            if (!pageData.length) {
+                el.innerHTML = '<tr><td colspan="6" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">데이터 없음</td></tr>';
+            } else {
+                el.innerHTML = pageData.map(function(r) {
+                    var ts = r.created_at || r.sent_at || r.date || '-';
+                    if (ts && ts.length > 16) ts = ts.substring(0, 16).replace('T', ' ');
+                    var status = r.status || r.state || 'active';
+                    var statusBadge = status === 'active' || status === 'sent'
+                        ? '<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">발송완료</span>'
+                        : '<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' + status + '</span>';
+                    return '<tr style="border-bottom:1px solid #F3F4F6;cursor:pointer;">' +
+                        '<td style="padding:12px 16px;font-size:13px;color:#6B7280;white-space:nowrap;">' + ts + '</td>' +
+                        '<td style="padding:12px 16px;font-size:13px;font-weight:500;color:#111827;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.template_name || r.name || '-') + '</td>' +
+                        '<td style="padding:12px 16px;font-size:13px;color:#374151;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.title || r.message || r.body || '-') + '</td>' +
+                        '<td style="padding:12px 16px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' + (r.template_type || r.type || '일반') + '</span></td>' +
+                        '<td style="padding:12px 16px;font-size:13px;font-weight:600;color:#111827;text-align:right;">' + Number(parseInt(r.send_count || r.count || 1)||1).toLocaleString() + '</td>' +
+                        '<td style="padding:12px 16px;text-align:center;">' + statusBadge + '</td>' +
+                        '</tr>';
+                }).join('');
+            }
+            // 페이지네이션
+            var pg = document.getElementById('push-pagination');
+            if (pg) {
+                pg.innerHTML = '<span style="font-size:13px;color:#6B7280;">총 ' + total + '건</span>';
+                if (pages > 1) {
+                    var btns = '';
+                    for (var i = 1; i <= Math.min(pages, 7); i++) {
+                        var active = i === _pushCurrentPage;
+                        btns += '<button onclick="_pushCurrentPage=' + i + ';renderPushTable();" style="padding:4px 10px;border:1px solid ' + (active?'#3B82F6':'#E5E7EB') + ';background:' + (active?'#3B82F6':'white') + ';color:' + (active?'white':'#374151') + ';border-radius:6px;font-size:13px;cursor:pointer;">' + i + '</button>';
+                    }
+                    pg.innerHTML += ' ' + btns;
+                }
+            }
+        }
+
+        function filterPushList() {
+            _pushCurrentPage = 1;
+            renderPushTable();
+        }
+
+        /* ── API 연결 불가 시 목업 대시보드 ── */
+        function renderMockDashboard() {
+            document.getElementById('kpi-total').textContent = '—';
+            document.getElementById('kpi-today').textContent = '—';
+            document.getElementById('kpi-week').textContent = '—';
+            document.getElementById('kpi-templates').textContent = '—';
+            document.getElementById('chart-daily').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9CA3AF;font-size:13px;">API 연결 후 데이터가 표시됩니다</div>';
+            document.getElementById('chart-type').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9CA3AF;font-size:13px;">API 연결 후 데이터가 표시됩니다</div>';
+            document.getElementById('top-templates').innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">API 연결 후 데이터가 표시됩니다</div>';
+        }
+        /* ===================================================== */
+
         /* ─── toast 알림 ─── */
         function toast(msg, dur, isSave) {
             var el = document.getElementById('_guideToast');
@@ -5766,6 +6242,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             }
             closeModal('reviewComparisonModal');
             toast('✅ 검토 완료되었습니다. 등록 대기로 이동했습니다.', 3000, true);
+        }
+
+        function switchJourneyTab(btn, tab) {
+            // 탭 버튼 스타일
+            document.querySelectorAll('.journey-tab').forEach(function(t) {
+                t.style.borderBottomColor = 'transparent';
+                t.style.color = '#6B7280';
+                t.style.fontWeight = '500';
+            });
+            btn.style.borderBottomColor = '#3B82F6';
+            btn.style.color = '#3B82F6';
+            btn.style.fontWeight = '600';
+            // 탭 콘텐츠
+            document.querySelectorAll('.journey-tab-content').forEach(function(c) {
+                c.style.display = 'none';
+            });
+            var target = document.getElementById('journey-' + tab);
+            if (target) target.style.display = 'block';
         }
 
         function openDetailViewModal(e) {
@@ -6097,25 +6591,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             stepBoxes.forEach(box => box.classList.remove('active'));
             event.currentTarget.classList.add('active');
             
-            // Filter table rows by status
-            const rows = document.querySelectorAll('.page-content.active tbody tr');
-            let visibleCount = 0;
+            // step 번호 매핑
+            var stepMap = {'내용 등록': 1, '라이팅 검토': 2, '등록 대기': 3, '등록 완료': 4};
+            window._activeStepFilter = stepMap[status] || null;
             
-            rows.forEach(row => {
-                const statusBadge = row.querySelector('.status-badge');
-                if (statusBadge && statusBadge.textContent.includes(status)) {
+            // Filter table rows
+            var tbody = document.getElementById('templateTableBody');
+            if (!tbody) return;
+            var rows = tbody.querySelectorAll('tr[data-step]');
+            rows.forEach(function(row) {
+                var badge = row.querySelector('.status-badge');
+                if (badge && badge.textContent.trim().includes(status)) {
                     row.style.display = '';
-                    visibleCount++;
                 } else {
                     row.style.display = 'none';
                 }
             });
-            
-            // Show message if no results
-            if (visibleCount === 0) {
-                // Could add a "no results" message here
-                console.log('No templates found for status:', status);
-            }
+            // 해당 step에 맞는 액션 버튼만 노출
+            renderTemplateActions();
         }
         
         function updateReviewPreview() {
