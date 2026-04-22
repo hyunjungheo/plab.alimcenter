@@ -3339,7 +3339,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-        import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
         const firebaseConfig = {
             apiKey: "AIzaSyBvlcA2j8mS3u1c-YuchQ-uBDoC8plNtF4",
             authDomain: "alimcenter-7b73a.firebaseapp.com",
@@ -3371,6 +3371,32 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
         window._loadGuide = loadGuide;
         window._saveGuideToFirestore = saveGuideToFirestore;
+
+        /* ── Push Consent Firestore 축적 ── */
+        window._savePushConsentRecord = async function(record) {
+            // record: {date, total, push_on, push_off, rate}
+            try {
+                await setDoc(doc(db, 'push_consent_daily', record.date), {
+                    ...record,
+                    savedAt: new Date().toISOString()
+                });
+                return true;
+            } catch(e) { console.warn('Firestore save:', e); return false; }
+        };
+        window._loadPushConsentHistory = async function() {
+            try {
+                const col = collection(db, 'push_consent_daily');
+                const q   = query(col, orderBy('date', 'asc'), limit(90));
+                const snap = await getDocs(q);
+                return snap.docs.map(function(d){ return d.data(); });
+            } catch(e) { console.warn('Firestore load:', e); return []; }
+        };
+        window._checkTodayConsentExists = async function(dateStr) {
+            try {
+                const snap = await getDoc(doc(db, 'push_consent_daily', dateStr));
+                return snap.exists();
+            } catch(e) { return false; }
+        };
         document.addEventListener('DOMContentLoaded', loadGuide);
     </script>
 
@@ -4537,6 +4563,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #E5E7EB;">
                 <button class="push-tab active" onclick="switchPushTab(this,'dashboard')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid #3B82F6;margin-bottom:-2px;font-size:14px;font-weight:600;color:#3B82F6;cursor:pointer;">대시보드</button>
                 <button class="push-tab" onclick="switchPushTab(this,'list')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">전체 푸시 목록</button>
+                <button class="push-tab" onclick="switchPushTab(this,'calendar')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">캘린더</button>
+                <button class="push-tab" onclick="switchPushTab(this,'calendar');initPushCalendar();" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">캘린더</button>
+                <button class="push-tab" onclick="switchPushTab(this,'consent');initConsentTab();" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">동의 현황</button>
             </div>
 
             <!-- 대시보드 탭 -->
@@ -4638,7 +4667,273 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <div id="push-pagination" style="display:flex;justify-content:center;align-items:center;gap:8px;padding:14px;border-top:1px solid #E5E7EB;flex-wrap:wrap;"></div>
                 </div>
             </div>
+
+
+            <!-- 캘린더 탭 -->
+            <div id="push-calendar" class="push-tab-content" style="display:none;">
+                <!-- 캘린더 헤더 -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <button onclick="movePushCalendar(-1)" style="width:32px;height:32px;border:1px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;line-height:1;">&#8249;</button>
+                        <h3 id="cal-month-label" style="font-size:18px;font-weight:700;color:#111827;min-width:110px;text-align:center;">-</h3>
+                        <button onclick="movePushCalendar(1)" style="width:32px;height:32px;border:1px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;line-height:1;">&#8250;</button>
+                        <button onclick="movePushCalendar(0)" style="padding:6px 14px;border:1px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;font-size:13px;color:#374151;">오늘</button>
+                    </div>
+                    <button onclick="openCalAddModal()" style="padding:8px 18px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">+ 발송 예정 추가</button>
+                </div>
+                <!-- 요일 헤더 -->
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#F9FAFB;border:1px solid #E5E7EB;border-bottom:none;border-radius:12px 12px 0 0;">
+                    <div style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:#EF4444;">일</div>
+                    <div style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:#374151;">월</div>
+                    <div style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:#374151;">화</div>
+                    <div style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:#374151;">수</div>
+                    <div style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:#374151;">목</div>
+                    <div style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:#374151;">금</div>
+                    <div style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;color:#3B82F6;">토</div>
+                </div>
+                <!-- 그리드 -->
+                <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);border:1px solid #E5E7EB;border-radius:0 0 12px 12px;overflow:hidden;background:white;"></div>
+
+            <!-- 동의 현황 탭 -->
+            <div id="push-consent" class="push-tab-content" style="display:none;">
+                <!-- 상단 배너: 기록 상태 -->
+                <div id="consent-record-banner" style="display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#1D4ED8;display:flex;align-items:center;justify-content:space-between;">
+                    <span id="consent-banner-msg">오늘 데이터를 불러오는 중...</span>
+                    <button onclick="recordConsentNow()" id="consent-record-btn" style="padding:6px 14px;background:#3B82F6;color:white;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">지금 기록</button>
+                </div>
+
+                <!-- KPI 카드 -->
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">활성 매니저</div>
+                        <div id="consent-kpi-total" style="font-size:28px;font-weight:800;color:#111827;">-</div>
+                        <div style="font-size:12px;color:#6B7280;margin-top:4px;">is_open = 1 기준</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">앱 푸시 ON</div>
+                        <div id="consent-kpi-on" style="font-size:28px;font-weight:800;color:#10B981;">-</div>
+                        <div id="consent-kpi-on-sub" style="font-size:12px;color:#6B7280;margin-top:4px;">-</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">앱 푸시 OFF</div>
+                        <div id="consent-kpi-off" style="font-size:28px;font-weight:800;color:#EF4444;">-</div>
+                        <div id="consent-kpi-off-sub" style="font-size:12px;color:#6B7280;margin-top:4px;">-</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">푸시 ON 비율</div>
+                        <div id="consent-kpi-rate" style="font-size:28px;font-weight:800;color:#3B82F6;">-</div>
+                        <div id="consent-kpi-date" style="font-size:12px;color:#6B7280;margin-top:4px;">기준 일자</div>
+                    </div>
+                </div>
+
+                <!-- 추이 차트 + OFF 특성 -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+                    <!-- 추이 차트 (Firestore 축적 데이터) -->
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <div style="font-size:15px;font-weight:700;color:#111827;">푸시 ON 비율 추이</div>
+                            <span style="font-size:11px;color:#9CA3AF;">최근 90일 · 매일 10시 자동 기록</span>
+                        </div>
+                        <div style="font-size:12px;color:#6B7280;margin-bottom:14px;">Firestore 축적 데이터 기준</div>
+                        <div id="consent-trend-chart" style="height:180px;"></div>
+                    </div>
+                    <!-- 카테고리별 OFF 비율 -->
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;">푸시 OFF 구장 그룹별 분포</div>
+                        <div style="font-size:12px;color:#6B7280;margin-bottom:14px;">매니저 우선 채용 구장 기준</div>
+                        <div id="consent-off-groups" style="height:180px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+
+                <!-- 히스토리 테이블 -->
+                <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div style="font-size:15px;font-weight:700;color:#111827;">일별 기록 이력</div>
+                        <span id="consent-history-count" style="font-size:12px;color:#9CA3AF;"></span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                            <colgroup><col style="width:110px"><col style="width:auto"><col style="width:auto"><col style="width:auto"><col style="width:80px"></colgroup>
+                            <thead>
+                                <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
+                                    <th style="padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">날짜</th>
+                                    <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;">활성 매니저</th>
+                                    <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#10B981;">푸시 ON</th>
+                                    <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#EF4444;">푸시 OFF</th>
+                                    <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#3B82F6;">ON 비율</th>
+                                </tr>
+                            </thead>
+                            <tbody id="consent-history-body">
+                                <tr><td colspan="5" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+            <!-- 발송 상세 모달 -->
+            <div id="calDetailModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.55);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this)closeCalDetailModal()">
+                <div style="background:white;border-radius:16px;width:500px;max-width:92vw;max-height:82vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 24px;border-bottom:1px solid #E5E7EB;position:sticky;top:0;background:white;z-index:1;">
+                        <div>
+                            <div id="cal-detail-date" style="font-size:12px;color:#6B7280;margin-bottom:3px;"></div>
+                            <div id="cal-detail-title" style="font-size:16px;font-weight:700;color:#111827;"></div>
+                        </div>
+                        <button onclick="closeCalDetailModal()" style="border:none;background:none;font-size:22px;color:#9CA3AF;cursor:pointer;flex-shrink:0;margin-left:8px;">×</button>
+                    </div>
+                    <div id="cal-detail-body" style="padding:20px 24px;"></div>
+                </div>
+            </div>
+
+            <!-- 발송 예정 추가 모달 -->
+            <div id="calAddModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.55);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this)closeCalAddModal()">
+                <div style="background:white;border-radius:16px;width:480px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid #E5E7EB;">
+                        <div style="font-size:17px;font-weight:700;color:#111827;">발송 예정 추가</div>
+                        <button onclick="closeCalAddModal()" style="border:none;background:none;font-size:22px;color:#9CA3AF;cursor:pointer;">×</button>
+                    </div>
+                    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">발송 예정일 <span style="color:#EF4444;">*</span></label>
+                            <input type="date" id="cal-add-date" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">제목 <span style="color:#EF4444;">*</span></label>
+                            <input type="text" id="cal-add-title" placeholder="푸시 제목을 입력하세요" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">내용</label>
+                            <textarea id="cal-add-body" rows="3" placeholder="푸시 내용을 입력하세요" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div>
+                                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">카테고리</label>
+                                <select id="cal-add-category" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:white;">
+                                    <option value="">선택</option>
+                                    <option>경기 관련</option><option>결제 관련</option>
+                                    <option>채용</option><option>활동</option>
+                                    <option>리마인더</option><option>이벤트</option>
+                                    <option>공지</option><option>기타</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">발송 대상</label>
+                                <select id="cal-add-target" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:white;">
+                                    <option value="">선택</option>
+                                    <option>전체 매니저</option><option>활성 매니저</option>
+                                    <option>신규 매니저</option><option>특정 매니저</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px;border-top:1px solid #F3F4F6;">
+                            <button onclick="closeCalAddModal()" style="padding:9px 20px;border:1px solid #E5E7EB;border-radius:8px;background:white;font-size:14px;font-weight:500;cursor:pointer;color:#374151;">취소</button>
+                            <button onclick="saveCalAdd()" style="padding:9px 20px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">저장</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+            <!-- 캘린더 탭 -->
+            <div id="push-calendar" class="push-tab-content" style="display:none;">
+                <!-- 캘린더 헤더 -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <button onclick="calNav(-1)" style="width:32px;height:32px;border:1px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">‹</button>
+                        <div id="cal-title" style="font-size:18px;font-weight:700;color:#111827;min-width:140px;text-align:center;"></div>
+                        <button onclick="calNav(1)" style="width:32px;height:32px;border:1px solid #E5E7EB;border-radius:8px;background:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">›</button>
+                        <button onclick="calNav(0)" style="padding:6px 14px;border:1px solid #E5E7EB;border-radius:8px;background:white;font-size:13px;font-weight:500;color:#374151;cursor:pointer;">오늘</button>
+                    </div>
+                    <button onclick="openCalAddModal(null)" style="padding:8px 18px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">+ 발송 예정 추가</button>
+                </div>
+
+                <!-- 캘린더 그리드 -->
+                <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;">
+                    <!-- 요일 헤더 -->
+                    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #E5E7EB;">
+                        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#EF4444;">일</div>
+                        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;">월</div>
+                        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;">화</div>
+                        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;">수</div>
+                        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;">목</div>
+                        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;">금</div>
+                        <div style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#3B82F6;">토</div>
+                    </div>
+                    <!-- 날짜 셀 -->
+                    <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
+                </div>
+
+                <!-- 색상 범례 -->
+                <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6B7280;">
+                        <div style="width:10px;height:10px;border-radius:2px;background:#3B82F6;"></div>실제 발송
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6B7280;">
+                        <div style="width:10px;height:10px;border-radius:2px;background:#F59E0B;"></div>발송 예정
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6B7280;">
+                        <div style="width:10px;height:10px;border-radius:2px;background:#10B981;"></div>다수 카테고리
+                    </div>
+                </div>
+            </div>
+
+            <!-- 캘린더 상세 모달 -->
+            <div id="calDetailModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:3000;align-items:center;justify-content:center;">
+                <div style="background:white;border-radius:16px;width:520px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                    <div style="padding:20px 24px;border-bottom:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;">
+                        <div id="cal-detail-date" style="font-size:16px;font-weight:700;color:#111827;"></div>
+                        <button onclick="closeCalModal('calDetailModal')" style="border:none;background:none;font-size:20px;color:#9CA3AF;cursor:pointer;line-height:1;">×</button>
+                    </div>
+                    <div id="cal-detail-body" style="padding:20px 24px;"></div>
+                </div>
+            </div>
+
+            <!-- 발송 예정 추가 모달 -->
+            <div id="calAddModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:3000;align-items:center;justify-content:center;">
+                <div style="background:white;border-radius:16px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                    <div style="padding:20px 24px;border-bottom:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:16px;font-weight:700;color:#111827;">발송 예정 추가</div>
+                        <button onclick="closeCalModal('calAddModal')" style="border:none;background:none;font-size:20px;color:#9CA3AF;cursor:pointer;line-height:1;">×</button>
+                    </div>
+                    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+                        <div>
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">발송 예정일 <span style="color:#EF4444;">*</span></label>
+                            <input id="cal-add-date" type="date" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">제목 <span style="color:#EF4444;">*</span></label>
+                            <input id="cal-add-title" type="text" placeholder="푸시 알림 제목" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">내용</label>
+                            <textarea id="cal-add-body" rows="3" placeholder="푸시 알림 내용" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">카테고리</label>
+                            <input id="cal-add-category" type="text" placeholder="예: match_confirm, payment_complete" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">발송 대상</label>
+                            <select id="cal-add-target" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:white;box-sizing:border-box;">
+                                <option value="all">전체</option>
+                                <option value="manager">매니저</option>
+                                <option value="player">플래버</option>
+                                <option value="owner">구장주</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">메모</label>
+                            <input id="cal-add-memo" type="text" placeholder="담당자, 특이사항 등" style="width:100%;padding:9px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px;">
+                            <button onclick="closeCalModal('calAddModal')" style="padding:9px 20px;border:1px solid #E5E7EB;border-radius:8px;background:white;font-size:13px;font-weight:500;color:#374151;cursor:pointer;">취소</button>
+                            <button onclick="saveCalSchedule()" style="padding:9px 20px;border:none;border-radius:8px;background:#3B82F6;font-size:13px;font-weight:600;color:white;cursor:pointer;">저장</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         <!-- Simple Form Modal for Modal/Push/Message/Etc -->
     <div class="modal" id="simpleFormModal" style="display: none;">
@@ -5921,6 +6216,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var t = document.getElementById('push-' + tab);
             if (t) t.style.display = 'block';
             if (tab === 'list' && _pushAllData.length === 0) loadPushList();
+            if (tab === 'calendar') initCalendar();
         }
 
         /* ── 초기화 ── */
@@ -6214,6 +6510,1079 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var el = document.getElementById(id);
                 if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9CA3AF;font-size:13px;">API 연결 후 표시</div>';
             });
+        }
+
+
+        /* =====================================================
+           캘린더 JS
+           ===================================================== */
+        var _calYear  = 0;
+        var _calMonth = 0;
+        var _calDayData = {};      // { 'YYYY-MM-DD': [{category,cnt,isScheduled,...}] }
+        var _calSchedules = [];    // localStorage 기반 예정 항목
+
+        function calStorageKey() { return 'plab_cal_schedules_v1'; }
+
+        function loadCalSchedules() {
+            try {
+                var raw = localStorage.getItem(calStorageKey());
+                _calSchedules = raw ? JSON.parse(raw) : [];
+            } catch(e) { _calSchedules = []; }
+        }
+
+        function saveCalSchedules() {
+            try { localStorage.setItem(calStorageKey(), JSON.stringify(_calSchedules)); } catch(e) {}
+        }
+
+        /* ── 캘린더 탭 진입 시 초기화 ── */
+        async function initCalendar() {
+            loadCalSchedules();
+            var now = new Date();
+            _calYear  = now.getFullYear();
+            _calMonth = now.getMonth(); // 0-based
+            await loadCalData();
+        }
+
+        /* ── 해당 월 데이터 로드 ── */
+        async function loadCalData() {
+            var y = _calYear, m = _calMonth;
+            var firstDay = new Date(y, m, 1);
+            var lastDay  = new Date(y, m + 1, 0);
+            var from = fmtDate(firstDay);
+            var to   = fmtDate(lastDay);
+
+            _calDayData = {};
+
+            // API 실제 발송 데이터 (날짜+카테고리+건수)
+            var data = await pushQuery(
+                'SELECT DATE(created_at) as d, notification_category as cat, COUNT(*) as cnt' +
+                ' FROM ' + PUSH_TABLE +
+                ' WHERE DATE(created_at) BETWEEN ? AND ?' +
+                ' GROUP BY DATE(created_at), notification_category ORDER BY d',
+                [from, to]
+            );
+            if (data) {
+                data.forEach(function(r) {
+                    var dk = toKSTDate(r.d);
+                    if (!_calDayData[dk]) _calDayData[dk] = [];
+                    _calDayData[dk].push({ cat: r.cat||'기타', cnt: parseInt(r.cnt)||0, isScheduled: false });
+                });
+            }
+
+            // 로컬 예정 항목 merge
+            _calSchedules.forEach(function(s) {
+                var dk = s.date;
+                if (!_calDayData[dk]) _calDayData[dk] = [];
+                _calDayData[dk].push({ cat: s.category||'예정', cnt: 0, isScheduled: true, data: s });
+            });
+
+            renderCalendar();
+        }
+
+        function fmtDate(d) {
+            var pad = function(n){ return String(n).padStart(2,'0'); };
+            return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+        }
+
+        /* ── 캘린더 렌더링 ── */
+        function renderCalendar() {
+            var y = _calYear, m = _calMonth;
+            var titleEl = document.getElementById('cal-title');
+            if (titleEl) titleEl.textContent = y + '년 ' + (m+1) + '월';
+
+            var grid = document.getElementById('cal-grid');
+            if (!grid) return;
+
+            var firstWeekday = new Date(y, m, 1).getDay(); // 0=일
+            var daysInMonth  = new Date(y, m + 1, 0).getDate();
+            var prevDays     = new Date(y, m, 0).getDate();
+            var todayStr     = fmtDate(new Date());
+
+            var cells = '';
+            var total  = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+
+            for (var i = 0; i < total; i++) {
+                var day, dateStr, isCurrentMonth = true;
+                if (i < firstWeekday) {
+                    day = prevDays - firstWeekday + 1 + i;
+                    dateStr = fmtDate(new Date(y, m - 1, day));
+                    isCurrentMonth = false;
+                } else if (i >= firstWeekday + daysInMonth) {
+                    day = i - firstWeekday - daysInMonth + 1;
+                    dateStr = fmtDate(new Date(y, m + 1, day));
+                    isCurrentMonth = false;
+                } else {
+                    day = i - firstWeekday + 1;
+                    dateStr = fmtDate(new Date(y, m, day));
+                }
+
+                var isToday   = dateStr === todayStr;
+                var isSun     = (i % 7 === 0);
+                var isSat     = (i % 7 === 6);
+                var dayColor  = isSun ? '#EF4444' : isSat ? '#3B82F6' : '#111827';
+                var bgColor   = isToday ? '#EFF6FF' : isCurrentMonth ? 'white' : '#FAFAFA';
+                var opacity   = isCurrentMonth ? '1' : '0.4';
+                var borderRight = (i%7 < 6) ? 'border-right:1px solid #E5E7EB;' : '';
+                var borderBottom = (i < total - 7) ? 'border-bottom:1px solid #E5E7EB;' : '';
+
+                var entries = _calDayData[dateStr] || [];
+                var entryHtml = '';
+
+                // 실제 발송: 카테고리별 합산
+                var realMap = {};
+                var schedList = [];
+                entries.forEach(function(e) {
+                    if (e.isScheduled) { schedList.push(e); }
+                    else {
+                        realMap[e.cat] = (realMap[e.cat]||0) + e.cnt;
+                    }
+                });
+                var realCats = Object.keys(realMap);
+                var totalCnt = realCats.reduce(function(s,k){ return s + realMap[k]; }, 0);
+
+                if (totalCnt > 0) {
+                    var color = realCats.length > 1 ? '#10B981' : '#3B82F6';
+                    var label = realCats.length > 1 ? '다수' : (realCats[0]||'기타');
+                    if (label.length > 8) label = label.slice(0,8) + '…';
+                    entryHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="margin:1px 4px;padding:2px 6px;background:' + color + ';color:white;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + label + ' ' + totalCnt.toLocaleString() + '건">' +
+                        label + ' <b>' + totalCnt.toLocaleString() + '건</b></div>';
+                }
+                schedList.forEach(function(e) {
+                    var sTitle = (e.data && e.data.title ? e.data.title : '예정').slice(0,10);
+                    entryHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="margin:1px 4px;padding:2px 6px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="예정: ' + sTitle + '">' +
+                        sTitle + '</div>';
+                });
+
+                cells += '<div style="min-height:100px;padding:6px 0 4px;' + bgColor + ';' + borderRight + borderBottom + 'opacity:' + opacity + ';background:' + bgColor + ';position:relative;" data-date="' + dateStr + '">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 6px 4px;">' +
+                    '<span style="font-size:13px;font-weight:' + (isToday?'800':'500') + ';color:' + (isToday?'#3B82F6':dayColor) + ';' + (isToday?'background:#3B82F6;color:white;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;':'' ) + '">' + day + '</span>' +
+                    (isCurrentMonth ? '<button class="cal-add-btn" data-cal-date="' + dateStr + '" style="border:none;background:none;color:#9CA3AF;font-size:16px;cursor:pointer;padding:0;line-height:1;opacity:0;" class="cal-add-btn" title="추가">+</button>' : '') +
+                    '</div>' +
+                    entryHtml +
+                    '</div>';
+            }
+            grid.innerHTML = cells;
+
+            // hover 시 + 버튼 표시
+            grid.querySelectorAll('[data-date]').forEach(function(cell) {
+                var btn = cell.querySelector('.cal-add-btn');
+                if (!btn) return;
+                cell.addEventListener('mouseenter', function(){ btn.style.opacity = '1'; });
+                cell.addEventListener('mouseleave', function(){ btn.style.opacity = '0'; });
+            });
+            // 엔트리 클릭 이벤트 위임
+            grid.querySelectorAll('.cal-day-entry').forEach(function(el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openCalDetail(this.getAttribute('data-caldate'));
+                });
+            });
+        }
+
+        /* ── 월 이동 ── */
+        function calNav(dir) {
+            if (dir === 0) {
+                var now = new Date();
+                _calYear = now.getFullYear(); _calMonth = now.getMonth();
+            } else {
+                _calMonth += dir;
+                if (_calMonth > 11) { _calMonth = 0;  _calYear++; }
+                if (_calMonth < 0)  { _calMonth = 11; _calYear--; }
+            }
+            loadCalData();
+        }
+
+        /* ── 날짜 상세 모달 ── */
+        function openCalDetail(dateStr) {
+            var modal = document.getElementById('calDetailModal');
+            var dateEl = document.getElementById('cal-detail-date');
+            var bodyEl = document.getElementById('cal-detail-body');
+            if (!modal) return;
+
+            dateEl.textContent = dateStr + ' 발송 현황';
+            bodyEl.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>';
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            // 예정 항목
+            var scheds = _calSchedules.filter(function(s){ return s.date === dateStr; });
+
+            // 실제 발송 이력 API
+            pushQuery(
+                'SELECT title, body, notification_category, COUNT(*) as cnt FROM ' + PUSH_TABLE +
+                ' WHERE DATE(created_at) = ? GROUP BY title, body, notification_category ORDER BY cnt DESC',
+                [dateStr]
+            ).then(function(data) {
+                var html = '';
+
+                if (data && data.length) {
+                    var totalCnt = data.reduce(function(s,r){ return s + (parseInt(r.cnt)||0); }, 0);
+                    html += '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">실제 발송 — 총 ' + totalCnt.toLocaleString() + '건</div>';
+                    html += '<div style="border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-bottom:20px;">';
+                    html += '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">';
+                    html += '<colgroup><col style="width:auto"><col style="width:110px"><col style="width:60px"></colgroup>';
+                    html += '<thead><tr style="background:#F9FAFB;">';
+                    html += '<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>';
+                    html += '<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">카테고리</th>';
+                    html += '<th style="padding:9px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;">건수</th>';
+                    html += '</tr></thead><tbody>';
+                    data.forEach(function(r) {
+                        html += '<tr style="border-top:1px solid #F3F4F6;">';
+                        html += '<td style="padding:9px 12px;font-size:13px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>';
+                        html += '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">' + (r.notification_category||'기타') + '</span></td>';
+                        html += '<td style="padding:9px 12px;font-size:13px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                }
+
+                if (scheds.length) {
+                    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+                    html += '<div style="font-size:13px;font-weight:600;color:#374151;">발송 예정</div>';
+                    html += '</div>';
+                    scheds.forEach(function(s, si) {
+                        html += '<div style="border:1px solid #FCD34D;border-radius:10px;padding:14px 16px;background:#FFFBEB;margin-bottom:10px;">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+                        html += '<div>';
+                        html += '<div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:4px;">' + (s.title||'제목 없음') + '</div>';
+                        if (s.body) html += '<div style="font-size:13px;color:#374151;margin-bottom:6px;">' + s.body + '</div>';
+                        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+                        if (s.category) html += '<span style="background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;">' + s.category + '</span>';
+                        if (s.target)   html += '<span style="background:#F3F4F6;color:#374151;padding:2px 7px;border-radius:6px;font-size:11px;">대상: ' + s.target + '</span>';
+                        if (s.memo)     html += '<span style="background:#F3F4F6;color:#374151;padding:2px 7px;border-radius:6px;font-size:11px;">' + s.memo + '</span>';
+                        html += '</div></div>';
+                        html += '<button data-delidx="' + _calSchedules.indexOf(s) + '" class="cal-del-btn" style="border:none;background:none;color:#9CA3AF;font-size:18px;cursor:pointer;flex-shrink:0;padding:0;">×</button>';
+                        html += '</div></div>';
+                    });
+                }
+
+                if ((!data || !data.length) && !scheds.length) {
+                    html = '<div style="text-align:center;padding:32px;color:#9CA3AF;font-size:14px;">이 날의 발송 기록이 없습니다.</div>';
+                }
+
+                bodyEl.innerHTML = html;
+                // 삭제 버튼 클릭 이벤트
+                bodyEl.querySelectorAll('.cal-del-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        deleteCalSchedule(parseInt(this.getAttribute('data-delidx')));
+                    });
+                });
+            });
+        }
+
+        /* ── 예정 추가 모달 ── */
+        function openCalAddModal(dateStr) {
+            var modal = document.getElementById('calAddModal');
+            if (!modal) return;
+            var dateInput = document.getElementById('cal-add-date');
+            if (dateInput) dateInput.value = dateStr || fmtDate(new Date());
+            ['cal-add-title','cal-add-body','cal-add-category','cal-add-memo'].forEach(function(id){
+                var el = document.getElementById(id); if (el) el.value = '';
+            });
+            var t = document.getElementById('cal-add-target'); if (t) t.value = 'all';
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function saveCalSchedule() {
+            var date  = (document.getElementById('cal-add-date')||{}).value || '';
+            var title = (document.getElementById('cal-add-title')||{}).value || '';
+            if (!date || !title) { alert('발송 예정일과 제목은 필수입니다.'); return; }
+            _calSchedules.push({
+                date:     date,
+                title:    title,
+                body:     (document.getElementById('cal-add-body')||{}).value || '',
+                category: (document.getElementById('cal-add-category')||{}).value || '',
+                target:   (document.getElementById('cal-add-target')||{}).value || 'all',
+                memo:     (document.getElementById('cal-add-memo')||{}).value || '',
+                addedAt:  new Date().toISOString()
+            });
+            saveCalSchedules();
+            closeCalModal('calAddModal');
+            loadCalData();
+            toast('발송 예정이 추가되었습니다.', 2000, true);
+        }
+
+        function deleteCalSchedule(idx) {
+            if (!confirm('이 예정 항목을 삭제할까요?')) return;
+            _calSchedules.splice(idx, 1);
+            saveCalSchedules();
+            closeCalModal('calDetailModal');
+            loadCalData();
+            toast('삭제되었습니다.', 1500);
+        }
+
+        function closeCalModal(id) {
+            var modal = document.getElementById(id);
+            if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+
+        /* ── switchPushTab에 캘린더 초기화 연결 ── */
+        var _origSwitchPushTab = window.switchPushTab;
+        /* =====================================================
+           캘린더 JS 끝
+           ===================================================== */
+        /* ===================================================== */
+
+
+        /* =====================================================
+           캘린더 JS
+           ===================================================== */
+        var _calYear  = new Date().getFullYear();
+        var _calMonth = new Date().getMonth(); // 0-based
+        var _calData  = {};   // { 'YYYY-MM-DD': [{title,body,category,cnt,type},...] }
+        var _calScheduled = []; // 로컬 예정 항목
+        var _calInited = false;
+
+        var CAL_COLORS = {
+            '경기 관련': '#3B82F6',
+            '결제 관련': '#10B981',
+            '채용':     '#8B5CF6',
+            '활동':     '#F59E0B',
+            '리마인더': '#6366F1',
+            '이벤트':   '#EC4899',
+            '공지':     '#14B8A6',
+            '기타':     '#9CA3AF'
+        };
+        function calColor(cat) {
+            return CAL_COLORS[cat] || '#9CA3AF';
+        }
+
+        /* ── 초기화 ── */
+        async function initPushCalendar() {
+            if (_calInited) { renderCalendar(); return; }
+            _calInited = true;
+            await loadCalData();
+        }
+
+        /* ── API로 해당 월 데이터 로드 ── */
+        async function loadCalData() {
+            var y = _calYear, m = _calMonth;
+            var firstDay = y + '-' + String(m+1).padStart(2,'0') + '-01';
+            var lastDay  = new Date(y, m+1, 0);
+            var lastStr  = y + '-' + String(m+1).padStart(2,'0') + '-' + String(lastDay.getDate()).padStart(2,'0');
+
+            var data = await pushQuery(
+                'SELECT DATE(created_at) as d, title, notification_category as cat, COUNT(*) as cnt' +
+                ' FROM ' + PUSH_TABLE +
+                ' WHERE DATE(created_at) BETWEEN ? AND ?' +
+                ' GROUP BY DATE(created_at), title, notification_category' +
+                ' ORDER BY d ASC',
+                [firstDay, lastStr]
+            );
+
+            _calData = {};
+            if (data) {
+                data.forEach(function(r) {
+                    var d = toKSTDate(r.d);
+                    if (!_calData[d]) _calData[d] = [];
+                    _calData[d].push({
+                        title: r.title || '-',
+                        cat:   r.cat   || '기타',
+                        cnt:   parseInt(r.cnt) || 0,
+                        type:  'actual'
+                    });
+                });
+            }
+            renderCalendar();
+        }
+
+        /* ── 캘린더 렌더링 ── */
+        function renderCalendar() {
+            var y = _calYear, m = _calMonth;
+            var label = document.getElementById('cal-month-label');
+            if (label) label.textContent = y + '년 ' + (m+1) + '월';
+
+            var grid = document.getElementById('cal-grid');
+            if (!grid) return;
+
+            var firstDow = new Date(y, m, 1).getDay(); // 0=일
+            var daysInMonth = new Date(y, m+1, 0).getDate();
+            var today = toKSTDate(new Date().toISOString());
+
+            var cells = '';
+            // 앞 빈칸
+            for (var i = 0; i < firstDow; i++) {
+                cells += '<div style="min-height:110px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;background:#FAFAFA;padding:8px 6px;"></div>';
+            }
+
+            for (var d = 1; d <= daysInMonth; d++) {
+                var dateStr = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                var isToday = dateStr === today;
+                var dow = (firstDow + d - 1) % 7;
+                var isSun = dow === 0, isSat = dow === 6;
+                var numColor = isToday ? 'white' : (isSun ? '#EF4444' : (isSat ? '#3B82F6' : '#374151'));
+
+                var events = (_calData[dateStr] || []);
+                // 예정 항목 추가
+                _calScheduled.forEach(function(s) {
+                    if (s.date === dateStr) events = events.concat([{title:s.title, cat:s.category||'기타', cnt:0, type:'scheduled', body:s.body, target:s.target}]);
+                });
+
+                var eventHtml = '';
+                var shown = events.slice(0, 3);
+                shown.forEach(function(ev) {
+                    var bg = ev.type === 'scheduled' ? '#FEF3C7' : calColor(ev.cat);
+                    var fc = ev.type === 'scheduled' ? '#92400E' : 'white';
+                    var cntStr = ev.type === 'scheduled' ? '예정' : (ev.cnt > 0 ? ev.cnt.toLocaleString()+'건' : '');
+                    eventHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="background:' + bg + ';color:' + fc + ';border-radius:4px;padding:2px 6px;font-size:11px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="' + (ev.cat||'') + ' ' + cntStr + '">' +
+                        '<span>' + (ev.cat||'기타') + '</span>' +
+                        (cntStr ? '<span style="margin-left:4px;opacity:0.85;">' + cntStr + '</span>' : '') +
+                        '</div>';
+                });
+                if (events.length > 3) {
+                    eventHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="font-size:11px;color:#6B7280;cursor:pointer;padding-left:4px;">+' + (events.length-3) + '개 더보기</div>';
+                }
+
+                cells += '<div style="min-height:110px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;padding:6px;background:' + (isToday?'#EFF6FF':'white') + ';cursor:default;vertical-align:top;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+                    '<span style="font-size:13px;font-weight:600;' + (isToday?'background:#3B82F6;color:white;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;':'color:'+numColor+';') + '">' + d + '</span>' +
+                    (events.length > 0 && events[0].type !== 'scheduled' ? '<span style="font-size:10px;color:#9CA3AF;">' + events.reduce(function(s,e){return s+(e.cnt||0);},0).toLocaleString() + '</span>' : '') +
+                    '</div>' +
+                    eventHtml +
+                    '</div>';
+            }
+
+            // 뒤 빈칸
+            var total = firstDow + daysInMonth;
+            var rem = total % 7 === 0 ? 0 : 7 - (total % 7);
+            for (var i = 0; i < rem; i++) {
+                cells += '<div style="min-height:110px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;background:#FAFAFA;padding:8px 6px;"></div>';
+            }
+
+            grid.innerHTML = cells;
+            // 이벤트 클릭 위임
+            grid.querySelectorAll('.cal-ev').forEach(function(el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openCalDetail(this.getAttribute('data-cal-date'));
+                });
+            });
+            grid.querySelectorAll('.cal-add-btn').forEach(function(el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var d = this.getAttribute('data-cal-date');
+                    openCalAddModal(d);
+                });
+            });
+        }
+
+        /* ── 월 이동 ── */
+        function movePushCalendar(dir) {
+            if (dir === 0) {
+                _calYear  = new Date().getFullYear();
+                _calMonth = new Date().getMonth();
+            } else {
+                _calMonth += dir;
+                if (_calMonth < 0)  { _calMonth = 11; _calYear--; }
+                if (_calMonth > 11) { _calMonth = 0;  _calYear++; }
+            }
+            _calInited = true;
+            loadCalData();
+        }
+
+        /* ── 날짜 클릭 상세 ── */
+        function openCalDetail(dateStr) {
+            var events = (_calData[dateStr] || []);
+            var scheduled = _calScheduled.filter(function(s){ return s.date === dateStr; });
+
+            var modal = document.getElementById('calDetailModal');
+            var dateEl = document.getElementById('cal-detail-date');
+            var titleEl = document.getElementById('cal-detail-title');
+            var bodyEl = document.getElementById('cal-detail-body');
+            if (!modal) return;
+
+            dateEl.textContent = dateStr;
+            titleEl.textContent = '총 ' + events.reduce(function(s,e){return s+(e.cnt||0);},0).toLocaleString() + '건 발송';
+
+            var html = '';
+
+            // 실제 발송 이력
+            if (events.length) {
+                html += '<div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">발송 이력</div>';
+                events.forEach(function(ev) {
+                    html += '<div style="border:1px solid #E5E7EB;border-radius:10px;padding:12px 14px;margin-bottom:8px;">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                        '<span style="background:' + calColor(ev.cat) + ';color:white;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;">' + ev.cat + '</span>' +
+                        '<span style="font-size:13px;font-weight:700;color:#111827;">' + (ev.cnt||0).toLocaleString() + '건</span>' +
+                        '</div>' +
+                        '<div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:3px;">' + ev.title + '</div>' +
+                        '</div>';
+                });
+            }
+
+            // 발송 예정
+            if (scheduled.length) {
+                html += '<div style="font-size:12px;font-weight:600;color:#6B7280;margin-top:12px;margin-bottom:8px;">발송 예정</div>';
+                scheduled.forEach(function(s, idx) {
+                    html += '<div style="border:1px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:12px 14px;margin-bottom:8px;">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                        '<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;">' + (s.category||'기타') + ' · 예정</span>' +
+                        '<button class="cal-del-btn" data-del-idx="' + idx + '" data-del-date="' + dateStr + '" style="border:none;background:none;color:#9CA3AF;font-size:14px;cursor:pointer;">×</button>' +
+                        '</div>' +
+                        '<div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:2px;">' + s.title + '</div>' +
+                        (s.body ? '<div style="font-size:12px;color:#6B7280;margin-top:3px;">' + s.body + '</div>' : '') +
+                        (s.target ? '<div style="font-size:11px;color:#9CA3AF;margin-top:4px;">대상: ' + s.target + '</div>' : '') +
+                        '</div>';
+                });
+            }
+
+            if (!html) html = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px;">이 날짜에 발송 이력이 없습니다.</div>';
+
+            bodyEl.innerHTML = html;
+            modal.style.display = 'flex';
+            // 삭제 버튼 위임
+            bodyEl.querySelectorAll('.cal-del-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-del-idx'));
+                    var dt = this.getAttribute('data-del-date');
+                    deleteCalScheduled(i, dt);
+                });
+            });
+        }
+
+        function closeCalDetailModal() {
+            var m = document.getElementById('calDetailModal');
+            if (m) m.style.display = 'none';
+        }
+
+        function deleteCalScheduled(idx, dateStr) {
+            var found = [];
+            var cnt = 0;
+            _calScheduled = _calScheduled.filter(function(s) {
+                if (s.date === dateStr) {
+                    if (cnt === idx) { cnt++; return false; }
+                    cnt++;
+                }
+                return true;
+            });
+            closeCalDetailModal();
+            renderCalendar();
+            toast('예정 항목이 삭제되었습니다.', 2000);
+        }
+
+        /* ── 예정 추가 모달 ── */
+        function openCalAddModal(dateStr) {
+            var m = document.getElementById('calAddModal');
+            if (!m) return;
+            // 날짜 기본값
+            var dateInput = document.getElementById('cal-add-date');
+            if (dateInput) {
+                var today = new Date();
+                var kst = new Date(today.getTime() + 9*3600*1000);
+                dateInput.value = kst.toISOString().slice(0,10);
+            }
+            // 입력 초기화
+            ['cal-add-title','cal-add-body'].forEach(function(id){
+                var el = document.getElementById(id); if(el) el.value = '';
+            });
+            ['cal-add-category','cal-add-target'].forEach(function(id){
+                var el = document.getElementById(id); if(el) el.selectedIndex = 0;
+            });
+            m.style.display = 'flex';
+        }
+
+        function closeCalAddModal() {
+            var m = document.getElementById('calAddModal');
+            if (m) m.style.display = 'none';
+        }
+
+        function saveCalAdd() {
+            var date  = (document.getElementById('cal-add-date')||{}).value;
+            var title = (document.getElementById('cal-add-title')||{}).value.trim();
+            if (!date || !title) { alert('발송 예정일과 제목은 필수입니다.'); return; }
+            _calScheduled.push({
+                date:     date,
+                title:    title,
+                body:     (document.getElementById('cal-add-body')||{}).value.trim(),
+                category: (document.getElementById('cal-add-category')||{}).value,
+                target:   (document.getElementById('cal-add-target')||{}).value
+            });
+            closeCalAddModal();
+            // 해당 월로 이동
+            var parts = date.split('-');
+            _calYear  = parseInt(parts[0]);
+            _calMonth = parseInt(parts[1]) - 1;
+            renderCalendar();
+            toast('발송 예정이 추가되었습니다.', 2000, true);
+        }
+        /* ===================================================== */
+
+
+        /* =====================================================
+           앱 푸시 동의 현황 JS
+           ===================================================== */
+        var _consentInited = false;
+
+        async function initConsentTab() {
+            if (_consentInited) return;
+            _consentInited = true;
+            // Firestore에서 기존 기록 로드
+            await loadConsentHistory();
+            // 오늘 오전 10시 지났으면 자동 기록 시도
+            await autoRecordConsent();
+            // OFF 매니저 구장 그룹 조회
+            await loadOffStadiums();
+        }
+
+        /* ── 자동 기록: 10시 이후 오늘 기록 없으면 저장 ── */
+        async function autoRecordConsent() {
+            var now = new Date(new Date().getTime() + 9*3600*1000); // KST
+            var hour = parseInt(now.toISOString().slice(11,13));
+            if (hour < 10) return; // 10시 이전이면 패스
+            var today = now.toISOString().slice(0,10);
+            try {
+                var existing = window._getPushConsentToday ? await window._getPushConsentToday(today) : null;
+                if (!existing) {
+                    await fetchAndSaveConsent(false);
+                } else {
+                    updateConsentKPI(existing);
+                    var savedEl = document.getElementById('consent-last-saved');
+                    if (savedEl) savedEl.textContent = '오늘 ' + today + ' 기록 완료';
+                }
+            } catch(e) { console.warn('자동 기록 오류:', e); }
+        }
+
+        /* ── 데이터 조회 + Firestore 저장 ── */
+        async function fetchAndSaveConsent(showToast) {
+            var btn = document.querySelector('[onclick="fetchAndSaveConsent(true)"]');
+            if (btn) { btn.disabled = true; btn.textContent = '기록 중...'; }
+
+            var result = await pushQuery(
+                'SELECT COUNT(DISTINCT m.id) AS total_count,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) AS push_on_count,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL, m.id, NULL)) AS push_off_count,' +
+                ' ROUND(COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS push_on_rate_pct' +
+                ' FROM plab.manager m' +
+                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' WHERE m.is_open = 1 AND m.id NOT IN (3, 102)'
+            );
+
+            if (!result || !result[0]) {
+                if (btn) { btn.disabled = false; btn.textContent = '지금 기록'; }
+                return;
+            }
+
+            var row = result[0];
+            var now = new Date(new Date().getTime() + 9*3600*1000);
+            var today = now.toISOString().slice(0,10);
+
+            var data = {
+                date:         today,
+                total:        parseInt(row.total_count) || 0,
+                push_on:      parseInt(row.push_on_count) || 0,
+                push_off:     parseInt(row.push_off_count) || 0,
+                push_on_rate: parseFloat(row.push_on_rate_pct) || 0,
+                recorded_at:  now.toISOString().slice(0,19).replace('T',' ')
+            };
+
+            // Firestore 저장
+            try {
+                if (window._savePushConsent) await window._savePushConsent(data);
+            } catch(e) { console.warn('Firestore 저장 오류:', e); }
+
+            updateConsentKPI(data);
+            var savedEl = document.getElementById('consent-last-saved');
+            if (savedEl) savedEl.textContent = data.recorded_at + ' 기록됨';
+            if (btn) { btn.disabled = false; btn.textContent = '지금 기록'; }
+            if (showToast) toast('✅ 오늘 현황이 기록되었습니다.', 2500, true);
+
+            await loadConsentHistory();
+        }
+
+        /* ── KPI 업데이트 ── */
+        function updateConsentKPI(d) {
+            setEl('con-total', (d.total||0).toLocaleString() + '명');
+            setEl('con-on',    (d.push_on||0).toLocaleString() + '명');
+            setEl('con-off',   (d.push_off||0).toLocaleString() + '명');
+            setEl('con-rate',  (d.push_on_rate||0) + '%');
+        }
+
+        /* ── Firestore 이력 로드 ── */
+        async function loadConsentHistory() {
+            var history = [];
+            try {
+                if (window._loadPushConsentHistory) history = await window._loadPushConsentHistory(90);
+            } catch(e) { console.warn('이력 로드 오류:', e); }
+
+            if (!history.length) {
+                var el = document.getElementById('con-history-body');
+                if (el) el.innerHTML = '<tr><td colspan="6" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">기록 없음 — "지금 기록" 버튼으로 첫 기록을 남기세요</td></tr>';
+                return;
+            }
+
+            // 최신 KPI
+            var latest = history[history.length - 1];
+            updateConsentKPI(latest);
+
+            // 전일 대비
+            if (history.length > 1) {
+                var prev = history[history.length - 2];
+                var delta = (latest.push_on_rate - prev.push_on_rate).toFixed(1);
+                var sign = delta >= 0 ? '+' : '';
+                var color = delta >= 0 ? '#10B981' : '#EF4444';
+                var deltaEl = document.getElementById('con-rate-delta');
+                if (deltaEl) {
+                    deltaEl.textContent = '전일 대비 ' + sign + delta + '%p';
+                    deltaEl.style.color = color;
+                }
+            }
+
+            renderConsentChart(history);
+            renderConsentHistoryTable(history);
+        }
+
+        /* ── 추이 라인 차트 ── */
+        function renderConsentChart(history) {
+            var el = document.getElementById('con-chart');
+            if (!el || !history.length) return;
+            var W = 500, H = 160, padL = 34, padR = 10, padT = 14, padB = 28;
+            var inner_W = W - padL - padR;
+            var inner_H = H - padT - padB;
+            var n = history.length;
+
+            var rates = history.map(function(d){ return parseFloat(d.push_on_rate)||0; });
+            var minR = Math.max(0, Math.min.apply(null, rates) - 1);
+            var maxR = Math.min(100, Math.max.apply(null, rates) + 1);
+            var range = maxR - minR || 1;
+
+            function px(i) { return padL + i * (inner_W / Math.max(n-1,1)); }
+            function py(v) { return padT + inner_H - (v - minR) / range * inner_H; }
+
+            // 눈금선 + Y축 라벨
+            var gridLines = '';
+            for (var gi = 0; gi <= 4; gi++) {
+                var gv = minR + range * gi / 4;
+                var gy = py(gv);
+                gridLines += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W-padR) + '" y2="' + gy + '" stroke="#F3F4F6" stroke-width="1"/>';
+                gridLines += '<text x="' + (padL-3) + '" y="' + (gy+3) + '" text-anchor="end" font-size="9" fill="#9CA3AF">' + gv.toFixed(1) + '</text>';
+            }
+
+            // 라인 경로
+            var points = rates.map(function(v,i){ return px(i) + ',' + py(v); }).join(' ');
+            var areaPoints = px(0) + ',' + (padT + inner_H) + ' ' + points + ' ' + px(n-1) + ',' + (padT + inner_H);
+
+            // X축 라벨 (최대 7개)
+            var xLabels = '';
+            var step = Math.max(1, Math.floor(n / 7));
+            for (var xi = 0; xi < n; xi += step) {
+                var lbl = (history[xi].date||'').slice(5);
+                xLabels += '<text x="' + px(xi) + '" y="' + (H - padB + 14) + '" text-anchor="middle" font-size="9" fill="#9CA3AF">' + lbl + '</text>';
+            }
+
+            // 포인트
+            var dots = rates.map(function(v,i){
+                return '<circle cx="' + px(i) + '" cy="' + py(v) + '" r="3" fill="#3B82F6"/>';
+            }).join('');
+
+            el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:' + H + 'px;">' +
+                '<defs><linearGradient id="conGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3B82F6" stop-opacity="0.15"/><stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/></linearGradient></defs>' +
+                gridLines +
+                '<polygon points="' + areaPoints + '" fill="url(#conGrad)"/>' +
+                '<polyline points="' + points + '" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>' +
+                dots + xLabels +
+                '</svg>';
+        }
+
+        /* ── 이력 테이블 ── */
+        function renderConsentHistoryTable(history) {
+            var el = document.getElementById('con-history-body');
+            if (!el) return;
+            var reversed = history.slice().reverse();
+            el.innerHTML = reversed.map(function(d, i) {
+                var prev = reversed[i+1];
+                var delta = prev ? (d.push_on_rate - prev.push_on_rate).toFixed(1) : null;
+                var deltaStr = delta !== null ? (delta >= 0 ? '+' + delta : delta) + '%p' : '-';
+                var deltaColor = delta > 0 ? '#10B981' : delta < 0 ? '#EF4444' : '#9CA3AF';
+                return '<tr style="border-bottom:1px solid #F3F4F6;">' +
+                    '<td style="padding:9px 14px;font-size:13px;color:#374151;">' + (d.date||'-') + '</td>' +
+                    '<td style="padding:9px 14px;font-size:13px;text-align:right;color:#111827;">' + (d.total||0).toLocaleString() + '</td>' +
+                    '<td style="padding:9px 14px;font-size:13px;font-weight:600;text-align:right;color:#10B981;">' + (d.push_on||0).toLocaleString() + '</td>' +
+                    '<td style="padding:9px 14px;font-size:13px;font-weight:600;text-align:right;color:#EF4444;">' + (d.push_off||0).toLocaleString() + '</td>' +
+                    '<td style="padding:9px 14px;font-size:13px;font-weight:700;text-align:right;color:#3B82F6;">' + (d.push_on_rate||0) + '%</td>' +
+                    '<td style="padding:9px 14px;font-size:13px;text-align:right;color:' + deltaColor + ';">' + deltaStr + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        /* ── OFF 매니저 구장 그룹별 분포 ── */
+        async function loadOffStadiums() {
+            var el = document.getElementById('con-off-stadiums');
+            if (!el) return;
+
+            var data = await pushQuery(
+                'SELECT sg.name AS stadium_group_name, COUNT(DISTINCT m.id) AS off_count' +
+                ' FROM plab.manager m' +
+                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' LEFT JOIN plab.manager_priority_hiring_stadiums mphs ON mphs.manager_id = m.id' +
+                ' LEFT JOIN plab.stadium s ON s.id = mphs.stadium_id' +
+                ' LEFT JOIN plab.stadium_group sg ON sg.id = s.stadium_group_id' +
+                ' WHERE m.is_open = 1' +
+                ' AND m.id NOT IN (3, 102)' +
+                ' AND (vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL)' +
+                ' GROUP BY sg.name, sg.id' +
+                ' ORDER BY off_count DESC' +
+                ' LIMIT 20'
+            );
+
+            if (!data || !data.length) {
+                el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">데이터 없음</div>';
+                return;
+            }
+
+            var maxV = parseInt(data[0].off_count) || 1;
+            var total = data.reduce(function(s,d){ return s + (parseInt(d.off_count)||0); }, 0);
+
+            el.innerHTML = data.map(function(d) {
+                var cnt = parseInt(d.off_count)||0;
+                var pct = Math.round(cnt / maxV * 100);
+                var name = d.stadium_group_name || '(미분류)';
+                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+                    '<div style="font-size:12px;color:#374151;min-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + name + '">' + name + '</div>' +
+                    '<div style="flex:1;height:12px;background:#F3F4F6;border-radius:6px;overflow:hidden;">' +
+                    '<div style="height:100%;width:' + pct + '%;background:#EF4444;border-radius:6px;opacity:0.7;"></div>' +
+                    '</div>' +
+                    '<div style="font-size:12px;font-weight:600;color:#374151;min-width:36px;text-align:right;">' + cnt + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+        /* ===================================================== */
+
+
+        /* =====================================================
+           매니저 앱 푸시 동의 현황 JS
+           ===================================================== */
+        var _consentInited = false;
+        var _consentTodayData = null;
+
+        /* ── 탭 진입 ── */
+        async function initConsentTab() {
+            if (!_consentInited) {
+                _consentInited = true;
+            }
+            // 오늘 KST 날짜
+            var todayKST = toKSTDate(new Date().toISOString());
+            var banner = document.getElementById('consent-record-banner');
+            if (banner) banner.style.display = 'flex';
+
+            // 1. 오늘 데이터 실시간 조회
+            await fetchConsentToday(todayKST);
+            // 2. Firestore 이력 로드
+            await loadConsentHistory();
+            // 3. OFF 구장 그룹 분포
+            await loadConsentOffGroups();
+            // 4. 오전 10시 자동 기록 체크
+            await autoRecordIfNeeded(todayKST);
+        }
+
+        /* ── 오늘 데이터 API 조회 ── */
+        async function fetchConsentToday(dateStr) {
+            setEl('consent-kpi-date', dateStr + ' 기준');
+            var data = await pushQuery(
+                'SELECT' +
+                '  COUNT(DISTINCT m.id) AS total_count,' +
+                '  COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) AS push_on_count,' +
+                '  COUNT(DISTINCT IF(vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL, m.id, NULL)) AS push_off_count,' +
+                '  ROUND(COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS push_on_rate_pct' +
+                ' FROM plab.manager m' +
+                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' WHERE m.is_open = 1 AND m.id NOT IN (3, 102)'
+            );
+            if (!data || !data[0]) return null;
+            var r = data[0];
+            _consentTodayData = {
+                date:     dateStr,
+                total:    parseInt(r.total_count)    || 0,
+                push_on:  parseInt(r.push_on_count)  || 0,
+                push_off: parseInt(r.push_off_count) || 0,
+                rate:     parseFloat(r.push_on_rate_pct) || 0
+            };
+            renderConsentKPI(_consentTodayData);
+            return _consentTodayData;
+        }
+
+        function renderConsentKPI(d) {
+            if (!d) return;
+            setEl('consent-kpi-total', Number(d.total).toLocaleString() + '명');
+            setEl('consent-kpi-on',    Number(d.push_on).toLocaleString() + '명');
+            setEl('consent-kpi-off',   Number(d.push_off).toLocaleString() + '명');
+            setEl('consent-kpi-rate',  d.rate + '%');
+            var onPct  = d.total > 0 ? Math.round(d.push_on  / d.total * 100) : 0;
+            var offPct = d.total > 0 ? Math.round(d.push_off / d.total * 100) : 0;
+            setEl('consent-kpi-on-sub',  '전체의 ' + onPct  + '%');
+            setEl('consent-kpi-off-sub', '전체의 ' + offPct + '%');
+        }
+
+        /* ── 오전 10시 자동 기록 체크 ── */
+        async function autoRecordIfNeeded(todayKST) {
+            var banner = document.getElementById('consent-banner-msg');
+            var btn    = document.getElementById('consent-record-btn');
+            if (!window._checkTodayConsentExists) return;
+
+            var exists = await window._checkTodayConsentExists(todayKST);
+            var nowKST = new Date(Date.now() + 9 * 3600 * 1000);
+            var hour   = nowKST.getUTCHours();
+
+            if (exists) {
+                if (banner) banner.textContent = '✅ ' + todayKST + ' 기록 완료';
+                if (btn) btn.style.display = 'none';
+            } else if (hour >= 10) {
+                // 10시 이후 미기록 → 자동 저장
+                if (banner) banner.textContent = '자동 기록 중...';
+                await recordConsentNow();
+            } else {
+                if (banner) banner.textContent = '오늘(' + todayKST + ') 기록 예정 (오전 10시)';
+            }
+        }
+
+        /* ── 수동/자동 기록 ── */
+        async function recordConsentNow() {
+            var todayKST = toKSTDate(new Date().toISOString());
+            var d = _consentTodayData;
+            if (!d) d = await fetchConsentToday(todayKST);
+            if (!d || !window._savePushConsentRecord) return;
+
+            var ok = await window._savePushConsentRecord(d);
+            var banner  = document.getElementById('consent-banner-msg');
+            var btn     = document.getElementById('consent-record-btn');
+            if (ok) {
+                if (banner) banner.textContent = '✅ ' + todayKST + ' 기록 완료';
+                if (btn) btn.style.display = 'none';
+                toast('동의 현황이 기록되었습니다.', 2000, true);
+                await loadConsentHistory(); // 이력 갱신
+            } else {
+                if (banner) banner.textContent = '⚠️ 기록 실패 (Firestore 연결 확인)';
+            }
+        }
+
+        /* ── Firestore 이력 로드 ── */
+        async function loadConsentHistory() {
+            if (!window._loadPushConsentHistory) return;
+            var history = await window._loadPushConsentHistory();
+            if (!history || !history.length) {
+                var el = document.getElementById('consent-history-body');
+                if (el) el.innerHTML = '<tr><td colspan="5" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">아직 기록된 데이터가 없습니다. 오전 10시 이후 자동 기록됩니다.</td></tr>';
+                var cnt = document.getElementById('consent-history-count');
+                if (cnt) cnt.textContent = '기록 0건';
+                return;
+            }
+            // 내림차순 정렬
+            history.sort(function(a,b){ return b.date > a.date ? 1 : -1; });
+            var cnt = document.getElementById('consent-history-count');
+            if (cnt) cnt.textContent = '기록 ' + history.length + '건';
+
+            var el = document.getElementById('consent-history-body');
+            if (el) {
+                el.innerHTML = history.map(function(r) {
+                    return '<tr style="border-bottom:1px solid #F3F4F6;">' +
+                        '<td style="padding:9px 14px;font-size:13px;color:#374151;font-weight:500;">' + r.date + '</td>' +
+                        '<td style="padding:9px 14px;font-size:13px;color:#111827;text-align:right;">' + Number(r.total||0).toLocaleString() + '명</td>' +
+                        '<td style="padding:9px 14px;font-size:13px;color:#10B981;font-weight:600;text-align:right;">' + Number(r.push_on||0).toLocaleString() + '명</td>' +
+                        '<td style="padding:9px 14px;font-size:13px;color:#EF4444;font-weight:600;text-align:right;">' + Number(r.push_off||0).toLocaleString() + '명</td>' +
+                        '<td style="padding:9px 14px;font-size:14px;color:#3B82F6;font-weight:700;text-align:right;">' + (r.rate||0) + '%</td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            // 추이 차트 렌더링
+            renderConsentTrendChart(history.slice().reverse().slice(-30)); // 최근 30일 오름차순
+        }
+
+        /* ── 추이 차트 ── */
+        function renderConsentTrendChart(data) {
+            var el = document.getElementById('consent-trend-chart');
+            if (!el || !data.length) {
+                if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9CA3AF;font-size:13px;">기록 데이터 없음</div>';
+                return;
+            }
+            var W = 520, H = 160, padL = 36, padR = 10, padT = 16, padB = 28;
+            var vals = data.map(function(d){ return parseFloat(d.rate)||0; });
+            var minV = Math.max(0, Math.min.apply(null, vals) - 1);
+            var maxV = Math.min(100, Math.max.apply(null, vals) + 1);
+            var range = maxV - minV || 1;
+            var n = data.length;
+            var stepX = (W - padL - padR) / Math.max(n - 1, 1);
+
+            // 라인 포인트
+            var pts = vals.map(function(v, i) {
+                var x = padL + i * stepX;
+                var y = padT + (1 - (v - minV) / range) * (H - padT - padB);
+                return { x: x, y: y, v: v, d: data[i].date };
+            });
+
+            var pathD = pts.map(function(p, i){ return (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
+            var areaD = pathD + ' L' + pts[pts.length-1].x.toFixed(1) + ' ' + (H-padB) + ' L' + padL + ' ' + (H-padB) + ' Z';
+
+            // 격자선 + Y 라벨
+            var gridLines = '';
+            for (var i = 0; i <= 4; i++) {
+                var yv = minV + (range / 4) * i;
+                var yp = padT + (1 - i/4) * (H - padT - padB);
+                gridLines += '<line x1="' + padL + '" y1="' + yp.toFixed(1) + '" x2="' + (W-padR) + '" y2="' + yp.toFixed(1) + '" stroke="#F3F4F6" stroke-width="1"/>';
+                gridLines += '<text x="' + (padL-4) + '" y="' + (yp+4).toFixed(1) + '" text-anchor="end" font-size="9" fill="#9CA3AF">' + yv.toFixed(1) + '</text>';
+            }
+
+            // X 라벨 (7일 간격)
+            var xLabels = '';
+            pts.forEach(function(p, i) {
+                if (i % Math.max(1, Math.floor(n/6)) === 0) {
+                    xLabels += '<text x="' + p.x.toFixed(1) + '" y="' + (H-padB+14) + '" text-anchor="middle" font-size="9" fill="#9CA3AF">' + (p.d||'').slice(5) + '</text>';
+                }
+            });
+
+            // 마지막 값 강조
+            var last = pts[pts.length-1];
+            el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:' + H + 'px;">' +
+                '<defs><linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3B82F6" stop-opacity="0.2"/><stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/></linearGradient></defs>' +
+                gridLines +
+                '<path d="' + areaD + '" fill="url(#cg1)"/>' +
+                '<path d="' + pathD + '" fill="none" stroke="#3B82F6" stroke-width="2"/>' +
+                pts.map(function(p) { return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="#3B82F6"/>'; }).join('') +
+                '<circle cx="' + last.x.toFixed(1) + '" cy="' + last.y.toFixed(1) + '" r="5" fill="#3B82F6"/>' +
+                '<text x="' + last.x.toFixed(1) + '" y="' + (last.y - 8).toFixed(1) + '" text-anchor="middle" font-size="10" fill="#3B82F6" font-weight="700">' + last.v + '%</text>' +
+                xLabels +
+                '</svg>';
+        }
+
+        /* ── OFF 구장 그룹 분포 ── */
+        async function loadConsentOffGroups() {
+            var el = document.getElementById('consent-off-groups');
+            if (!el) return;
+            el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>';
+
+            // 푸시 OFF 매니저의 우선 채용 구장 → stadium_group name
+            var data = await pushQuery(
+                'SELECT sg.name AS group_name, COUNT(DISTINCT m.id) AS off_count' +
+                ' FROM plab.manager m' +
+                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' LEFT JOIN plab.manager_priority_hiring_stadiums mphs ON mphs.manager_id = m.id' +
+                ' LEFT JOIN plab.stadium s ON s.id = mphs.stadium_id' +
+                ' LEFT JOIN plab.stadium_group sg ON sg.id = s.stadium_group_id' +
+                ' WHERE m.is_open = 1' +
+                '   AND m.id NOT IN (3, 102)' +
+                '   AND (vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL)' +
+                '   AND sg.name IS NOT NULL' +
+                ' GROUP BY sg.name' +
+                ' ORDER BY off_count DESC' +
+                ' LIMIT 15'
+            );
+
+            if (!data || !data.length) {
+                el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">데이터 없음</div>';
+                return;
+            }
+            var maxV = parseInt(data[0].off_count) || 1;
+            el.innerHTML = data.map(function(r, i) {
+                var pct = Math.round((parseInt(r.off_count)||0) / maxV * 100);
+                var colors = ['#EF4444','#F97316','#F59E0B','#EAB308','#84CC16'];
+                var c = colors[Math.min(i, colors.length-1)];
+                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">' +
+                    '<div style="font-size:12px;color:#374151;min-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.group_name||'') + '">' + (r.group_name||'미분류') + '</div>' +
+                    '<div style="flex:1;height:14px;background:#F3F4F6;border-radius:7px;overflow:hidden;">' +
+                    '<div style="height:100%;width:' + pct + '%;background:' + c + ';border-radius:7px;transition:width .3s;"></div></div>' +
+                    '<div style="font-size:12px;font-weight:600;color:#111827;min-width:32px;text-align:right;">' + Number(parseInt(r.off_count)||0).toLocaleString() + '</div>' +
+                    '</div>';
+            }).join('');
         }
         /* ===================================================== */
 
