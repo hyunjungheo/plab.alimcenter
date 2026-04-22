@@ -4646,7 +4646,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
                 <!-- TITLE별 통계 테이블 -->
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;margin-bottom:24px;">
-                    <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;">TITLE별 발송 현황</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div style="font-size:15px;font-weight:700;color:#111827;">TITLE별 발송 현황</div>
+                        <span style="font-size:11px;color:#9CA3AF;background:#F3F4F6;padding:2px 8px;border-radius:8px;">최근 30일 기준</span>
+                    </div>
                     <div id="title-stats-wrap">
                         <div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>
                     </div>
@@ -4654,7 +4657,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
                 <!-- TOP 템플릿 (클릭 시 상세) -->
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
-                    <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;">발송량 TOP 10</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <div style="font-size:15px;font-weight:700;color:#111827;">발송량 TOP 10</div>
+                        <span style="font-size:11px;color:#9CA3AF;background:#F3F4F6;padding:2px 8px;border-radius:8px;">최근 30일 기준</span>
+                    </div>
                     <div style="font-size:12px;color:#6B7280;margin-bottom:16px;">제목 클릭 시 발송 이력 확인</div>
                     <div id="top-templates">
                         <div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>
@@ -6119,13 +6125,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             btn.style.borderBottomColor = '#3B82F6';
             btn.style.color = '#3B82F6';
             btn.style.fontWeight = '600';
-            // push 페이지 내 탭 콘텐츠만 숨기기 (page-content 안의 것만)
-            var pushPage = document.querySelector('.page-content.active');
-            if (pushPage) {
-                pushPage.querySelectorAll('.push-tab-content').forEach(function(c) { c.style.display = 'none'; });
-            } else {
-                document.querySelectorAll('.push-tab-content').forEach(function(c) { c.style.display = 'none'; });
-            }
+            // push 탭 콘텐츠 모두 숨기기
+            ['push-dashboard','push-list','push-calendar','push-consent','push-review'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
             var t = document.getElementById('push-' + tab);
             if (t) t.style.display = 'block';
             if (tab === 'dashboard') initPushDashboard();
@@ -6301,21 +6305,21 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (!data.length) { el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">데이터 없음</div>'; return; }
             var rows = data.map(function(d) {
                 return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                    '<td style="padding:8px 10px;font-size:12px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (d.title||'') + '">' + (d.title||'-') + '</td>' +
-                    '<td style="padding:8px 10px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(d.last_date) + '</td>' +
+                    '<td style="padding:7px 3px;font-size:12px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (d.title||'') + '">' + (d.title||'-') + '</td>' +
+                    '<td style="padding:7px 3px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(d.last_date) + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#7C3AED;text-align:right;">' + Number(parseInt(d.week_cnt)||0).toLocaleString() + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#3B82F6;text-align:right;">' + Number(parseInt(d.month_cnt)||0).toLocaleString() + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(d.total)||0).toLocaleString() + '</td>' +
                     '</tr>';
             }).join('');
             el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
-                '<colgroup><col style="width:auto"><col style="width:86px"><col style="width:68px"><col style="width:68px"><col style="width:60px"></colgroup>' +
+                '<colgroup><col style="width:auto"><col style="width:30px"><col style="width:24px"><col style="width:24px"><col style="width:22px"></colgroup>' +
                 '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">' +
-                '<th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>' +
-                '<th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">마지막 발송</th>' +
-                '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">주</th>' +
-                '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">월</th>' +
-                '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">전체</th>' +
+                '<th style="padding:9px 3px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>' +
+                '<th style="padding:9px 3px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">마지막</th>' +
+                '<th style="padding:9px 3px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">주</th>' +
+                '<th style="padding:9px 3px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">월</th>' +
+                '<th style="padding:9px 3px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">전체</th>' +
                 '</tr></thead><tbody>' + rows + '</tbody></table></div>';
         }
 
