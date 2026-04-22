@@ -4738,6 +4738,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             <!-- 동의 현황 탭 -->
             <div id="push-consent" class="push-tab-content" style="display:none;">
+                <div id="consentApiError" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#DC2626;"></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <div>
                         <div style="font-size:15px;font-weight:700;color:#111827;">매니저 앱 푸시 동의 현황</div>
@@ -4787,6 +4788,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             </div>
             <!-- 검토 필요 탭 -->
             <div id="push-review" class="push-tab-content" style="display:none;">
+                <div id="reviewApiError" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#DC2626;"></div>
                 <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
                     <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:4px;">동의 검토 기준</div>
                     <div style="font-size:12px;color:#78350F;line-height:1.7;">
@@ -6156,51 +6158,52 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         async function loadDashboard() {
             var tbl = PUSH_TABLE;
 
-            // KPI: 총 건수
-            var r1 = await pushQuery('SELECT COUNT(*) as cnt FROM ' + tbl);
-            if (r1 && r1[0]) setEl('kpi-total', Number(r1[0].cnt||0).toLocaleString());
+            // KPI 4개 단일 쿼리로 합산 (직렬 4회 → 1회)
+            var kpiQ = pushQuery(
+                'SELECT COUNT(*) as total,' +
+                ' SUM(IF(DATE(created_at)=CURDATE(),1,0)) as today,' +
+                ' SUM(IF(created_at>=DATE_SUB(NOW(),INTERVAL 7 DAY),1,0)) as week,' +
+                ' COUNT(DISTINCT notification_category) as cats' +
+                ' FROM ' + tbl
+            );
 
-            // KPI: 오늘
-            var r2 = await pushQuery('SELECT COUNT(*) as cnt FROM ' + tbl + ' WHERE DATE(created_at) = CURDATE()');
-            if (r2 && r2[0]) setEl('kpi-today', Number(r2[0].cnt||0).toLocaleString());
-
-            // KPI: 이번 주
-            var r3 = await pushQuery('SELECT COUNT(*) as cnt FROM ' + tbl + ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)');
-            if (r3 && r3[0]) setEl('kpi-week', Number(r3[0].cnt||0).toLocaleString());
-
-            // KPI: 카테고리 수
-            var r4 = await pushQuery('SELECT COUNT(DISTINCT notification_category) as cnt FROM ' + tbl);
-            if (r4 && r4[0]) setEl('kpi-templates', Number(r4[0].cnt||0).toLocaleString());
-
-            // 일별 추이 (기본 14일)
-            await reloadDailyChart();
-
-            // 카테고리별 비율
-            var cat = await pushQuery(
+            // 나머지 쿼리 병렬 실행
+            var chartQ   = reloadDailyChart();
+            var catQ     = pushQuery(
                 'SELECT notification_category as cat, COUNT(*) as cnt FROM ' + tbl +
                 ' GROUP BY notification_category ORDER BY cnt DESC LIMIT 10'
             );
-            if (cat) renderTypeChart(cat);
-
-            // TITLE별 통계
-            var titleStats = await pushQuery(
-                'SELECT title,' +
-                ' COUNT(*) as total,' +
+            var titleQ   = pushQuery(
+                'SELECT title, COUNT(*) as total,' +
                 ' MAX(DATE(created_at)) as last_date,' +
-                ' SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as week_cnt,' +
-                ' SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as month_cnt' +
+                ' SUM(IF(created_at>=DATE_SUB(NOW(),INTERVAL 7 DAY),1,0)) as week_cnt,' +
+                ' SUM(IF(created_at>=DATE_SUB(NOW(),INTERVAL 30 DAY),1,0)) as month_cnt' +
                 ' FROM ' + tbl +
                 ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)' +
                 ' GROUP BY title ORDER BY total DESC LIMIT 30'
             );
-            if (titleStats) renderTitleStats(titleStats);
-
-            // TOP 10
-            var top = await pushQuery(
+            var topQ     = pushQuery(
                 'SELECT title, COUNT(*) as cnt FROM ' + tbl +
                 ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)' +
                 ' GROUP BY title ORDER BY cnt DESC LIMIT 10'
             );
+
+            // KPI 결과 반영
+            var kpi = await kpiQ;
+            if (kpi && kpi[0]) {
+                setEl('kpi-total',     Number(kpi[0].total||0).toLocaleString());
+                setEl('kpi-today',     Number(kpi[0].today||0).toLocaleString());
+                setEl('kpi-week',      Number(kpi[0].week||0).toLocaleString());
+                setEl('kpi-templates', Number(kpi[0].cats||0).toLocaleString());
+            }
+
+            // 나머지 병렬 결과 반영
+            await chartQ;
+            var cat = await catQ;
+            if (cat) renderTypeChart(cat);
+            var titleStats = await titleQ;
+            if (titleStats) renderTitleStats(titleStats);
+            var top = await topQ;
             if (top) renderTopTemplates(top);
         }
 
@@ -6241,9 +6244,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
 
         /* ── 일별 차트 (Canvas-like SVG, 픽셀 고정) ── */
+        /* 일별 차트에 hover tooltip용 데이터 저장 */
+        var _dailyChartData = [];
+
         function renderDailyChart(data) {
             var el = document.getElementById('chart-daily');
             if (!el) return;
+            _dailyChartData = data || [];
             if (!data || !data.length) {
                 el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9CA3AF;font-size:13px;">데이터 없음</div>';
                 return;
@@ -6252,7 +6259,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var vals = data.map(function(d){ return parseInt(d.cnt)||0; });
             var maxV = Math.max.apply(null, vals) || 1;
 
-            // 고정 좌표계 사용 (viewBox 기반, preserveAspectRatio=none으로 반응형)
             var VW = 600, VH = 180;
             var padL = 8, padR = 8, padT = 24, padB = 32;
             var chartW = VW - padL - padR;
@@ -6262,21 +6268,84 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var bw     = slotW - gap;
 
             var bars = vals.map(function(v, i) {
-                var bh      = Math.max(v > 0 ? 3 : 0, Math.round(v / maxV * chartH));
-                var x       = padL + i * slotW + gap / 2;
-                var y       = padT + chartH - bh;
-                var label   = toKSTShort(data[i].d);
-                var valText = v > 0 ? '<text x="' + (x + bw/2).toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="#374151" font-weight="500">' + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v) + '</text>' : '';
-                return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" fill="#3B82F6" rx="2.5" opacity="0.85"/>' +
+                var bh    = Math.max(v > 0 ? 3 : 0, Math.round(v / maxV * chartH));
+                var x     = padL + i * slotW + gap / 2;
+                var y     = padT + chartH - bh;
+                var label = toKSTShort(data[i].d);
+                // 숫자 그대로 표시 (k 없음)
+                var valText = v > 0
+                    ? '<text x="' + (x+bw/2).toFixed(1) + '" y="' + (y-5).toFixed(1) + '" text-anchor="middle" font-size="8" fill="#374151" font-weight="600">' + v.toLocaleString() + '</text>'
+                    : '';
+                return '<rect class="daily-bar" data-idx="' + i + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" fill="#3B82F6" rx="2.5" opacity="0.85" style="cursor:pointer;"/>' +
                        valText +
-                       '<text x="' + (x + bw/2).toFixed(1) + '" y="' + (VH - padB + 14).toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="#9CA3AF">' + label + '</text>';
+                       '<text x="' + (x+bw/2).toFixed(1) + '" y="' + (VH-padB+14).toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="#9CA3AF">' + label + '</text>';
             }).join('');
 
-            var baseline = '<line x1="' + padL + '" y1="' + (padT + chartH) + '" x2="' + (VW - padR) + '" y2="' + (padT + chartH) + '" stroke="#E5E7EB" stroke-width="1"/>';
+            var baseline = '<line x1="' + padL + '" y1="' + (padT+chartH) + '" x2="' + (VW-padR) + '" y2="' + (padT+chartH) + '" stroke="#E5E7EB" stroke-width="1"/>';
 
-            el.innerHTML = '<div style="width:100%;overflow-x:auto;">' +
+            el.innerHTML =
+                '<div style="width:100%;position:relative;">' +
                 '<svg viewBox="0 0 ' + VW + ' ' + VH + '" preserveAspectRatio="none" style="width:100%;height:180px;display:block;">' +
-                baseline + bars + '</svg></div>';
+                baseline + bars + '</svg>' +
+                '<div id="daily-tooltip" style="display:none;position:absolute;background:rgba(17,24,39,0.9);color:white;border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:99;min-width:160px;"></div>' +
+                '</div>';
+
+            // hover 이벤트
+            var svg = el.querySelector('svg');
+            var tooltip = el.querySelector('#daily-tooltip');
+            svg.addEventListener('mousemove', function(e) {
+                var rect = svg.getBoundingClientRect();
+                var xPct = (e.clientX - rect.left) / rect.width;
+                var rawX = xPct * VW;
+                var idx  = Math.floor((rawX - padL) / slotW);
+                if (idx < 0 || idx >= n) { tooltip.style.display='none'; return; }
+                var d    = data[idx];
+                var dateStr = toKSTDate(d.d);
+                // Top3 조회 (캐시된 데이터 사용, 없으면 API)
+                showDailyTooltip(tooltip, e, dateStr, vals[idx]);
+            });
+            svg.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        }
+
+        var _tooltipCache = {};
+        function showDailyTooltip(tooltip, e, dateStr, totalCnt) {
+            var svgEl = tooltip.closest('[style*="position:relative"]') || tooltip.parentElement;
+            var rect  = svgEl.getBoundingClientRect();
+            var left  = e.clientX - rect.left + 10;
+            var top   = e.clientY - rect.top - 10;
+            if (left + 180 > rect.width) left = left - 200;
+
+            tooltip.style.left = left + 'px';
+            tooltip.style.top  = top  + 'px';
+
+            if (_tooltipCache[dateStr]) {
+                tooltip.innerHTML = _tooltipCache[dateStr];
+                tooltip.style.display = 'block';
+                return;
+            }
+            tooltip.innerHTML = '<div style="color:#9CA3AF;font-size:11px;">불러오는 중...</div>';
+            tooltip.style.display = 'block';
+
+            pushQuery(
+                'SELECT title, COUNT(*) as cnt FROM ' + PUSH_TABLE +
+                ' WHERE DATE(created_at) = ? GROUP BY title ORDER BY cnt DESC LIMIT 3',
+                [dateStr]
+            ).then(function(rows) {
+                var html = '<div style="font-weight:700;margin-bottom:6px;font-size:12px;">' + dateStr + ' · ' + totalCnt.toLocaleString() + '건</div>';
+                if (rows && rows.length) {
+                    html += rows.map(function(r, i) {
+                        var t = (r.title||'기타').length > 18 ? (r.title||'기타').slice(0,18)+'…' : (r.title||'기타');
+                        return '<div style="display:flex;justify-content:space-between;gap:12px;margin-top:4px;font-size:11px;">' +
+                            '<span style="color:#93C5FD;">' + (i+1) + '. ' + t + '</span>' +
+                            '<span style="font-weight:600;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '</span>' +
+                            '</div>';
+                    }).join('');
+                }
+                _tooltipCache[dateStr] = html;
+                tooltip.innerHTML = html;
+            });
         }
 
         /* ── 카테고리 비율 ── */
@@ -6972,6 +7041,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         /* ── 오늘 데이터 DB 조회 ── */
         async function consentFetchToday() {
+            var errEl = document.getElementById('consentApiError');
+            if (errEl) errEl.style.display = 'none';
             var data = await pushQuery(
                 'SELECT' +
                 ' COUNT(DISTINCT m.id) AS total,' +
@@ -6986,7 +7057,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
                 ' WHERE m.is_open = 1 AND m.id NOT IN (3, 102)'
             );
-            if (!data || !data[0]) return null;
+            if (!data || !data[0]) {
+                var errEl2 = document.getElementById('consentApiError');
+                if (errEl2) { errEl2.style.display='block'; errEl2.textContent='⚠️ 데이터 조회 실패 — API 연결을 확인해주세요.'; }
+                return null;
+            }
+            var errEl3 = document.getElementById('consentApiError');
+            if (errEl3) errEl3.style.display = 'none';
             var r = data[0];
             var today = toKSTDate(new Date().toISOString());
             return {
