@@ -6134,7 +6134,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (t) t.style.display = 'block';
             if (tab === 'dashboard') initPushDashboard();
             if (tab === 'list' && _pushAllData.length === 0) loadPushList();
-            if (tab === 'calendar') initPushCalendar();
+            if (tab === 'calendar') initCalendar();
             if (tab === 'consent') initConsentTab();
             if (tab === 'review') initReviewTab();
         }
@@ -6313,7 +6313,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     '</tr>';
             }).join('');
             el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
-                '<colgroup><col style="width:auto"><col style="width:30px"><col style="width:24px"><col style="width:24px"><col style="width:22px"></colgroup>' +
+                '<colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>' +
                 '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">' +
                 '<th style="padding:9px 3px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>' +
                 '<th style="padding:9px 3px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">마지막</th>' +
