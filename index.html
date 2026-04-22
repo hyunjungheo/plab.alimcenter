@@ -4564,8 +4564,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 <button class="push-tab active" onclick="switchPushTab(this,'dashboard')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid #3B82F6;margin-bottom:-2px;font-size:14px;font-weight:600;color:#3B82F6;cursor:pointer;">대시보드</button>
                 <button class="push-tab" onclick="switchPushTab(this,'list')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">전체 푸시 목록</button>
                 <button class="push-tab" onclick="switchPushTab(this,'calendar')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">캘린더</button>
-                <button class="push-tab" onclick="switchPushTab(this,'calendar');initPushCalendar();" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">캘린더</button>
                 <button class="push-tab" onclick="switchPushTab(this,'consent');initConsentTab();" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">동의 현황</button>
+                <button class="push-tab" onclick="switchPushTab(this,'review');initReviewTab();" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">검토 필요</button>
             </div>
 
             <!-- 대시보드 탭 -->
@@ -4708,6 +4708,16 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">활성 매니저</div>
                         <div id="consent-kpi-total" style="font-size:28px;font-weight:800;color:#111827;">-</div>
                         <div style="font-size:12px;color:#6B7280;margin-top:4px;">is_open = 1 기준</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">광고성 정보 수신 동의</div>
+                        <div id="consent-kpi-mkt1" style="font-size:28px;font-weight:800;color:#8B5CF6;">-</div>
+                        <div id="consent-kpi-mkt1-sub" style="font-size:12px;color:#6B7280;margin-top:4px;">is_accepts_marketing1</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">맞춤 광고 개인정보 동의</div>
+                        <div id="consent-kpi-mkt2" style="font-size:28px;font-weight:800;color:#F59E0B;">-</div>
+                        <div id="consent-kpi-mkt2-sub" style="font-size:12px;color:#6B7280;margin-top:4px;">is_accepts_marketing2</div>
                     </div>
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
                         <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">앱 푸시 ON</div>
@@ -4934,6 +4944,108 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </div>
                 </div>
             </div>
+
+            <!-- 검토 필요 탭 -->
+            <div id="push-review" class="push-tab-content" style="display:none;">
+                <!-- 안내 배너 -->
+                <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
+                    <div style="font-size:18px;flex-shrink:0;">⚠️</div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:3px;">동의 조건 기준</div>
+                        <div style="font-size:12px;color:#78350F;line-height:1.6;">
+                            <b>제목 또는 내용에 "(광고)" 포함</b> → 앱 푸시(is_accepts_push) + 광고성 정보 수신 동의(is_accepts_marketing1) 모두 체크 필요<br>
+                            <b>일반 푸시</b> → 앱 푸시(is_accepts_push) 체크 필요
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 필터/새로고침 -->
+                <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
+                    <select id="review-period" style="padding:9px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;background:white;outline:none;">
+                        <option value="7">최근 7일</option>
+                        <option value="30" selected>최근 30일</option>
+                        <option value="90">최근 90일</option>
+                    </select>
+                    <button onclick="loadReviewData()" style="padding:9px 18px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">조회</button>
+                    <div id="review-summary" style="font-size:13px;color:#6B7280;margin-left:8px;"></div>
+                </div>
+
+                <!-- KPI 요약 -->
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">광고성 푸시 점검 대상</div>
+                        <div id="review-kpi-ad" style="font-size:24px;font-weight:800;color:#EF4444;">-</div>
+                        <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">(광고) 수신 + 미동의</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">일반 푸시 점검 대상</div>
+                        <div id="review-kpi-normal" style="font-size:24px;font-weight:800;color:#F59E0B;">-</div>
+                        <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">일반 푸시 수신 + 앱푸시 미동의</div>
+                    </div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;">
+                        <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">전체 점검 필요</div>
+                        <div id="review-kpi-total" style="font-size:24px;font-weight:800;color:#7C3AED;">-</div>
+                        <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">중복 제거 건수</div>
+                    </div>
+                </div>
+
+                <!-- 광고성 푸시 점검 테이블 -->
+                <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:16px;overflow:hidden;">
+                    <div style="padding:14px 18px;border-bottom:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <span style="font-size:14px;font-weight:700;color:#111827;">광고성 푸시 미동의 발송 이력</span>
+                            <span style="margin-left:8px;background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">(광고) 포함</span>
+                        </div>
+                        <div style="font-size:12px;color:#9CA3AF;">앱푸시 OFF 또는 광고성 정보 수신 동의 OFF인 발송 이력</div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                            <colgroup><col style="width:90px"><col style="width:180px"><col style="width:auto"><col style="width:70px"><col style="width:70px"><col style="width:90px"></colgroup>
+                            <thead>
+                                <tr style="background:#FFF5F5;border-bottom:1px solid #FEE2E2;">
+                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
+                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
+                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">카테고리</th>
+                                    <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">앱푸시</th>
+                                    <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">광고동의</th>
+                                    <th style="padding:9px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송건수</th>
+                                </tr>
+                            </thead>
+                            <tbody id="review-ad-body">
+                                <tr><td colspan="6" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 일반 푸시 점검 테이블 -->
+                <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
+                    <div style="padding:14px 18px;border-bottom:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <span style="font-size:14px;font-weight:700;color:#111827;">일반 푸시 앱푸시 미동의 발송 이력</span>
+                        </div>
+                        <div style="font-size:12px;color:#9CA3AF;">앱푸시 OFF인 수신자에게 발송된 일반 푸시 이력</div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                            <colgroup><col style="width:90px"><col style="width:180px"><col style="width:auto"><col style="width:70px"><col style="width:90px"></colgroup>
+                            <thead>
+                                <tr style="background:#FFFBEB;border-bottom:1px solid #FEF3C7;">
+                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
+                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
+                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">카테고리</th>
+                                    <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">앱푸시</th>
+                                    <th style="padding:9px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송건수</th>
+                                </tr>
+                            </thead>
+                            <tbody id="review-normal-body">
+                                <tr><td colspan="5" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
 
         <!-- Simple Form Modal for Modal/Push/Message/Etc -->
     <div class="modal" id="simpleFormModal" style="display: none;">
@@ -6215,8 +6327,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             document.querySelectorAll('.push-tab-content').forEach(function(c) { c.style.display = 'none'; });
             var t = document.getElementById('push-' + tab);
             if (t) t.style.display = 'block';
+            if (tab === 'dashboard') initPushDashboard();
             if (tab === 'list' && _pushAllData.length === 0) loadPushList();
-            if (tab === 'calendar') initCalendar();
+            if (tab === 'calendar') initPushCalendar();
+            if (tab === 'consent') initConsentTab();
+            if (tab === 'review') initReviewTab();
         }
 
         /* ── 초기화 ── */
@@ -7110,246 +7225,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
 
         /* =====================================================
-           앱 푸시 동의 현황 JS
-           ===================================================== */
-        var _consentInited = false;
-
-        async function initConsentTab() {
-            if (_consentInited) return;
-            _consentInited = true;
-            // Firestore에서 기존 기록 로드
-            await loadConsentHistory();
-            // 오늘 오전 10시 지났으면 자동 기록 시도
-            await autoRecordConsent();
-            // OFF 매니저 구장 그룹 조회
-            await loadOffStadiums();
-        }
-
-        /* ── 자동 기록: 10시 이후 오늘 기록 없으면 저장 ── */
-        async function autoRecordConsent() {
-            var now = new Date(new Date().getTime() + 9*3600*1000); // KST
-            var hour = parseInt(now.toISOString().slice(11,13));
-            if (hour < 10) return; // 10시 이전이면 패스
-            var today = now.toISOString().slice(0,10);
-            try {
-                var existing = window._getPushConsentToday ? await window._getPushConsentToday(today) : null;
-                if (!existing) {
-                    await fetchAndSaveConsent(false);
-                } else {
-                    updateConsentKPI(existing);
-                    var savedEl = document.getElementById('consent-last-saved');
-                    if (savedEl) savedEl.textContent = '오늘 ' + today + ' 기록 완료';
-                }
-            } catch(e) { console.warn('자동 기록 오류:', e); }
-        }
-
-        /* ── 데이터 조회 + Firestore 저장 ── */
-        async function fetchAndSaveConsent(showToast) {
-            var btn = document.querySelector('[onclick="fetchAndSaveConsent(true)"]');
-            if (btn) { btn.disabled = true; btn.textContent = '기록 중...'; }
-
-            var result = await pushQuery(
-                'SELECT COUNT(DISTINCT m.id) AS total_count,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) AS push_on_count,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL, m.id, NULL)) AS push_off_count,' +
-                ' ROUND(COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS push_on_rate_pct' +
-                ' FROM plab.manager m' +
-                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
-                ' WHERE m.is_open = 1 AND m.id NOT IN (3, 102)'
-            );
-
-            if (!result || !result[0]) {
-                if (btn) { btn.disabled = false; btn.textContent = '지금 기록'; }
-                return;
-            }
-
-            var row = result[0];
-            var now = new Date(new Date().getTime() + 9*3600*1000);
-            var today = now.toISOString().slice(0,10);
-
-            var data = {
-                date:         today,
-                total:        parseInt(row.total_count) || 0,
-                push_on:      parseInt(row.push_on_count) || 0,
-                push_off:     parseInt(row.push_off_count) || 0,
-                push_on_rate: parseFloat(row.push_on_rate_pct) || 0,
-                recorded_at:  now.toISOString().slice(0,19).replace('T',' ')
-            };
-
-            // Firestore 저장
-            try {
-                if (window._savePushConsent) await window._savePushConsent(data);
-            } catch(e) { console.warn('Firestore 저장 오류:', e); }
-
-            updateConsentKPI(data);
-            var savedEl = document.getElementById('consent-last-saved');
-            if (savedEl) savedEl.textContent = data.recorded_at + ' 기록됨';
-            if (btn) { btn.disabled = false; btn.textContent = '지금 기록'; }
-            if (showToast) toast('✅ 오늘 현황이 기록되었습니다.', 2500, true);
-
-            await loadConsentHistory();
-        }
-
-        /* ── KPI 업데이트 ── */
-        function updateConsentKPI(d) {
-            setEl('con-total', (d.total||0).toLocaleString() + '명');
-            setEl('con-on',    (d.push_on||0).toLocaleString() + '명');
-            setEl('con-off',   (d.push_off||0).toLocaleString() + '명');
-            setEl('con-rate',  (d.push_on_rate||0) + '%');
-        }
-
-        /* ── Firestore 이력 로드 ── */
-        async function loadConsentHistory() {
-            var history = [];
-            try {
-                if (window._loadPushConsentHistory) history = await window._loadPushConsentHistory(90);
-            } catch(e) { console.warn('이력 로드 오류:', e); }
-
-            if (!history.length) {
-                var el = document.getElementById('con-history-body');
-                if (el) el.innerHTML = '<tr><td colspan="6" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">기록 없음 — "지금 기록" 버튼으로 첫 기록을 남기세요</td></tr>';
-                return;
-            }
-
-            // 최신 KPI
-            var latest = history[history.length - 1];
-            updateConsentKPI(latest);
-
-            // 전일 대비
-            if (history.length > 1) {
-                var prev = history[history.length - 2];
-                var delta = (latest.push_on_rate - prev.push_on_rate).toFixed(1);
-                var sign = delta >= 0 ? '+' : '';
-                var color = delta >= 0 ? '#10B981' : '#EF4444';
-                var deltaEl = document.getElementById('con-rate-delta');
-                if (deltaEl) {
-                    deltaEl.textContent = '전일 대비 ' + sign + delta + '%p';
-                    deltaEl.style.color = color;
-                }
-            }
-
-            renderConsentChart(history);
-            renderConsentHistoryTable(history);
-        }
-
-        /* ── 추이 라인 차트 ── */
-        function renderConsentChart(history) {
-            var el = document.getElementById('con-chart');
-            if (!el || !history.length) return;
-            var W = 500, H = 160, padL = 34, padR = 10, padT = 14, padB = 28;
-            var inner_W = W - padL - padR;
-            var inner_H = H - padT - padB;
-            var n = history.length;
-
-            var rates = history.map(function(d){ return parseFloat(d.push_on_rate)||0; });
-            var minR = Math.max(0, Math.min.apply(null, rates) - 1);
-            var maxR = Math.min(100, Math.max.apply(null, rates) + 1);
-            var range = maxR - minR || 1;
-
-            function px(i) { return padL + i * (inner_W / Math.max(n-1,1)); }
-            function py(v) { return padT + inner_H - (v - minR) / range * inner_H; }
-
-            // 눈금선 + Y축 라벨
-            var gridLines = '';
-            for (var gi = 0; gi <= 4; gi++) {
-                var gv = minR + range * gi / 4;
-                var gy = py(gv);
-                gridLines += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W-padR) + '" y2="' + gy + '" stroke="#F3F4F6" stroke-width="1"/>';
-                gridLines += '<text x="' + (padL-3) + '" y="' + (gy+3) + '" text-anchor="end" font-size="9" fill="#9CA3AF">' + gv.toFixed(1) + '</text>';
-            }
-
-            // 라인 경로
-            var points = rates.map(function(v,i){ return px(i) + ',' + py(v); }).join(' ');
-            var areaPoints = px(0) + ',' + (padT + inner_H) + ' ' + points + ' ' + px(n-1) + ',' + (padT + inner_H);
-
-            // X축 라벨 (최대 7개)
-            var xLabels = '';
-            var step = Math.max(1, Math.floor(n / 7));
-            for (var xi = 0; xi < n; xi += step) {
-                var lbl = (history[xi].date||'').slice(5);
-                xLabels += '<text x="' + px(xi) + '" y="' + (H - padB + 14) + '" text-anchor="middle" font-size="9" fill="#9CA3AF">' + lbl + '</text>';
-            }
-
-            // 포인트
-            var dots = rates.map(function(v,i){
-                return '<circle cx="' + px(i) + '" cy="' + py(v) + '" r="3" fill="#3B82F6"/>';
-            }).join('');
-
-            el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:' + H + 'px;">' +
-                '<defs><linearGradient id="conGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3B82F6" stop-opacity="0.15"/><stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/></linearGradient></defs>' +
-                gridLines +
-                '<polygon points="' + areaPoints + '" fill="url(#conGrad)"/>' +
-                '<polyline points="' + points + '" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>' +
-                dots + xLabels +
-                '</svg>';
-        }
-
-        /* ── 이력 테이블 ── */
-        function renderConsentHistoryTable(history) {
-            var el = document.getElementById('con-history-body');
-            if (!el) return;
-            var reversed = history.slice().reverse();
-            el.innerHTML = reversed.map(function(d, i) {
-                var prev = reversed[i+1];
-                var delta = prev ? (d.push_on_rate - prev.push_on_rate).toFixed(1) : null;
-                var deltaStr = delta !== null ? (delta >= 0 ? '+' + delta : delta) + '%p' : '-';
-                var deltaColor = delta > 0 ? '#10B981' : delta < 0 ? '#EF4444' : '#9CA3AF';
-                return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                    '<td style="padding:9px 14px;font-size:13px;color:#374151;">' + (d.date||'-') + '</td>' +
-                    '<td style="padding:9px 14px;font-size:13px;text-align:right;color:#111827;">' + (d.total||0).toLocaleString() + '</td>' +
-                    '<td style="padding:9px 14px;font-size:13px;font-weight:600;text-align:right;color:#10B981;">' + (d.push_on||0).toLocaleString() + '</td>' +
-                    '<td style="padding:9px 14px;font-size:13px;font-weight:600;text-align:right;color:#EF4444;">' + (d.push_off||0).toLocaleString() + '</td>' +
-                    '<td style="padding:9px 14px;font-size:13px;font-weight:700;text-align:right;color:#3B82F6;">' + (d.push_on_rate||0) + '%</td>' +
-                    '<td style="padding:9px 14px;font-size:13px;text-align:right;color:' + deltaColor + ';">' + deltaStr + '</td>' +
-                    '</tr>';
-            }).join('');
-        }
-
-        /* ── OFF 매니저 구장 그룹별 분포 ── */
-        async function loadOffStadiums() {
-            var el = document.getElementById('con-off-stadiums');
-            if (!el) return;
-
-            var data = await pushQuery(
-                'SELECT sg.name AS stadium_group_name, COUNT(DISTINCT m.id) AS off_count' +
-                ' FROM plab.manager m' +
-                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
-                ' LEFT JOIN plab.manager_priority_hiring_stadiums mphs ON mphs.manager_id = m.id' +
-                ' LEFT JOIN plab.stadium s ON s.id = mphs.stadium_id' +
-                ' LEFT JOIN plab.stadium_group sg ON sg.id = s.stadium_group_id' +
-                ' WHERE m.is_open = 1' +
-                ' AND m.id NOT IN (3, 102)' +
-                ' AND (vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL)' +
-                ' GROUP BY sg.name, sg.id' +
-                ' ORDER BY off_count DESC' +
-                ' LIMIT 20'
-            );
-
-            if (!data || !data.length) {
-                el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">데이터 없음</div>';
-                return;
-            }
-
-            var maxV = parseInt(data[0].off_count) || 1;
-            var total = data.reduce(function(s,d){ return s + (parseInt(d.off_count)||0); }, 0);
-
-            el.innerHTML = data.map(function(d) {
-                var cnt = parseInt(d.off_count)||0;
-                var pct = Math.round(cnt / maxV * 100);
-                var name = d.stadium_group_name || '(미분류)';
-                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
-                    '<div style="font-size:12px;color:#374151;min-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + name + '">' + name + '</div>' +
-                    '<div style="flex:1;height:12px;background:#F3F4F6;border-radius:6px;overflow:hidden;">' +
-                    '<div style="height:100%;width:' + pct + '%;background:#EF4444;border-radius:6px;opacity:0.7;"></div>' +
-                    '</div>' +
-                    '<div style="font-size:12px;font-weight:600;color:#374151;min-width:36px;text-align:right;">' + cnt + '</div>' +
-                    '</div>';
-            }).join('');
-        }
-        /* ===================================================== */
-
-
-        /* =====================================================
            매니저 앱 푸시 동의 현황 JS
            ===================================================== */
         var _consentInited = false;
@@ -7383,7 +7258,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 '  COUNT(DISTINCT m.id) AS total_count,' +
                 '  COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) AS push_on_count,' +
                 '  COUNT(DISTINCT IF(vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL, m.id, NULL)) AS push_off_count,' +
-                '  ROUND(COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS push_on_rate_pct' +
+                '  ROUND(COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS push_on_rate_pct,' +
+                '  COUNT(DISTINCT IF(vau.is_accepts_marketing1 = 1, m.id, NULL)) AS mkt1_on_count,' +
+                '  ROUND(COUNT(DISTINCT IF(vau.is_accepts_marketing1 = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS mkt1_rate_pct,' +
+                '  COUNT(DISTINCT IF(vau.is_accepts_marketing2 = 1, m.id, NULL)) AS mkt2_on_count,' +
+                '  ROUND(COUNT(DISTINCT IF(vau.is_accepts_marketing2 = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS mkt2_rate_pct' +
                 ' FROM plab.manager m' +
                 ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
                 ' WHERE m.is_open = 1 AND m.id NOT IN (3, 102)'
@@ -7391,11 +7270,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (!data || !data[0]) return null;
             var r = data[0];
             _consentTodayData = {
-                date:     dateStr,
-                total:    parseInt(r.total_count)    || 0,
-                push_on:  parseInt(r.push_on_count)  || 0,
-                push_off: parseInt(r.push_off_count) || 0,
-                rate:     parseFloat(r.push_on_rate_pct) || 0
+                date:      dateStr,
+                total:     parseInt(r.total_count)       || 0,
+                push_on:   parseInt(r.push_on_count)     || 0,
+                push_off:  parseInt(r.push_off_count)    || 0,
+                rate:      parseFloat(r.push_on_rate_pct) || 0,
+                mkt1_on:   parseInt(r.mkt1_on_count)     || 0,
+                mkt1_rate: parseFloat(r.mkt1_rate_pct)   || 0,
+                mkt2_on:   parseInt(r.mkt2_on_count)     || 0,
+                mkt2_rate: parseFloat(r.mkt2_rate_pct)   || 0
             };
             renderConsentKPI(_consentTodayData);
             return _consentTodayData;
@@ -7411,6 +7294,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var offPct = d.total > 0 ? Math.round(d.push_off / d.total * 100) : 0;
             setEl('consent-kpi-on-sub',  '전체의 ' + onPct  + '%');
             setEl('consent-kpi-off-sub', '전체의 ' + offPct + '%');
+            // marketing
+            setEl('consent-kpi-mkt1', Number(d.mkt1_on||0).toLocaleString() + '명');
+            setEl('consent-kpi-mkt1-sub', '동의율 ' + (d.mkt1_rate||0) + '%');
+            setEl('consent-kpi-mkt2', Number(d.mkt2_on||0).toLocaleString() + '명');
+            setEl('consent-kpi-mkt2-sub', '동의율 ' + (d.mkt2_rate||0) + '%');
         }
 
         /* ── 오전 10시 자동 기록 체크 ── */
@@ -7582,6 +7470,150 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     '<div style="height:100%;width:' + pct + '%;background:' + c + ';border-radius:7px;transition:width .3s;"></div></div>' +
                     '<div style="font-size:12px;font-weight:600;color:#111827;min-width:32px;text-align:right;">' + Number(parseInt(r.off_count)||0).toLocaleString() + '</div>' +
                     '</div>';
+            }).join('');
+        }
+        /* ===================================================== */
+
+
+        /* =====================================================
+           검토 필요 탭 JS
+           ===================================================== */
+        var _reviewInited = false;
+
+        async function initReviewTab() {
+            // 첫 진입 시 자동 조회
+            if (!_reviewInited) {
+                _reviewInited = true;
+                await loadReviewData();
+            }
+        }
+
+        async function loadReviewData() {
+            var period = parseInt((document.getElementById('review-period')||{}).value) || 30;
+            var tbl = PUSH_TABLE;
+            var summaryEl = document.getElementById('review-summary');
+            if (summaryEl) summaryEl.textContent = '조회 중...';
+
+            // 먼저 push 테이블 컬럼 확인 (user 연결 키 탐색)
+            var cols = await pushQuery('DESCRIBE ' + tbl);
+            if (!cols) return;
+            var colNames = cols.map(function(c){ return (c.Field||Object.values(c)[0]||'').toLowerCase(); });
+
+            // manager_id 또는 user_id 찾기
+            var userCol = null;
+            if (colNames.indexOf('manager_id') !== -1) userCol = 'manager_id';
+            else if (colNames.indexOf('user_id') !== -1) userCol = 'user_id';
+            else if (colNames.indexOf('v3_auth_user_id') !== -1) userCol = 'v3_auth_user_id';
+
+            if (!userCol) {
+                var el1 = document.getElementById('review-ad-body');
+                var el2 = document.getElementById('review-normal-body');
+                var msg = '<tr><td colspan="6" style="padding:30px;text-align:center;color:#EF4444;font-size:13px;">푸시 테이블에서 사용자 연결 컬럼(manager_id/user_id)을 찾을 수 없습니다.<br>발견된 컬럼: ' + colNames.join(', ') + '</td></tr>';
+                if (el1) el1.innerHTML = msg;
+                if (el2) el2.innerHTML = msg.replace('6"', '5"');
+                if (summaryEl) summaryEl.textContent = '컬럼 탐색 실패';
+                return;
+            }
+
+            // ── 광고성 푸시 미동의 조회 ──
+            // (광고) 포함 푸시를 수신했지만 is_accepts_push != 1 OR is_accepts_marketing1 != 1
+            var adData = await pushQuery(
+                'SELECT DATE(ph.created_at) AS send_date,' +
+                '  ph.title,' +
+                '  ph.notification_category,' +
+                '  SUM(IF(vau.is_accepts_push != 1, 1, 0)) AS push_off_cnt,' +
+                '  SUM(IF(vau.is_accepts_marketing1 != 1 OR vau.is_accepts_marketing1 IS NULL, 1, 0)) AS mkt1_off_cnt,' +
+                '  COUNT(*) AS total_cnt' +
+                ' FROM ' + tbl + ' ph' +
+                ' LEFT JOIN plab.manager m ON m.id = ph.' + userCol +
+                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
+                '   AND (ph.title LIKE '%(광고)%' OR ph.body LIKE '%(광고)%')' +
+                '   AND (vau.is_accepts_push != 1 OR vau.is_accepts_marketing1 != 1 OR vau.is_accepts_marketing1 IS NULL)' +
+                ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
+                ' ORDER BY send_date DESC, total_cnt DESC' +
+                ' LIMIT 200',
+                [period]
+            );
+
+            // ── 일반 푸시 미동의 조회 ──
+            // (광고) 미포함 푸시를 수신했지만 is_accepts_push != 1
+            var normalData = await pushQuery(
+                'SELECT DATE(ph.created_at) AS send_date,' +
+                '  ph.title,' +
+                '  ph.notification_category,' +
+                '  SUM(IF(vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL, 1, 0)) AS push_off_cnt,' +
+                '  COUNT(*) AS total_cnt' +
+                ' FROM ' + tbl + ' ph' +
+                ' LEFT JOIN plab.manager m ON m.id = ph.' + userCol +
+                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
+                '   AND ph.title NOT LIKE '%(광고)%' AND (ph.body NOT LIKE '%(광고)%' OR ph.body IS NULL)' +
+                '   AND (vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL)' +
+                ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
+                ' ORDER BY send_date DESC, push_off_cnt DESC' +
+                ' LIMIT 200',
+                [period]
+            );
+
+            renderReviewAd(adData || []);
+            renderReviewNormal(normalData || []);
+
+            // KPI
+            var adTotal = (adData||[]).reduce(function(s,r){ return s+(parseInt(r.total_cnt)||0); }, 0);
+            var normTotal = (normalData||[]).reduce(function(s,r){ return s+(parseInt(r.push_off_cnt)||0); }, 0);
+            setEl('review-kpi-ad', adTotal.toLocaleString() + '건');
+            setEl('review-kpi-normal', normTotal.toLocaleString() + '건');
+            setEl('review-kpi-total', (adTotal + normTotal).toLocaleString() + '건');
+            if (summaryEl) summaryEl.textContent = '최근 ' + period + '일 기준 · 연결 컬럼: ' + userCol;
+        }
+
+        function renderReviewAd(data) {
+            var el = document.getElementById('review-ad-body');
+            if (!el) return;
+            if (!data.length) {
+                el.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:#10B981;font-size:13px;">✅ 점검 필요 항목 없음</td></tr>';
+                return;
+            }
+            el.innerHTML = data.map(function(r) {
+                var pushOff = parseInt(r.push_off_cnt)||0;
+                var mkt1Off = parseInt(r.mkt1_off_cnt)||0;
+                var total   = parseInt(r.total_cnt)||0;
+                var pushBadge = pushOff > 0
+                    ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;">' + pushOff + '명 OFF</span>'
+                    : '<span style="background:#D1FAE5;color:#065F46;padding:2px 6px;border-radius:6px;font-size:11px;">✓</span>';
+                var mktBadge = mkt1Off > 0
+                    ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;">' + mkt1Off + '명 OFF</span>'
+                    : '<span style="background:#D1FAE5;color:#065F46;padding:2px 6px;border-radius:6px;font-size:11px;">✓</span>';
+                return '<tr style="border-bottom:1px solid #FFF5F5;">' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.notification_category||'기타') + '</td>' +
+                    '<td style="padding:9px 12px;text-align:center;">' + pushBadge + '</td>' +
+                    '<td style="padding:9px 12px;text-align:center;">' + mktBadge + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#EF4444;text-align:right;">' + total.toLocaleString() + '건</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function renderReviewNormal(data) {
+            var el = document.getElementById('review-normal-body');
+            if (!el) return;
+            if (!data.length) {
+                el.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:#10B981;font-size:13px;">✅ 점검 필요 항목 없음</td></tr>';
+                return;
+            }
+            el.innerHTML = data.map(function(r) {
+                var pushOff = parseInt(r.push_off_cnt)||0;
+                var total   = parseInt(r.total_cnt)||0;
+                var pushBadge = '<span style="background:#FEE2E2;color:#DC2626;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;">' + pushOff + '명 OFF</span>';
+                return '<tr style="border-bottom:1px solid #FFFBEB;">' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.notification_category||'기타') + '</td>' +
+                    '<td style="padding:9px 12px;text-align:center;">' + pushBadge + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#F59E0B;text-align:right;">' + total.toLocaleString() + '건</td>' +
+                    '</tr>';
             }).join('');
         }
         /* ===================================================== */
