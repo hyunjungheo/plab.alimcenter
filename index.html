@@ -7154,14 +7154,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var errEl = document.getElementById('consentApiError');
             if (errEl) errEl.style.display = 'none';
 
-            // plab.manager 접근 가능 여부 사전 확인
-            var testQ = await pushQuery('SELECT COUNT(*) as cnt FROM plab.manager WHERE is_open=1 LIMIT 1');
+            // manager 테이블 접근 가능 여부 사전 확인
+            var testQ = await pushQuery('SELECT COUNT(*) as cnt FROM manager WHERE is_open=1 LIMIT 1');
             if (!testQ) {
                 // testQ가 null → API 오류 → pushQuery 내부에서 에러 표시됨
                 if (errEl) {
                     errEl.style.display='block';
                     errEl.style.background='#FEF2F2'; errEl.style.color='#DC2626'; errEl.style.borderColor='#FCA5A5';
-                    errEl.textContent='⚠️ plab.manager 테이블 접근 실패. F12 콘솔에서 [pushQuery error] 메시지를 확인해주세요.';
+                    errEl.textContent='⚠️ manager 테이블 접근 실패. F12 콘솔에서 [pushQuery error] 메시지를 확인해주세요.';
                 }
                 return null;
             }
@@ -7176,8 +7176,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 ' ROUND(COUNT(DISTINCT IF(vau.is_accepts_marketing1 = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS mkt1_rate,' +
                 ' COUNT(DISTINCT IF(vau.is_accepts_marketing2 = 1, m.id, NULL)) AS mkt2_on,' +
                 ' ROUND(COUNT(DISTINCT IF(vau.is_accepts_marketing2 = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS mkt2_rate' +
-                ' FROM plab.manager m' +
-                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' FROM manager m' +
+                ' LEFT JOIN v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
                 ' WHERE m.is_open = 1 AND m.id NOT IN (3, 102)'
             );
             if (!data || !data[0]) {
@@ -7399,8 +7399,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             // manager → v3_auth_user JOIN
             var join = userCol === 'manager_id'
-                ? ' LEFT JOIN plab.manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN plab.v3_auth_user vau ON vau.id = mgr.v3_auth_user_id'
-                : ' LEFT JOIN plab.v3_auth_user vau ON vau.id = ph.' + userCol;
+                ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id'
+                : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
 
             /* 광고성 푸시: (광고) 포함, 앱푸시 OFF 또는 광고동의1 OFF */
             var adData = await pushQuery(
