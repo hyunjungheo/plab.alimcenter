@@ -6512,17 +6512,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             // API 실제 발송 데이터 (날짜+카테고리+건수)
             var data = await pushQuery(
-                'SELECT DATE(created_at) as d, notification_category as cat, COUNT(*) as cnt' +
+                'SELECT DATE(created_at) as d, title, body, notification_category as cat, COUNT(*) as cnt, MIN(created_at) as first_sent' +
                 ' FROM ' + PUSH_TABLE +
                 ' WHERE DATE(created_at) BETWEEN ? AND ?' +
-                ' GROUP BY DATE(created_at), notification_category ORDER BY d',
+                ' GROUP BY DATE(created_at), title, body, notification_category ORDER BY d, cnt DESC',
                 [from, to]
             );
             if (data) {
                 data.forEach(function(r) {
                     var dk = toKSTDate(r.d);
                     if (!_calDayData[dk]) _calDayData[dk] = [];
-                    _calDayData[dk].push({ cat: r.cat||'기타', cnt: parseInt(r.cnt)||0, isScheduled: false });
+                    _calDayData[dk].push({
+                        title: r.title||'(제목 없음)',
+                        body:  r.body||'',
+                        cat:   r.cat||'기타',
+                        cnt:   parseInt(r.cnt)||0,
+                        first_sent: r.first_sent||'',
+                        isScheduled: false
+                    });
                 });
             }
 
@@ -6541,22 +6548,30 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
         }
 
-        /* ── 캘린더 렌더링 ── */
         function renderCalendar() {
             var y = _calYear, m = _calMonth;
+            var grid = document.getElementById('cal-grid');
             var titleEl = document.getElementById('cal-title');
             if (titleEl) titleEl.textContent = y + '년 ' + (m+1) + '월';
-
-            var grid = document.getElementById('cal-grid');
             if (!grid) return;
 
-            var firstWeekday = new Date(y, m, 1).getDay(); // 0=일
+            var firstWeekday = new Date(y, m, 1).getDay();
             var daysInMonth  = new Date(y, m + 1, 0).getDate();
             var prevDays     = new Date(y, m, 0).getDate();
             var todayStr     = fmtDate(new Date());
+            var total        = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+
+            // 카테고리별 색상
+            var CAT_COLORS = {
+                '경기 관련':'#3B82F6','결제 관련':'#10B981','채용':'#8B5CF6',
+                '활동':'#F59E0B','리마인더':'#6366F1','이벤트':'#EC4899',
+                '공지':'#14B8A6','기타':'#6B7280'
+            };
+            function catColor(cat) { return CAT_COLORS[cat] || '#6B7280'; }
 
             var cells = '';
-            var total  = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+            // 전체 인덱스 → 날짜 매핑 (이벤트 위임용)
+            window._calDateMap = {};
 
             for (var i = 0; i < total; i++) {
                 var day, dateStr, isCurrentMonth = true;
@@ -6573,65 +6588,130 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     dateStr = fmtDate(new Date(y, m, day));
                 }
 
-                var isToday   = dateStr === todayStr;
-                var isSun     = (i % 7 === 0);
-                var isSat     = (i % 7 === 6);
-                var dayColor  = isSun ? '#EF4444' : isSat ? '#3B82F6' : '#111827';
-                var bgColor   = isToday ? '#EFF6FF' : isCurrentMonth ? 'white' : '#FAFAFA';
-                var opacity   = isCurrentMonth ? '1' : '0.4';
-                var borderRight = (i%7 < 6) ? 'border-right:1px solid #E5E7EB;' : '';
-                var borderBottom = (i < total - 7) ? 'border-bottom:1px solid #E5E7EB;' : '';
+                var isToday  = (dateStr === todayStr);
+                var isSun    = (i % 7 === 0);
+                var isSat    = (i % 7 === 6);
+                var dayColor = isSun ? '#EF4444' : isSat ? '#3B82F6' : '#111827';
+                var bgColor  = isToday ? '#EFF6FF' : isCurrentMonth ? 'white' : '#FAFAFA';
+                var opacity  = isCurrentMonth ? '1' : '0.45';
+                var bdrR     = (i % 7 < 6) ? 'border-right:1px solid #E5E7EB;' : '';
+                var bdrB     = (i < total - 7)  ? 'border-bottom:1px solid #E5E7EB;' : '';
 
-                var entries = _calDayData[dateStr] || [];
-                var entryHtml = '';
+                var entries   = _calDayData[dateStr] || [];
+                var realItems = entries.filter(function(e){ return !e.isScheduled; });
+                var schedItems= entries.filter(function(e){ return  e.isScheduled; });
+                var totalCnt  = realItems.reduce(function(s,e){ return s+(e.cnt||0); }, 0);
 
-                // 실제 발송: 카테고리별 합산
-                var realMap = {};
-                var schedList = [];
-                entries.forEach(function(e) {
-                    if (e.isScheduled) { schedList.push(e); }
-                    else {
-                        realMap[e.cat] = (realMap[e.cat]||0) + e.cnt;
-                    }
-                });
-                var realCats = Object.keys(realMap);
-                var totalCnt = realCats.reduce(function(s,k){ return s + realMap[k]; }, 0);
+                var SHOW = 2;
+                var shownReal  = realItems.slice(0, SHOW);
+                var hiddenReal = realItems.slice(SHOW);
 
-                if (totalCnt > 0) {
-                    var color = realCats.length > 1 ? '#10B981' : '#3B82F6';
-                    var label = realCats.length > 1 ? '다수' : (realCats[0]||'기타');
-                    if (label.length > 8) label = label.slice(0,8) + '…';
-                    entryHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="margin:1px 4px;padding:2px 6px;background:' + color + ';color:white;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + label + ' ' + totalCnt.toLocaleString() + '건">' +
-                        label + ' <b>' + totalCnt.toLocaleString() + '건</b></div>';
+                // 실제 발송 박스 (title별)
+                var evHtml = shownReal.map(function(e, ei) {
+                    var bg    = catColor(e.cat);
+                    var title = e.title || '기타';
+                    var lbl   = title.length > 11 ? title.slice(0,11) + '…' : title;
+                    var cntStr = e.cnt > 0 ? e.cnt.toLocaleString() + '건' : '';
+                    return '<div class="cal-item" data-date="' + dateStr + '" data-idx="' + entries.indexOf(e) + '" ' +
+                           'style="margin:1px 3px;padding:2px 5px;background:' + bg + ';color:white;border-radius:4px;' +
+                           'font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;text-overflow:ellipsis;' +
+                           'white-space:nowrap;" title="' + title.replace(/"/g,'&quot;') + (cntStr?' · '+cntStr:'') + '">' +
+                           lbl + (cntStr ? '<span style="opacity:.8;margin-left:3px;">' + cntStr + '</span>' : '') + '</div>';
+                }).join('');
+
+                // 더보기
+                var moreHtml = '';
+                if (hiddenReal.length > 0) {
+                    moreHtml = '<div class="cal-more" data-date="' + dateStr + '" ' +
+                               'style="font-size:10px;color:#3B82F6;cursor:pointer;padding:1px 5px;font-weight:600;">' +
+                               '+' + hiddenReal.length + ' 더보기</div>' +
+                               '<div class="cal-extra" id="extra-' + dateStr + '" style="display:none;">' +
+                               hiddenReal.map(function(e) {
+                                   var bg = catColor(e.cat);
+                                   var lbl = (e.title||'기타').slice(0,11);
+                                   var cntStr = e.cnt > 0 ? e.cnt.toLocaleString()+'건' : '';
+                                   return '<div class="cal-item" data-date="' + dateStr + '" data-idx="' + entries.indexOf(e) + '" ' +
+                                          'style="margin:1px 3px;padding:2px 5px;background:' + bg + ';color:white;border-radius:4px;' +
+                                          'font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+                                          lbl + (cntStr?'<span style="opacity:.8;margin-left:3px;">'+cntStr+'</span>':'') + '</div>';
+                               }).join('') +
+                               '<div class="cal-fold" data-date="' + dateStr + '" ' +
+                               'style="font-size:10px;color:#9CA3AF;cursor:pointer;padding:1px 5px;">접기 ▲</div></div>';
                 }
-                schedList.forEach(function(e) {
-                    var sTitle = (e.data && e.data.title ? e.data.title : '예정').slice(0,10);
-                    entryHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="margin:1px 4px;padding:2px 6px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="예정: ' + sTitle + '">' +
-                        sTitle + '</div>';
-                });
 
-                cells += '<div style="min-height:100px;padding:6px 0 4px;' + bgColor + ';' + borderRight + borderBottom + 'opacity:' + opacity + ';background:' + bgColor + ';position:relative;" data-date="' + dateStr + '">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 6px 4px;">' +
-                    '<span style="font-size:13px;font-weight:' + (isToday?'800':'500') + ';color:' + (isToday?'#3B82F6':dayColor) + ';' + (isToday?'background:#3B82F6;color:white;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;':'' ) + '">' + day + '</span>' +
-                    (isCurrentMonth ? '<button class="cal-add-btn" data-cal-date="' + dateStr + '" style="border:none;background:none;color:#9CA3AF;font-size:16px;cursor:pointer;padding:0;line-height:1;opacity:0;" class="cal-add-btn" title="추가">+</button>' : '') +
+                // 예정 박스
+                var schedHtml = schedItems.map(function(e) {
+                    var lbl = (e.data && e.data.title ? e.data.title : '예정').slice(0,11);
+                    return '<div class="cal-item" data-date="' + dateStr + '" data-idx="' + entries.indexOf(e) + '" ' +
+                           'style="margin:1px 3px;padding:2px 5px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;' +
+                           'border-radius:4px;font-size:10px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+                           lbl + '</div>';
+                }).join('');
+
+                // 날짜 숫자
+                var daySpan = isToday
+                    ? '<span style="font-size:12px;font-weight:800;background:#3B82F6;color:white;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">' + day + '</span>'
+                    : '<span style="font-size:12px;font-weight:' + (isCurrentMonth?'500':'400') + ';color:' + dayColor + ';">' + day + '</span>';
+
+                cells += '<div data-cal-cell="' + dateStr + '" style="min-height:95px;padding:4px 0 3px;background:' + bgColor + ';' + bdrR + bdrB + 'opacity:' + opacity + ';position:relative;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px 3px;">' +
+                    daySpan +
+                    (totalCnt > 0 ? '<span style="font-size:9px;color:#9CA3AF;">' + totalCnt.toLocaleString() + '</span>' : '') +
                     '</div>' +
-                    entryHtml +
+                    evHtml + moreHtml + schedHtml +
                     '</div>';
             }
+
             grid.innerHTML = cells;
 
-            // hover 시 + 버튼 표시
-            grid.querySelectorAll('[data-date]').forEach(function(cell) {
-                var btn = cell.querySelector('.cal-add-btn');
-                if (!btn) return;
-                cell.addEventListener('mouseenter', function(){ btn.style.opacity = '1'; });
-                cell.addEventListener('mouseleave', function(){ btn.style.opacity = '0'; });
-            });
-            // 엔트리 클릭 이벤트 위임
-            grid.querySelectorAll('.cal-day-entry').forEach(function(el) {
-                el.addEventListener('click', function(e) {
+            // ── 이벤트 위임 (grid 단일 리스너) ──
+            grid.onclick = function(e) {
+                var item = e.target.closest('.cal-item');
+                var more = e.target.closest('.cal-more');
+                var fold = e.target.closest('.cal-fold');
+                var addBtn = e.target.closest('.cal-add-btn');
+
+                if (item) {
                     e.stopPropagation();
-                    openCalDetail(this.getAttribute('data-caldate'));
+                    var dateStr = item.getAttribute('data-date');
+                    var idx     = parseInt(item.getAttribute('data-idx'));
+                    var entry   = (_calDayData[dateStr]||[])[idx];
+                    if (entry) openCalEntryDetail(dateStr, entry);
+                    return;
+                }
+                if (more) {
+                    e.stopPropagation();
+                    var d = more.getAttribute('data-date');
+                    var ex = document.getElementById('extra-' + d);
+                    if (ex) { ex.style.display = 'block'; more.style.display = 'none'; }
+                    return;
+                }
+                if (fold) {
+                    e.stopPropagation();
+                    var d = fold.getAttribute('data-date');
+                    var ex = document.getElementById('extra-' + d);
+                    var mo = grid.querySelector('.cal-more[data-date="' + d + '"]');
+                    if (ex) ex.style.display = 'none';
+                    if (mo) mo.style.display = 'block';
+                    return;
+                }
+                if (addBtn) {
+                    e.stopPropagation();
+                    openCalAddModal(addBtn.getAttribute('data-cal-date'));
+                    return;
+                }
+            };
+
+            // hover + 버튼
+            grid.querySelectorAll('[data-cal-cell]').forEach(function(cell) {
+                var d = cell.getAttribute('data-cal-cell');
+                cell.addEventListener('mouseenter', function() {
+                    var btn = cell.querySelector('.cal-add-btn');
+                    if (btn) btn.style.opacity = '1';
+                });
+                cell.addEventListener('mouseleave', function() {
+                    var btn = cell.querySelector('.cal-add-btn');
+                    if (btn) btn.style.opacity = '0';
                 });
             });
         }
@@ -6650,6 +6730,97 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
 
         /* ── 날짜 상세 모달 ── */
+        /* ── 항목 클릭 → 세부 정보 모달 ── */
+        function openCalEntryDetail(dateStr, entry) {
+            var modal  = document.getElementById('calDetailModal');
+            var dateEl = document.getElementById('cal-detail-date');
+            var titleEl= document.getElementById('cal-detail-title');
+            var bodyEl = document.getElementById('cal-detail-body');
+            if (!modal) return;
+
+            if (entry.isScheduled) {
+                // 예정 항목
+                var s = entry.data || {};
+                dateEl.textContent  = dateStr + ' · 발송 예정';
+                titleEl.textContent = s.title || '제목 없음';
+                bodyEl.innerHTML =
+                    '<div style="display:flex;flex-direction:column;gap:10px;">' +
+                    (s.body ? '<div style="font-size:13px;color:#374151;line-height:1.6;">' + s.body + '</div>' : '') +
+                    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+                    (s.category ? '<span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600;">' + s.category + '</span>' : '') +
+                    (s.target   ? '<span style="background:#F3F4F6;color:#374151;padding:3px 10px;border-radius:8px;font-size:12px;">대상: ' + s.target + '</span>' : '') +
+                    '</div></div>';
+                modal.style.display = 'flex';
+                return;
+            }
+
+            // 실제 발송 항목
+            dateEl.textContent  = dateStr;
+            titleEl.textContent = entry.title || '(제목 없음)';
+            bodyEl.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>';
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            // 해당 날짜 + title 상세 조회
+            pushQuery(
+                'SELECT title, body, notification_category, COUNT(*) as cnt, MIN(created_at) as first_sent, MAX(created_at) as last_sent' +
+                ' FROM ' + PUSH_TABLE +
+                ' WHERE DATE(created_at) = ? AND title = ?' +
+                ' GROUP BY title, body, notification_category ORDER BY cnt DESC',
+                [dateStr, entry.title || '']
+            ).then(function(data) {
+                if (!data || !data.length) {
+                    bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px;">조회된 데이터가 없습니다.</div>';
+                    return;
+                }
+                var totalCnt = data.reduce(function(s,r){ return s+(parseInt(r.cnt)||0); }, 0);
+                var r0 = data[0];
+
+                var html = '<div style="display:flex;flex-direction:column;gap:14px;">';
+
+                // KPI 행
+                html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">' +
+                    '<div style="background:#F0FDF4;border-radius:10px;padding:12px;text-align:center;">' +
+                    '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">발송량</div>' +
+                    '<div style="font-size:20px;font-weight:800;color:#10B981;">' + totalCnt.toLocaleString() + '건</div></div>' +
+                    '<div style="background:#EFF6FF;border-radius:10px;padding:12px;text-align:center;">' +
+                    '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">카테고리</div>' +
+                    '<div style="font-size:13px;font-weight:700;color:#3B82F6;">' + (r0.notification_category||'기타') + '</div></div>' +
+                    '<div style="background:#F9FAFB;border-radius:10px;padding:12px;text-align:center;">' +
+                    '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">발송일</div>' +
+                    '<div style="font-size:12px;font-weight:600;color:#374151;">' + dateStr + '</div></div>' +
+                    '</div>';
+
+                // 발송 일시
+                if (r0.first_sent) {
+                    html += '<div style="background:#F9FAFB;border-radius:10px;padding:12px;">' +
+                        '<div style="font-size:11px;color:#6B7280;margin-bottom:4px;">발송 일시</div>' +
+                        '<div style="font-size:13px;color:#374151;">' + toKST(r0.first_sent) +
+                        (r0.last_sent && r0.last_sent !== r0.first_sent ? '<span style="color:#9CA3AF;"> ~ </span>' + toKST(r0.last_sent) : '') +
+                        '</div></div>';
+                }
+
+                // 내용 목록
+                if (data.length > 0) {
+                    html += '<div style="border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;">' +
+                        '<div style="background:#F9FAFB;padding:9px 12px;font-size:11px;font-weight:600;color:#6B7280;border-bottom:1px solid #E5E7EB;">내용 (body) · 발송건수</div>';
+                    data.forEach(function(r, i) {
+                        html += '<div style="padding:10px 12px;' + (i>0?'border-top:1px solid #F3F4F6;':'') + 'display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">' +
+                            '<div style="font-size:13px;color:#374151;line-height:1.5;flex:1;">' + (r.body || '<span style="color:#9CA3AF;">내용 없음</span>') + '</div>' +
+                            '<div style="font-size:13px;font-weight:700;color:#111827;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</div>' +
+                            '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                html += '</div>';
+                bodyEl.innerHTML = html;
+            }).catch(function(e) {
+                bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#EF4444;font-size:13px;">조회 오류: ' + (e.message||e) + '</div>';
+            });
+        }
+
+        /* ── 날짜 클릭 상세 (전체) ── */
         function openCalDetail(dateStr) {
             var modal = document.getElementById('calDetailModal');
             var dateEl = document.getElementById('cal-detail-date');
