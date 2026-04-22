@@ -7125,6 +7125,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             // 1. DB에서 오늘 데이터 직접 조회
             var d = await consentFetchToday();
+            console.log('[CONSENT] consentFetchToday 결과:', d);
             if (d) {
                 consentRenderKPI(d);
                 if (errEl) errEl.style.display = 'none';
@@ -7169,39 +7170,59 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return null;
             }
 
-            var data = await pushQuery(
-                'SELECT' +
-                ' COUNT(DISTINCT m.id) AS total,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) AS push_on,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push = 0 OR vau.is_accepts_push IS NULL, m.id, NULL)) AS push_off,' +
-                ' ROUND(COUNT(DISTINCT IF(vau.is_accepts_push = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS push_on_rate,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_marketing1 = 1, m.id, NULL)) AS mkt1_on,' +
-                ' ROUND(COUNT(DISTINCT IF(vau.is_accepts_marketing1 = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS mkt1_rate,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_marketing2 = 1, m.id, NULL)) AS mkt2_on,' +
-                ' ROUND(COUNT(DISTINCT IF(vau.is_accepts_marketing2 = 1, m.id, NULL)) / COUNT(DISTINCT m.id) * 100, 1) AS mkt2_rate' +
-                ' FROM manager m' +
-                ' LEFT JOIN v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
-                ' WHERE m.is_open = 1 AND m.id NOT IN (3, 102)'
+            // 쿼리 3개로 분리 (COUNT DISTINCT 단일쿼리가 타임아웃 발생)
+            console.log('[CONSENT] 쿼리1 - 전체 매니저 수');
+            var q1 = await pushQuery(
+                'SELECT COUNT(*) as total FROM manager WHERE is_open=1 AND id NOT IN (3,102)'
             );
-            if (!data || !data[0]) {
-                var errEl2 = document.getElementById('consentApiError');
-                if (errEl2) { errEl2.style.display='block'; errEl2.textContent='⚠️ 데이터 조회 실패 — API 연결을 확인해주세요.'; }
+            console.log('[CONSENT] 쿼리1 결과:', q1);
+            if (!q1 || !q1[0]) {
+                var eEl = document.getElementById('consentApiError');
+                if (eEl) { eEl.style.display='block'; eEl.style.background='#FEF2F2'; eEl.style.color='#DC2626'; eEl.style.borderColor='#FCA5A5'; eEl.textContent='⚠️ manager 쿼리 실패 — F12 콘솔 확인'; }
                 return null;
             }
+
+            console.log('[CONSENT] 쿼리2 - 앱 푸시 동의');
+            var q2 = await pushQuery(
+                'SELECT SUM(IF(vau.is_accepts_push=1,1,0)) AS push_on,' +
+                ' SUM(IF(vau.is_accepts_push IS NULL OR vau.is_accepts_push!=1,1,0)) AS push_off' +
+                ' FROM manager m LEFT JOIN v3_auth_user vau ON vau.id=m.v3_auth_user_id' +
+                ' WHERE m.is_open=1 AND m.id NOT IN (3,102)'
+            );
+            console.log('[CONSENT] 쿼리2 결과:', q2);
+
+            console.log('[CONSENT] 쿼리3 - 마케팅 동의');
+            var q3 = await pushQuery(
+                'SELECT SUM(IF(vau.is_accepts_marketing1=1,1,0)) AS mkt1_on,' +
+                ' SUM(IF(vau.is_accepts_marketing2=1,1,0)) AS mkt2_on' +
+                ' FROM manager m LEFT JOIN v3_auth_user vau ON vau.id=m.v3_auth_user_id' +
+                ' WHERE m.is_open=1 AND m.id NOT IN (3,102)'
+            );
+            console.log('[CONSENT] 쿼리3 결과:', q3);
+
             var errEl3 = document.getElementById('consentApiError');
             if (errEl3) errEl3.style.display = 'none';
-            var r = data[0];
+
+            var total    = parseInt((q1[0]||{}).total)||0;
+            var push_on  = parseInt(((q2||[{}])[0]||{}).push_on)||0;
+            var push_off = parseInt(((q2||[{}])[0]||{}).push_off)||0;
+            var mkt1_on  = parseInt(((q3||[{}])[0]||{}).mkt1_on)||0;
+            var mkt2_on  = parseInt(((q3||[{}])[0]||{}).mkt2_on)||0;
+            var push_rate = total > 0 ? Math.round(push_on/total*1000)/10 : 0;
+            var mkt1_rate = total > 0 ? Math.round(mkt1_on/total*1000)/10 : 0;
+            var mkt2_rate = total > 0 ? Math.round(mkt2_on/total*1000)/10 : 0;
             var today = toKSTDate(new Date().toISOString());
+            console.log('[CONSENT] 최종 데이터:', {total:total, push_on:push_on, push_rate:push_rate});
             return {
                 date:       today,
-                total:      parseInt(r.total)||0,
-                push_on:    parseInt(r.push_on)||0,
-                push_off:   parseInt(r.push_off)||0,
-                push_rate:  parseFloat(r.push_on_rate)||0,
-                mkt1_on:    parseInt(r.mkt1_on)||0,
-                mkt1_rate:  parseFloat(r.mkt1_rate)||0,
-                mkt2_on:    parseInt(r.mkt2_on)||0,
-                mkt2_rate:  parseFloat(r.mkt2_rate)||0,
+                total:      total,
+                push_on:    push_on,
+                push_off:   push_off,
+                push_rate:  push_rate,
+                mkt1_on:    mkt1_on,
+                mkt1_rate:  mkt1_rate,
+                mkt2_on:    mkt2_on,
+                mkt2_rate:  mkt2_rate,
                 recorded_at: toKST(new Date().toISOString())
             };
         }
