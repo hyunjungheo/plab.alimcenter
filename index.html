@@ -5000,19 +5000,20 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </div>
                     <div style="overflow-x:auto;">
                         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                            <colgroup><col style="width:90px"><col style="width:180px"><col style="width:auto"><col style="width:70px"><col style="width:70px"><col style="width:90px"></colgroup>
+                            <colgroup><col style="width:85px"><col style="width:170px"><col style="width:auto"><col style="width:60px"><col style="width:60px"><col style="width:60px"><col style="width:60px"></colgroup>
                             <thead>
                                 <tr style="background:#FFF5F5;border-bottom:1px solid #FEE2E2;">
                                     <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
                                     <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
-                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">카테고리</th>
+                                    <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">카테고리</th>
                                     <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">앱푸시</th>
-                                    <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">광고동의</th>
-                                    <th style="padding:9px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송건수</th>
+                                    <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">광고동의1</th>
+                                    <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">광고동의2</th>
+                                    <th style="padding:9px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">건수</th>
                                 </tr>
                             </thead>
                             <tbody id="review-ad-body">
-                                <tr><td colspan="6" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
+                                <tr><td colspan="7" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -6301,7 +6302,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 if (!json.success) throw new Error(json.error || '쿼리 오류');
                 return json.data || [];
             } catch(e) {
-                showPushError('API 연결 오류: ' + e.message);
+                var msg = e.message || String(e);
+                showPushError('API 오류: ' + msg);
+                console.error('pushQuery error:', msg, 'SQL:', sql);
                 return null;
             }
         }
@@ -6339,7 +6342,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (_pushDashboardInited) return;
             hidePushError();
             _pushDashboardInited = true;
-            await Promise.all([loadDashboard(), loadPushList()]);
+            try {
+                await Promise.all([loadDashboard(), loadPushList()]);
+            } catch(e) {
+                _pushDashboardInited = false; // 실패 시 재시도 허용
+                showPushError('대시보드 로드 실패: ' + e.message);
+            }
         }
 
         /* ── 대시보드 ── */
@@ -7479,93 +7487,106 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
            검토 필요 탭 JS
            ===================================================== */
         var _reviewInited = false;
+        var _pushUserCol  = null; // 푸시 테이블의 사용자 연결 컬럼
 
         async function initReviewTab() {
-            // 첫 진입 시 자동 조회
-            if (!_reviewInited) {
-                _reviewInited = true;
-                await loadReviewData();
+            if (_reviewInited) return;
+            _reviewInited = true;
+            await loadReviewData();
+        }
+
+        /* ── 컬럼 탐색 ── */
+        async function detectPushUserCol() {
+            if (_pushUserCol) return _pushUserCol;
+            var cols = await pushQuery('DESCRIBE ' + PUSH_TABLE);
+            if (!cols) return null;
+            var names = cols.map(function(c){ return (c.Field || Object.values(c)[0] || '').toLowerCase(); });
+            console.log('push 테이블 컬럼:', names);
+            var candidates = ['manager_id','user_id','v3_auth_user_id','recipient_id','receiver_id'];
+            for (var i = 0; i < candidates.length; i++) {
+                if (names.indexOf(candidates[i]) !== -1) {
+                    _pushUserCol = candidates[i];
+                    return _pushUserCol;
+                }
             }
+            // 찾지 못하면 컬럼 목록 그대로 반환 (에러 표시용)
+            return 'NOT_FOUND:' + names.join(',');
         }
 
         async function loadReviewData() {
             var period = parseInt((document.getElementById('review-period')||{}).value) || 30;
-            var tbl = PUSH_TABLE;
             var summaryEl = document.getElementById('review-summary');
-            if (summaryEl) summaryEl.textContent = '조회 중...';
+            if (summaryEl) summaryEl.textContent = '컬럼 탐색 중...';
 
-            // 먼저 push 테이블 컬럼 확인 (user 연결 키 탐색)
-            var cols = await pushQuery('DESCRIBE ' + tbl);
-            if (!cols) return;
-            var colNames = cols.map(function(c){ return (c.Field||Object.values(c)[0]||'').toLowerCase(); });
-
-            // manager_id 또는 user_id 찾기
-            var userCol = null;
-            if (colNames.indexOf('manager_id') !== -1) userCol = 'manager_id';
-            else if (colNames.indexOf('user_id') !== -1) userCol = 'user_id';
-            else if (colNames.indexOf('v3_auth_user_id') !== -1) userCol = 'v3_auth_user_id';
-
-            if (!userCol) {
+            var userCol = await detectPushUserCol();
+            if (!userCol || userCol.startsWith('NOT_FOUND:')) {
+                var cols = userCol ? userCol.replace('NOT_FOUND:','') : '?';
+                var errMsg = '<tr><td colspan="6" style="padding:24px;text-align:center;color:#EF4444;font-size:13px;">사용자 연결 컬럼을 찾지 못했습니다.<br><span style="font-size:11px;color:#9CA3AF;">발견된 컬럼: ' + cols + '</span></td></tr>';
                 var el1 = document.getElementById('review-ad-body');
                 var el2 = document.getElementById('review-normal-body');
-                var msg = '<tr><td colspan="6" style="padding:30px;text-align:center;color:#EF4444;font-size:13px;">푸시 테이블에서 사용자 연결 컬럼(manager_id/user_id)을 찾을 수 없습니다.<br>발견된 컬럼: ' + colNames.join(', ') + '</td></tr>';
-                if (el1) el1.innerHTML = msg;
-                if (el2) el2.innerHTML = msg.replace('6"', '5"');
+                if (el1) el1.innerHTML = errMsg;
+                if (el2) el2.innerHTML = errMsg.replace('colspan="6"','colspan="5"');
                 if (summaryEl) summaryEl.textContent = '컬럼 탐색 실패';
                 return;
             }
 
-            // ── 광고성 푸시 미동의 조회 ──
-            // (광고) 포함 푸시를 수신했지만 is_accepts_push != 1 OR is_accepts_marketing1 != 1
+            if (summaryEl) summaryEl.textContent = '조회 중... (컬럼: ' + userCol + ')';
+
+            // manager → v3_auth_user 연결 확인
+            // userCol이 manager_id인 경우: push.manager_id → manager.id → manager.v3_auth_user_id → v3_auth_user
+            // userCol이 v3_auth_user_id인 경우: push.v3_auth_user_id → v3_auth_user
+
+            var joinClause, userIdRef;
+            if (userCol === 'manager_id') {
+                joinClause = ' LEFT JOIN plab.manager m ON m.id = ph.' + userCol +
+                             ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id';
+            } else {
+                joinClause = ' LEFT JOIN plab.v3_auth_user vau ON vau.id = ph.' + userCol;
+            }
+
+            /* ── 광고성 푸시: (광고) 포함, is_accepts_push=0 OR is_accepts_marketing1=0 ── */
             var adData = await pushQuery(
-                'SELECT DATE(ph.created_at) AS send_date,' +
-                '  ph.title,' +
-                '  ph.notification_category,' +
-                '  SUM(IF(vau.is_accepts_push != 1, 1, 0)) AS push_off_cnt,' +
+                'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
+                '  SUM(IF(vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL, 1, 0)) AS push_off_cnt,' +
                 '  SUM(IF(vau.is_accepts_marketing1 != 1 OR vau.is_accepts_marketing1 IS NULL, 1, 0)) AS mkt1_off_cnt,' +
+                '  SUM(IF(vau.is_accepts_marketing2 != 1 OR vau.is_accepts_marketing2 IS NULL, 1, 0)) AS mkt2_off_cnt,' +
                 '  COUNT(*) AS total_cnt' +
-                ' FROM ' + tbl + ' ph' +
-                ' LEFT JOIN plab.manager m ON m.id = ph.' + userCol +
-                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' FROM ' + PUSH_TABLE + ' ph' +
+                joinClause +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
-                '   AND (ph.title LIKE '%(광고)%' OR ph.body LIKE '%(광고)%')' +
-                '   AND (vau.is_accepts_push != 1 OR vau.is_accepts_marketing1 != 1 OR vau.is_accepts_marketing1 IS NULL)' +
+                "  AND (ph.title LIKE '%(광고)%' OR ph.body LIKE '%(광고)%')" +
+                '  AND (vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL' +
+                '    OR vau.is_accepts_marketing1 != 1 OR vau.is_accepts_marketing1 IS NULL)' +
                 ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
-                ' ORDER BY send_date DESC, total_cnt DESC' +
-                ' LIMIT 200',
+                ' ORDER BY send_date DESC, total_cnt DESC LIMIT 300',
                 [period]
             );
 
-            // ── 일반 푸시 미동의 조회 ──
-            // (광고) 미포함 푸시를 수신했지만 is_accepts_push != 1
+            /* ── 일반 푸시: (광고) 미포함, is_accepts_push=0 ── */
             var normalData = await pushQuery(
-                'SELECT DATE(ph.created_at) AS send_date,' +
-                '  ph.title,' +
-                '  ph.notification_category,' +
+                'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
                 '  SUM(IF(vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL, 1, 0)) AS push_off_cnt,' +
                 '  COUNT(*) AS total_cnt' +
-                ' FROM ' + tbl + ' ph' +
-                ' LEFT JOIN plab.manager m ON m.id = ph.' + userCol +
-                ' LEFT JOIN plab.v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' FROM ' + PUSH_TABLE + ' ph' +
+                joinClause +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
-                '   AND ph.title NOT LIKE '%(광고)%' AND (ph.body NOT LIKE '%(광고)%' OR ph.body IS NULL)' +
-                '   AND (vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL)' +
+                "  AND ph.title NOT LIKE '%(광고)%'" +
+                "  AND (ph.body NOT LIKE '%(광고)%' OR ph.body IS NULL)" +
+                '  AND (vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL)' +
                 ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
-                ' ORDER BY send_date DESC, push_off_cnt DESC' +
-                ' LIMIT 200',
+                ' ORDER BY send_date DESC, push_off_cnt DESC LIMIT 300',
                 [period]
             );
 
             renderReviewAd(adData || []);
             renderReviewNormal(normalData || []);
 
-            // KPI
-            var adTotal = (adData||[]).reduce(function(s,r){ return s+(parseInt(r.total_cnt)||0); }, 0);
-            var normTotal = (normalData||[]).reduce(function(s,r){ return s+(parseInt(r.push_off_cnt)||0); }, 0);
+            var adTotal    = (adData||[]).reduce(function(s,r){ return s+(parseInt(r.total_cnt)||0); },0);
+            var normOff    = (normalData||[]).reduce(function(s,r){ return s+(parseInt(r.push_off_cnt)||0); },0);
             setEl('review-kpi-ad', adTotal.toLocaleString() + '건');
-            setEl('review-kpi-normal', normTotal.toLocaleString() + '건');
-            setEl('review-kpi-total', (adTotal + normTotal).toLocaleString() + '건');
-            if (summaryEl) summaryEl.textContent = '최근 ' + period + '일 기준 · 연결 컬럼: ' + userCol;
+            setEl('review-kpi-normal', normOff.toLocaleString() + '건');
+            setEl('review-kpi-total', (adTotal + normOff).toLocaleString() + '건');
+            if (summaryEl) summaryEl.textContent = '최근 ' + period + '일 · 연결: ' + userCol;
         }
 
         function renderReviewAd(data) {
@@ -7578,20 +7599,21 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             el.innerHTML = data.map(function(r) {
                 var pushOff = parseInt(r.push_off_cnt)||0;
                 var mkt1Off = parseInt(r.mkt1_off_cnt)||0;
+                var mkt2Off = parseInt(r.mkt2_off_cnt)||0;
                 var total   = parseInt(r.total_cnt)||0;
-                var pushBadge = pushOff > 0
-                    ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;">' + pushOff + '명 OFF</span>'
-                    : '<span style="background:#D1FAE5;color:#065F46;padding:2px 6px;border-radius:6px;font-size:11px;">✓</span>';
-                var mktBadge = mkt1Off > 0
-                    ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;">' + mkt1Off + '명 OFF</span>'
-                    : '<span style="background:#D1FAE5;color:#065F46;padding:2px 6px;border-radius:6px;font-size:11px;">✓</span>';
+                function badge(n, label) {
+                    return n > 0
+                        ? '<span style="display:inline-block;background:#FEE2E2;color:#DC2626;padding:2px 5px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap;">' + n + '명</span>'
+                        : '<span style="display:inline-block;background:#D1FAE5;color:#065F46;padding:2px 5px;border-radius:5px;font-size:10px;">✓</span>';
+                }
                 return '<tr style="border-bottom:1px solid #FFF5F5;">' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.notification_category||'기타') + '</td>' +
-                    '<td style="padding:9px 12px;text-align:center;">' + pushBadge + '</td>' +
-                    '<td style="padding:9px 12px;text-align:center;">' + mktBadge + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#EF4444;text-align:right;">' + total.toLocaleString() + '건</td>' +
+                    '<td style="padding:8px 10px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
+                    '<td style="padding:8px 10px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11px;color:#374151;white-space:nowrap;">' + (r.notification_category||'-') + '</td>' +
+                    '<td style="padding:8px 10px;text-align:center;">' + badge(pushOff) + '</td>' +
+                    '<td style="padding:8px 10px;text-align:center;">' + badge(mkt1Off) + '</td>' +
+                    '<td style="padding:8px 10px;text-align:center;">' + badge(mkt2Off) + '</td>' +
+                    '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:#EF4444;text-align:right;">' + total.toLocaleString() + '</td>' +
                     '</tr>';
             }).join('');
         }
@@ -7606,19 +7628,18 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             el.innerHTML = data.map(function(r) {
                 var pushOff = parseInt(r.push_off_cnt)||0;
                 var total   = parseInt(r.total_cnt)||0;
-                var pushBadge = '<span style="background:#FEE2E2;color:#DC2626;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;">' + pushOff + '명 OFF</span>';
                 return '<tr style="border-bottom:1px solid #FFFBEB;">' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.notification_category||'기타') + '</td>' +
-                    '<td style="padding:9px 12px;text-align:center;">' + pushBadge + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#F59E0B;text-align:right;">' + total.toLocaleString() + '건</td>' +
+                    '<td style="padding:8px 10px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
+                    '<td style="padding:8px 10px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:11px;color:#374151;white-space:nowrap;">' + (r.notification_category||'-') + '</td>' +
+                    '<td style="padding:8px 10px;text-align:center;"><span style="background:#FEE2E2;color:#DC2626;padding:2px 5px;border-radius:5px;font-size:10px;font-weight:600;">' + pushOff + '명</span></td>' +
+                    '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:#F59E0B;text-align:right;">' + total.toLocaleString() + '</td>' +
                     '</tr>';
             }).join('');
         }
         /* ===================================================== */
 
-  /* ─── toast 알림 ─── */
+        /* ─── toast 알림 ─── */
         function toast(msg, dur, isSave) {
             var el = document.getElementById('_guideToast');
             if (!el) {
