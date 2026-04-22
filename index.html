@@ -1374,6 +1374,10 @@
             border-color: #BFDBFE;
         }
         .btn-view:hover { background: #DBEAFE; }
+
+        /* 매니저 푸시 탭 */
+        .push-tab-content { display: none; }
+        .push-tab-content.active-tab { display: block; }
         
         /* Modal */
         .modal {
@@ -4564,8 +4568,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 <button class="push-tab active" onclick="switchPushTab(this,'dashboard')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid #3B82F6;margin-bottom:-2px;font-size:14px;font-weight:600;color:#3B82F6;cursor:pointer;">대시보드</button>
                 <button class="push-tab" onclick="switchPushTab(this,'list')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">전체 푸시 목록</button>
                 <button class="push-tab" onclick="switchPushTab(this,'calendar')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">캘린더</button>
-                <button class="push-tab" onclick="switchPushTab(this,'consent');initConsentTab();" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">동의 현황</button>
-                <button class="push-tab" onclick="switchPushTab(this,'review');initReviewTab();" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">검토 필요</button>
+                <button class="push-tab" onclick="switchPushTab(this,'consent');" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">동의 현황</button>
+                <button class="push-tab" onclick="switchPushTab(this,'review');" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:500;color:#6B7280;cursor:pointer;">검토 필요</button>
             </div>
 
             <!-- 대시보드 탭 -->
@@ -4597,8 +4601,19 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 <!-- 차트 2단 -->
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
-                        <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:2px;">일별 발송량 추이</div>
-                        <div style="font-size:12px;color:#6B7280;margin-bottom:16px;">최근 14일</div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                            <div>
+                                <div style="font-size:15px;font-weight:700;color:#111827;">일별 발송량 추이</div>
+                                <div id="chart-daily-label" style="font-size:12px;color:#6B7280;margin-top:2px;">최근 14일</div>
+                            </div>
+                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                                <input type="date" id="daily-from" style="padding:5px 8px;border:1px solid #E5E7EB;border-radius:6px;font-size:12px;font-family:inherit;outline:none;">
+                                <span style="font-size:12px;color:#9CA3AF;">~</span>
+                                <input type="date" id="daily-to" style="padding:5px 8px;border:1px solid #E5E7EB;border-radius:6px;font-size:12px;font-family:inherit;outline:none;">
+                                <button onclick="reloadDailyChart()" style="padding:5px 12px;background:#3B82F6;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">적용</button>
+                                <button onclick="reloadDailyChart('reset')" style="padding:5px 10px;background:#F3F4F6;color:#374151;border:1px solid #E5E7EB;border-radius:6px;font-size:12px;cursor:pointer;">초기화</button>
+                            </div>
+                        </div>
                         <div id="chart-daily" style="height:180px;"></div>
                     </div>
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
@@ -6083,7 +6098,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             btn.style.borderBottomColor = '#3B82F6';
             btn.style.color = '#3B82F6';
             btn.style.fontWeight = '600';
-            document.querySelectorAll('.push-tab-content').forEach(function(c) { c.style.display = 'none'; });
+            // push 페이지 내 탭 콘텐츠만 숨기기 (page-content 안의 것만)
+            var pushPage = document.querySelector('.page-content.active');
+            if (pushPage) {
+                pushPage.querySelectorAll('.push-tab-content').forEach(function(c) { c.style.display = 'none'; });
+            } else {
+                document.querySelectorAll('.push-tab-content').forEach(function(c) { c.style.display = 'none'; });
+            }
             var t = document.getElementById('push-' + tab);
             if (t) t.style.display = 'block';
             if (tab === 'dashboard') initPushDashboard();
@@ -6126,13 +6147,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var r4 = await pushQuery('SELECT COUNT(DISTINCT notification_category) as cnt FROM ' + tbl);
             if (r4 && r4[0]) setEl('kpi-templates', Number(r4[0].cnt||0).toLocaleString());
 
-            // 일별 추이
-            var daily = await pushQuery(
-                'SELECT DATE(created_at) as d, COUNT(*) as cnt FROM ' + tbl +
-                ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)' +
-                ' GROUP BY DATE(created_at) ORDER BY d ASC'
-            );
-            if (daily) renderDailyChart(daily);
+            // 일별 추이 (기본 14일)
+            await reloadDailyChart();
 
             // 카테고리별 비율
             var cat = await pushQuery(
@@ -6164,6 +6180,37 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function setEl(id, val) {
             var el = document.getElementById(id);
             if (el) el.textContent = val;
+        }
+
+        /* ── 일별 차트 날짜 필터 적용/재로드 ── */
+        async function reloadDailyChart(mode) {
+            var tbl = PUSH_TABLE;
+            var fromEl = document.getElementById('daily-from');
+            var toEl   = document.getElementById('daily-to');
+            var labelEl = document.getElementById('chart-daily-label');
+
+            var fromVal, toVal;
+            if (mode === 'reset' || (!fromEl || !fromEl.value || !toEl || !toEl.value)) {
+                // 기본: 오늘 기준 최근 14일
+                var now = new Date(Date.now() + 9*3600*1000);
+                toVal   = now.toISOString().slice(0,10);
+                var fromD = new Date(now.getTime() - 13*24*3600*1000);
+                fromVal = fromD.toISOString().slice(0,10);
+                if (fromEl) fromEl.value = fromVal;
+                if (toEl)   toEl.value   = toVal;
+            } else {
+                fromVal = fromEl.value;
+                toVal   = toEl.value;
+            }
+
+            if (labelEl) labelEl.textContent = fromVal + ' ~ ' + toVal;
+
+            var daily = await pushQuery(
+                'SELECT DATE(created_at) as d, COUNT(*) as cnt FROM ' + tbl +
+                ' WHERE DATE(created_at) BETWEEN ? AND ? GROUP BY DATE(created_at) ORDER BY d ASC',
+                [fromVal, toVal]
+            );
+            if (daily) renderDailyChart(daily);
         }
 
         /* ── 일별 차트 (Canvas-like SVG, 픽셀 고정) ── */
@@ -6742,11 +6789,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var lastStr  = y + '-' + String(m+1).padStart(2,'0') + '-' + String(lastDay.getDate()).padStart(2,'0');
 
             var data = await pushQuery(
-                'SELECT DATE(created_at) as d, title, notification_category as cat, COUNT(*) as cnt' +
+                'SELECT DATE(created_at) as d, title, notification_category as cat, COUNT(*) as cnt,' +
+                ' MIN(created_at) as first_sent' +
                 ' FROM ' + PUSH_TABLE +
                 ' WHERE DATE(created_at) BETWEEN ? AND ?' +
-                ' GROUP BY DATE(created_at), title, notification_category' +
-                ' ORDER BY d ASC',
+                ' GROUP BY DATE(created_at), title, notification_category ORDER BY d ASC, cnt DESC',
                 [firstDay, lastStr]
             );
 
@@ -6755,12 +6802,19 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 data.forEach(function(r) {
                     var d = toKSTDate(r.d);
                     if (!_calData[d]) _calData[d] = [];
-                    _calData[d].push({
-                        title: r.title || '-',
-                        cat:   r.cat   || '기타',
-                        cnt:   parseInt(r.cnt) || 0,
-                        type:  'actual'
-                    });
+                    // 같은 title은 cnt 합산
+                    var existing = _calData[d].find(function(e){ return e.title === (r.title||'-') && e.type === 'actual'; });
+                    if (existing) {
+                        existing.cnt += parseInt(r.cnt)||0;
+                    } else {
+                        _calData[d].push({
+                            title: r.title || '-',
+                            cat:   r.cat   || '기타',
+                            cnt:   parseInt(r.cnt) || 0,
+                            first_sent: r.first_sent || '',
+                            type:  'actual'
+                        });
+                    }
                 });
             }
             renderCalendar();
@@ -6792,33 +6846,50 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var isSun = dow === 0, isSat = dow === 6;
                 var numColor = isToday ? 'white' : (isSun ? '#EF4444' : (isSat ? '#3B82F6' : '#374151'));
 
-                var events = (_calData[dateStr] || []);
-                // 예정 항목 추가
-                _calScheduled.forEach(function(s) {
-                    if (s.date === dateStr) events = events.concat([{title:s.title, cat:s.category||'기타', cnt:0, type:'scheduled', body:s.body, target:s.target}]);
-                });
+                var actualEvents = (_calData[dateStr] || []).filter(function(e){ return e.type === 'actual'; });
+                var schedEvents  = (_calScheduled||[]).filter(function(s){ return s.date === dateStr; });
+                var allEvents    = actualEvents.concat(schedEvents.map(function(s){ return {title:s.title, cat:s.category||'기타', cnt:0, type:'scheduled', body:s.body, target:s.target}; }));
+                var totalCnt     = actualEvents.reduce(function(s,e){ return s+(e.cnt||0); }, 0);
 
-                var eventHtml = '';
-                var shown = events.slice(0, 3);
-                shown.forEach(function(ev) {
+                var SHOW_MAX = 3;
+                var shown = allEvents.slice(0, SHOW_MAX);
+                var hidden = allEvents.slice(SHOW_MAX);
+                var cellId = 'cell-' + dateStr;
+
+                var shownHtml = shown.map(function(ev) {
                     var bg = ev.type === 'scheduled' ? '#FEF3C7' : calColor(ev.cat);
                     var fc = ev.type === 'scheduled' ? '#92400E' : 'white';
+                    var label = (ev.title || ev.cat || '기타');
+                    if (label.length > 12) label = label.slice(0,12) + '…';
                     var cntStr = ev.type === 'scheduled' ? '예정' : (ev.cnt > 0 ? ev.cnt.toLocaleString()+'건' : '');
-                    eventHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="background:' + bg + ';color:' + fc + ';border-radius:4px;padding:2px 6px;font-size:11px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="' + (ev.cat||'') + ' ' + cntStr + '">' +
-                        '<span>' + (ev.cat||'기타') + '</span>' +
-                        (cntStr ? '<span style="margin-left:4px;opacity:0.85;">' + cntStr + '</span>' : '') +
+                    return '<div class="cal-ev" data-cal-date="' + dateStr + '" data-ev-title="' + (ev.title||'').replace(/"/g,'&quot;') + '" style="background:' + bg + ';color:' + fc + ';border-radius:4px;padding:2px 5px;font-size:10px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="' + (ev.title||ev.cat||'') + (cntStr?' · '+cntStr:'') + '">' +
+                        label + (cntStr ? ' <b>' + cntStr + '</b>' : '') +
                         '</div>';
-                });
-                if (events.length > 3) {
-                    eventHtml += '<div class="cal-ev" data-cal-date="' + dateStr + '" style="font-size:11px;color:#6B7280;cursor:pointer;padding-left:4px;">+' + (events.length-3) + '개 더보기</div>';
+                }).join('');
+
+                var hiddenHtml = hidden.map(function(ev) {
+                    var bg = ev.type === 'scheduled' ? '#FEF3C7' : calColor(ev.cat);
+                    var fc = ev.type === 'scheduled' ? '#92400E' : 'white';
+                    var label = (ev.title || ev.cat || '기타');
+                    if (label.length > 12) label = label.slice(0,12) + '…';
+                    var cntStr = ev.type === 'scheduled' ? '예정' : (ev.cnt > 0 ? ev.cnt.toLocaleString()+'건' : '');
+                    return '<div class="cal-ev" data-cal-date="' + dateStr + '" data-ev-title="' + (ev.title||'').replace(/"/g,'&quot;') + '" style="background:' + bg + ';color:' + fc + ';border-radius:4px;padding:2px 5px;font-size:10px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="' + (ev.title||ev.cat||'') + (cntStr?' · '+cntStr:'') + '">' +
+                        label + (cntStr ? ' <b>' + cntStr + '</b>' : '') +
+                        '</div>';
+                }).join('');
+
+                var moreHtml = '';
+                if (hidden.length > 0) {
+                    moreHtml = '<div class="cal-more-btn" data-date="' + dateStr + '" style="font-size:10px;color:#3B82F6;cursor:pointer;padding:1px 4px;font-weight:600;">+' + hidden.length + '개 더보기</div>' +
+                               '<div class="cal-hidden-events" id="cal-hidden-' + dateStr + '" style="display:none;">' + hiddenHtml + '<div class="cal-fold-btn" data-date="' + dateStr + '" style="font-size:10px;color:#9CA3AF;cursor:pointer;padding:1px 4px;">접기 ▲</div></div>';
                 }
 
-                cells += '<div style="min-height:110px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;padding:6px;background:' + (isToday?'#EFF6FF':'white') + ';cursor:default;vertical-align:top;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
-                    '<span style="font-size:13px;font-weight:600;' + (isToday?'background:#3B82F6;color:white;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;':'color:'+numColor+';') + '">' + d + '</span>' +
-                    (events.length > 0 && events[0].type !== 'scheduled' ? '<span style="font-size:10px;color:#9CA3AF;">' + events.reduce(function(s,e){return s+(e.cnt||0);},0).toLocaleString() + '</span>' : '') +
+                cells += '<div id="' + cellId + '" style="min-height:100px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;padding:5px 4px;background:' + (isToday?'#EFF6FF':'white') + ';vertical-align:top;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;padding:0 2px;">' +
+                    '<span style="font-size:12px;font-weight:600;' + (isToday?'background:#3B82F6;color:white;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;':'color:'+numColor+';') + '">' + d + '</span>' +
+                    (totalCnt > 0 ? '<span style="font-size:9px;color:#9CA3AF;">' + totalCnt.toLocaleString() + '</span>' : '') +
                     '</div>' +
-                    eventHtml +
+                    shownHtml + moreHtml +
                     '</div>';
             }
 
@@ -6830,18 +6901,51 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             }
 
             grid.innerHTML = cells;
-            // 이벤트 클릭 위임
+
+            // cal-ev 클릭 → 해당 타이틀 기준 상세 모달
             grid.querySelectorAll('.cal-ev').forEach(function(el) {
                 el.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    openCalDetail(this.getAttribute('data-cal-date'));
+                    var dateStr  = this.getAttribute('data-cal-date');
+                    var evTitle  = this.getAttribute('data-ev-title');
+                    openCalDetailByTitle(dateStr, evTitle);
                 });
             });
+
+            // 더보기 버튼 → 인라인 확장
+            grid.querySelectorAll('.cal-more-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var dateStr = this.getAttribute('data-date');
+                    var hidden  = document.getElementById('cal-hidden-' + dateStr);
+                    if (hidden) { hidden.style.display = 'block'; this.style.display = 'none'; }
+                });
+            });
+
+            // 접기 버튼
+            grid.querySelectorAll('.cal-fold-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var dateStr = this.getAttribute('data-date');
+                    var hidden  = document.getElementById('cal-hidden-' + dateStr);
+                    var more    = grid.querySelector('.cal-more-btn[data-date="' + dateStr + '"]');
+                    if (hidden) hidden.style.display = 'none';
+                    if (more)   more.style.display   = 'block';
+                });
+            });
+
+            // 숨겨진 항목 안의 cal-ev도 클릭 처리
+            grid.querySelectorAll('.cal-hidden-events .cal-ev').forEach(function(el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openCalDetailByTitle(this.getAttribute('data-cal-date'), this.getAttribute('data-ev-title'));
+                });
+            });
+
             grid.querySelectorAll('.cal-add-btn').forEach(function(el) {
                 el.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    var d = this.getAttribute('data-cal-date');
-                    openCalAddModal(d);
+                    openCalAddModal(this.getAttribute('data-cal-date'));
                 });
             });
         }
@@ -6860,7 +6964,76 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             loadCalData();
         }
 
-        /* ── 날짜 클릭 상세 ── */
+        /* ── 타이틀 기준 상세 모달 ── */
+        function openCalDetailByTitle(dateStr, evTitle) {
+            var modal = document.getElementById('calDetailModal');
+            var dateEl = document.getElementById('cal-detail-date');
+            var titleEl = document.getElementById('cal-detail-title');
+            var bodyEl  = document.getElementById('cal-detail-body');
+            if (!modal) return;
+
+            dateEl.textContent  = dateStr;
+            titleEl.textContent = evTitle || '상세 정보';
+            bodyEl.innerHTML    = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>';
+            modal.style.display = 'flex';
+
+            if (!evTitle || evTitle === '예정') {
+                // 예정 항목 표시
+                var sched = (_calScheduled||[]).find(function(s){ return s.date===dateStr && s.title===evTitle; });
+                if (sched) {
+                    bodyEl.innerHTML = '<div style="border:1px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:14px;">' +
+                        '<div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:6px;">' + sched.title + '</div>' +
+                        (sched.body ? '<div style="font-size:13px;color:#374151;margin-bottom:8px;">' + sched.body + '</div>' : '') +
+                        (sched.category ? '<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;">' + sched.category + '</span>' : '') +
+                        (sched.target ? ' <span style="background:#F3F4F6;color:#374151;padding:2px 8px;border-radius:6px;font-size:11px;">대상: ' + sched.target + '</span>' : '') +
+                        '</div>';
+                }
+                return;
+            }
+
+            // API 조회 - 해당 날짜 + title
+            pushQuery(
+                'SELECT title, body, notification_category, COUNT(*) as cnt, MIN(created_at) as first_sent, MAX(created_at) as last_sent' +
+                ' FROM ' + PUSH_TABLE +
+                ' WHERE DATE(created_at) = ? AND title = ?' +
+                ' GROUP BY title, body, notification_category ORDER BY cnt DESC',
+                [dateStr, evTitle]
+            ).then(function(data) {
+                if (!data || !data.length) {
+                    bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#9CA3AF;">데이터 없음</div>';
+                    return;
+                }
+                var totalCnt = data.reduce(function(s,r){ return s+(parseInt(r.cnt)||0); }, 0);
+                var html = '<div style="margin-bottom:14px;">' +
+                    '<div style="font-size:12px;color:#6B7280;margin-bottom:4px;">발송일</div>' +
+                    '<div style="font-size:14px;font-weight:600;color:#111827;">' + dateStr + '</div>' +
+                    '</div>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">' +
+                    '<div style="background:#F0FDF4;border-radius:8px;padding:10px;"><div style="font-size:11px;color:#6B7280;">총 발송량</div><div style="font-size:20px;font-weight:800;color:#10B981;">' + totalCnt.toLocaleString() + '건</div></div>' +
+                    '<div style="background:#EFF6FF;border-radius:8px;padding:10px;"><div style="font-size:11px;color:#6B7280;">카테고리</div><div style="font-size:13px;font-weight:600;color:#3B82F6;">' + (data[0].notification_category||'기타') + '</div></div>' +
+                    '</div>';
+
+                if (data[0].first_sent) {
+                    html += '<div style="font-size:12px;color:#6B7280;margin-bottom:4px;">발송 일시</div>' +
+                        '<div style="font-size:13px;color:#374151;margin-bottom:14px;">' + toKST(data[0].first_sent) +
+                        (data[0].last_sent && data[0].last_sent !== data[0].first_sent ? ' ~ ' + toKST(data[0].last_sent) : '') + '</div>';
+                }
+
+                html += '<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">내용별 발송 현황</div>';
+                html += '<div style="border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;">';
+                data.forEach(function(r, i) {
+                    html += '<div style="padding:10px 12px;' + (i>0?'border-top:1px solid #F3F4F6;':'') + '">' +
+                        '<div style="font-size:12px;color:#374151;margin-bottom:4px;line-height:1.5;">' + (r.body || '<span style="color:#9CA3AF;">내용 없음</span>') + '</div>' +
+                        '<div style="font-size:12px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</div>' +
+                        '</div>';
+                });
+                html += '</div>';
+
+                bodyEl.innerHTML = html;
+            });
+        }
+
+        /* ── 날짜 클릭 상세 (전체) ── */
         function openCalDetail(dateStr) {
             var events = (_calData[dateStr] || []);
             var scheduled = _calScheduled.filter(function(s){ return s.date === dateStr; });
@@ -6994,8 +7167,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _consentInited = false;
 
         async function initConsentTab() {
-            if (_consentInited) return;
-            _consentInited = true;
             await consentLoadHistory();
             await consentAutoRecord();
         }
