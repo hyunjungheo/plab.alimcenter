@@ -3339,7 +3339,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
     </style>
     <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Google OAuth 제거 (미리보기) -->
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -3387,7 +3387,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return true;
             } catch(e) { console.warn('Firestore save:', e); return false; }
         };
-        window._loadPushConsentHistory = async function() {
+        window._loadPushConsentHistory = async function(limitN) {
             try {
                 const col = collection(db, 'push_consent_daily');
                 const q   = query(col, orderBy('date', 'asc'), limit(90));
@@ -3463,25 +3463,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
     }
 
     window.addEventListener('DOMContentLoaded', function() {
-        if (sessionStorage.getItem('admin_auth') === 'true') {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            checkWritingTeamUI();
-            var nameEl = document.getElementById('admin-user-name');
-            var badge  = document.getElementById('admin-user-badge');
-            // 이메일만 표시 (이름은 한글 깨짐 가능성)
-            // admin_display(순수 ASCII email) 우선, 없으면 admin_email
-            var storedEmail = sessionStorage.getItem('admin_display') || sessionStorage.getItem('admin_email') || '';
-            if (nameEl) nameEl.textContent = storedEmail;
-            if (badge)  badge.style.display = 'flex';
-            renderTemplateActions();
-        }
+        // 미리보기 모드: 자동 진입 (라이팅팀 권한)
+        sessionStorage.setItem('admin_auth', 'true');
+        sessionStorage.setItem('admin_email', 'hyunjung.heo@plabfootball.com');
+        sessionStorage.setItem('admin_display', 'hyunjung.heo@plabfootball.com');
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        var nameEl = document.getElementById('admin-user-name');
+        var badge  = document.getElementById('admin-user-badge');
+        if (nameEl) nameEl.textContent = 'hyunjung.heo@plabfootball.com';
+        if (badge)  badge.style.display = 'flex';
+        checkWritingTeamUI();
+        renderTemplateActions();
     });
     </script>
 </head>
 
 <!-- ========== 로그인 화면 ========== -->
-<div id="login-screen" style="
+<div id="login-screen" style="display:none!important;" style="
     display: flex;
     align-items: center;
     justify-content: center;
@@ -6165,6 +6164,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 ' SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as week_cnt,' +
                 ' SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as month_cnt' +
                 ' FROM ' + tbl +
+                ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)' +
                 ' GROUP BY title ORDER BY total DESC LIMIT 30'
             );
             if (titleStats) renderTitleStats(titleStats);
@@ -6172,6 +6172,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             // TOP 10
             var top = await pushQuery(
                 'SELECT title, COUNT(*) as cnt FROM ' + tbl +
+                ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)' +
                 ' GROUP BY title ORDER BY cnt DESC LIMIT 10'
             );
             if (top) renderTopTemplates(top);
@@ -6218,35 +6219,38 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var el = document.getElementById('chart-daily');
             if (!el) return;
             if (!data || !data.length) {
-                el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9CA3AF;font-size:13px;">데이터 없음</div>';
+                el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9CA3AF;font-size:13px;">데이터 없음</div>';
                 return;
             }
-            var W = 560, H = 160, padL = 10, padR = 10, padT = 20, padB = 30;
-            var n = data.length;
+            var n    = data.length;
             var vals = data.map(function(d){ return parseInt(d.cnt)||0; });
             var maxV = Math.max.apply(null, vals) || 1;
-            var barW = Math.floor((W - padL - padR) / n);
-            var gap  = Math.max(2, Math.floor(barW * 0.15));
-            var bw   = barW - gap;
-            var colors = '#3B82F6';
+
+            // 고정 좌표계 사용 (viewBox 기반, preserveAspectRatio=none으로 반응형)
+            var VW = 600, VH = 180;
+            var padL = 8, padR = 8, padT = 24, padB = 32;
+            var chartW = VW - padL - padR;
+            var chartH = VH - padT - padB;
+            var slotW  = chartW / n;
+            var gap    = Math.max(1, slotW * 0.18);
+            var bw     = slotW - gap;
 
             var bars = vals.map(function(v, i) {
-                var bh = Math.round(v / maxV * (H - padT - padB));
-                var bh = Math.max(bh, v > 0 ? 3 : 0);
-                var x  = padL + i * barW;
-                var y  = H - padB - bh;
-                var dateStr = toKSTShort(data[i].d);
-                return [
-                    '<rect x="', x, '" y="', y, '" width="', bw, '" height="', bh,
-                    '" fill="#3B82F6" rx="3" opacity="0.85"/>',
-                    (v > 0 ? '<text x="' + (x + bw/2) + '" y="' + (y-4) + '" text-anchor="middle" font-size="9" fill="#374151">' + v + '</text>' : ''),
-                    '<text x="', (x + bw/2), '" y="', (H - padB + 14), '" text-anchor="middle" font-size="9" fill="#9CA3AF">', dateStr, '</text>'
-                ].join('');
+                var bh      = Math.max(v > 0 ? 3 : 0, Math.round(v / maxV * chartH));
+                var x       = padL + i * slotW + gap / 2;
+                var y       = padT + chartH - bh;
+                var label   = toKSTShort(data[i].d);
+                var valText = v > 0 ? '<text x="' + (x + bw/2).toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="#374151" font-weight="500">' + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v) + '</text>' : '';
+                return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" fill="#3B82F6" rx="2.5" opacity="0.85"/>' +
+                       valText +
+                       '<text x="' + (x + bw/2).toFixed(1) + '" y="' + (VH - padB + 14).toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="#9CA3AF">' + label + '</text>';
             }).join('');
 
-            el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:' + H + 'px;">' +
-                '<line x1="' + padL + '" y1="' + (H-padB) + '" x2="' + (W-padR) + '" y2="' + (H-padB) + '" stroke="#E5E7EB" stroke-width="1"/>' +
-                bars + '</svg>';
+            var baseline = '<line x1="' + padL + '" y1="' + (padT + chartH) + '" x2="' + (VW - padR) + '" y2="' + (padT + chartH) + '" stroke="#E5E7EB" stroke-width="1"/>';
+
+            el.innerHTML = '<div style="width:100%;overflow-x:auto;">' +
+                '<svg viewBox="0 0 ' + VW + ' ' + VH + '" preserveAspectRatio="none" style="width:100%;height:180px;display:block;">' +
+                baseline + bars + '</svg></div>';
         }
 
         /* ── 카테고리 비율 ── */
@@ -6275,20 +6279,21 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (!data.length) { el.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">데이터 없음</div>'; return; }
             var rows = data.map(function(d) {
                 return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                    '<td style="padding:10px 12px;font-size:13px;color:#111827;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (d.title||'') + '">' + (d.title||'-') + '</td>' +
-                    '<td style="padding:10px 12px;font-size:13px;color:#6B7280;white-space:nowrap;">' + toKSTDate(d.last_date) + '</td>' +
+                    '<td style="padding:8px 10px;font-size:12px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (d.title||'') + '">' + (d.title||'-') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(d.last_date) + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#7C3AED;text-align:right;">' + Number(parseInt(d.week_cnt)||0).toLocaleString() + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#3B82F6;text-align:right;">' + Number(parseInt(d.month_cnt)||0).toLocaleString() + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(d.total)||0).toLocaleString() + '</td>' +
                     '</tr>';
             }).join('');
-            el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">' +
+            el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
+                '<colgroup><col style="width:auto"><col style="width:86px"><col style="width:68px"><col style="width:68px"><col style="width:60px"></colgroup>' +
                 '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">' +
-                '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목 (title)</th>' +
-                '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">마지막 발송일</th>' +
-                '<th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">주 발송량</th>' +
-                '<th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">월 발송량</th>' +
-                '<th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">전체</th>' +
+                '<th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>' +
+                '<th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">마지막 발송</th>' +
+                '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">주</th>' +
+                '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">월</th>' +
+                '<th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">전체</th>' +
                 '</tr></thead><tbody>' + rows + '</tbody></table></div>';
         }
 
@@ -6751,414 +6756,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         /* ===================================================== */
 
 
-        /* =====================================================
-           캘린더 JS
-           ===================================================== */
-        var _calYear  = new Date().getFullYear();
-        var _calMonth = new Date().getMonth(); // 0-based
-        var _calData  = {};   // { 'YYYY-MM-DD': [{title,body,category,cnt,type},...] }
-        var _calScheduled = []; // 로컬 예정 항목
-        var _calInited = false;
-
-        var CAL_COLORS = {
-            '경기 관련': '#3B82F6',
-            '결제 관련': '#10B981',
-            '채용':     '#8B5CF6',
-            '활동':     '#F59E0B',
-            '리마인더': '#6366F1',
-            '이벤트':   '#EC4899',
-            '공지':     '#14B8A6',
-            '기타':     '#9CA3AF'
-        };
-        function calColor(cat) {
-            return CAL_COLORS[cat] || '#9CA3AF';
-        }
-
-        /* ── 초기화 ── */
-        async function initPushCalendar() {
-            if (_calInited) { renderCalendar(); return; }
-            _calInited = true;
-            await loadCalData();
-        }
-
-        /* ── API로 해당 월 데이터 로드 ── */
-        async function loadCalData() {
-            var y = _calYear, m = _calMonth;
-            var firstDay = y + '-' + String(m+1).padStart(2,'0') + '-01';
-            var lastDay  = new Date(y, m+1, 0);
-            var lastStr  = y + '-' + String(m+1).padStart(2,'0') + '-' + String(lastDay.getDate()).padStart(2,'0');
-
-            var data = await pushQuery(
-                'SELECT DATE(created_at) as d, title, notification_category as cat, COUNT(*) as cnt,' +
-                ' MIN(created_at) as first_sent' +
-                ' FROM ' + PUSH_TABLE +
-                ' WHERE DATE(created_at) BETWEEN ? AND ?' +
-                ' GROUP BY DATE(created_at), title, notification_category ORDER BY d ASC, cnt DESC',
-                [firstDay, lastStr]
-            );
-
-            _calData = {};
-            if (data) {
-                data.forEach(function(r) {
-                    var d = toKSTDate(r.d);
-                    if (!_calData[d]) _calData[d] = [];
-                    // 같은 title은 cnt 합산
-                    var existing = _calData[d].find(function(e){ return e.title === (r.title||'-') && e.type === 'actual'; });
-                    if (existing) {
-                        existing.cnt += parseInt(r.cnt)||0;
-                    } else {
-                        _calData[d].push({
-                            title: r.title || '-',
-                            cat:   r.cat   || '기타',
-                            cnt:   parseInt(r.cnt) || 0,
-                            first_sent: r.first_sent || '',
-                            type:  'actual'
-                        });
-                    }
-                });
-            }
-            renderCalendar();
-        }
-
-        /* ── 캘린더 렌더링 ── */
-        function renderCalendar() {
-            var y = _calYear, m = _calMonth;
-            var label = document.getElementById('cal-month-label');
-            if (label) label.textContent = y + '년 ' + (m+1) + '월';
-
-            var grid = document.getElementById('cal-grid');
-            if (!grid) return;
-
-            var firstDow = new Date(y, m, 1).getDay(); // 0=일
-            var daysInMonth = new Date(y, m+1, 0).getDate();
-            var today = toKSTDate(new Date().toISOString());
-
-            var cells = '';
-            // 앞 빈칸
-            for (var i = 0; i < firstDow; i++) {
-                cells += '<div style="min-height:110px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;background:#FAFAFA;padding:8px 6px;"></div>';
-            }
-
-            for (var d = 1; d <= daysInMonth; d++) {
-                var dateStr = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-                var isToday = dateStr === today;
-                var dow = (firstDow + d - 1) % 7;
-                var isSun = dow === 0, isSat = dow === 6;
-                var numColor = isToday ? 'white' : (isSun ? '#EF4444' : (isSat ? '#3B82F6' : '#374151'));
-
-                var actualEvents = (_calData[dateStr] || []).filter(function(e){ return e.type === 'actual'; });
-                var schedEvents  = (_calScheduled||[]).filter(function(s){ return s.date === dateStr; });
-                var allEvents    = actualEvents.concat(schedEvents.map(function(s){ return {title:s.title, cat:s.category||'기타', cnt:0, type:'scheduled', body:s.body, target:s.target}; }));
-                var totalCnt     = actualEvents.reduce(function(s,e){ return s+(e.cnt||0); }, 0);
-
-                var SHOW_MAX = 3;
-                var shown = allEvents.slice(0, SHOW_MAX);
-                var hidden = allEvents.slice(SHOW_MAX);
-                var cellId = 'cell-' + dateStr;
-
-                var shownHtml = shown.map(function(ev) {
-                    var bg = ev.type === 'scheduled' ? '#FEF3C7' : calColor(ev.cat);
-                    var fc = ev.type === 'scheduled' ? '#92400E' : 'white';
-                    var label = (ev.title || ev.cat || '기타');
-                    if (label.length > 12) label = label.slice(0,12) + '…';
-                    var cntStr = ev.type === 'scheduled' ? '예정' : (ev.cnt > 0 ? ev.cnt.toLocaleString()+'건' : '');
-                    return '<div class="cal-ev" data-cal-date="' + dateStr + '" data-ev-title="' + (ev.title||'').replace(/"/g,'&quot;') + '" style="background:' + bg + ';color:' + fc + ';border-radius:4px;padding:2px 5px;font-size:10px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="' + (ev.title||ev.cat||'') + (cntStr?' · '+cntStr:'') + '">' +
-                        label + (cntStr ? ' <b>' + cntStr + '</b>' : '') +
-                        '</div>';
-                }).join('');
-
-                var hiddenHtml = hidden.map(function(ev) {
-                    var bg = ev.type === 'scheduled' ? '#FEF3C7' : calColor(ev.cat);
-                    var fc = ev.type === 'scheduled' ? '#92400E' : 'white';
-                    var label = (ev.title || ev.cat || '기타');
-                    if (label.length > 12) label = label.slice(0,12) + '…';
-                    var cntStr = ev.type === 'scheduled' ? '예정' : (ev.cnt > 0 ? ev.cnt.toLocaleString()+'건' : '');
-                    return '<div class="cal-ev" data-cal-date="' + dateStr + '" data-ev-title="' + (ev.title||'').replace(/"/g,'&quot;') + '" style="background:' + bg + ';color:' + fc + ';border-radius:4px;padding:2px 5px;font-size:10px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="' + (ev.title||ev.cat||'') + (cntStr?' · '+cntStr:'') + '">' +
-                        label + (cntStr ? ' <b>' + cntStr + '</b>' : '') +
-                        '</div>';
-                }).join('');
-
-                var moreHtml = '';
-                if (hidden.length > 0) {
-                    moreHtml = '<div class="cal-more-btn" data-date="' + dateStr + '" style="font-size:10px;color:#3B82F6;cursor:pointer;padding:1px 4px;font-weight:600;">+' + hidden.length + '개 더보기</div>' +
-                               '<div class="cal-hidden-events" id="cal-hidden-' + dateStr + '" style="display:none;">' + hiddenHtml + '<div class="cal-fold-btn" data-date="' + dateStr + '" style="font-size:10px;color:#9CA3AF;cursor:pointer;padding:1px 4px;">접기 ▲</div></div>';
-                }
-
-                cells += '<div id="' + cellId + '" style="min-height:100px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;padding:5px 4px;background:' + (isToday?'#EFF6FF':'white') + ';vertical-align:top;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;padding:0 2px;">' +
-                    '<span style="font-size:12px;font-weight:600;' + (isToday?'background:#3B82F6;color:white;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;':'color:'+numColor+';') + '">' + d + '</span>' +
-                    (totalCnt > 0 ? '<span style="font-size:9px;color:#9CA3AF;">' + totalCnt.toLocaleString() + '</span>' : '') +
-                    '</div>' +
-                    shownHtml + moreHtml +
-                    '</div>';
-            }
-
-            // 뒤 빈칸
-            var total = firstDow + daysInMonth;
-            var rem = total % 7 === 0 ? 0 : 7 - (total % 7);
-            for (var i = 0; i < rem; i++) {
-                cells += '<div style="min-height:110px;border-right:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;background:#FAFAFA;padding:8px 6px;"></div>';
-            }
-
-            grid.innerHTML = cells;
-
-            // cal-ev 클릭 → 해당 타이틀 기준 상세 모달
-            grid.querySelectorAll('.cal-ev').forEach(function(el) {
-                el.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    var dateStr  = this.getAttribute('data-cal-date');
-                    var evTitle  = this.getAttribute('data-ev-title');
-                    openCalDetailByTitle(dateStr, evTitle);
-                });
-            });
-
-            // 더보기 버튼 → 인라인 확장
-            grid.querySelectorAll('.cal-more-btn').forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    var dateStr = this.getAttribute('data-date');
-                    var hidden  = document.getElementById('cal-hidden-' + dateStr);
-                    if (hidden) { hidden.style.display = 'block'; this.style.display = 'none'; }
-                });
-            });
-
-            // 접기 버튼
-            grid.querySelectorAll('.cal-fold-btn').forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    var dateStr = this.getAttribute('data-date');
-                    var hidden  = document.getElementById('cal-hidden-' + dateStr);
-                    var more    = grid.querySelector('.cal-more-btn[data-date="' + dateStr + '"]');
-                    if (hidden) hidden.style.display = 'none';
-                    if (more)   more.style.display   = 'block';
-                });
-            });
-
-            // 숨겨진 항목 안의 cal-ev도 클릭 처리
-            grid.querySelectorAll('.cal-hidden-events .cal-ev').forEach(function(el) {
-                el.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    openCalDetailByTitle(this.getAttribute('data-cal-date'), this.getAttribute('data-ev-title'));
-                });
-            });
-
-            grid.querySelectorAll('.cal-add-btn').forEach(function(el) {
-                el.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    openCalAddModal(this.getAttribute('data-cal-date'));
-                });
-            });
-        }
-
-        /* ── 월 이동 ── */
-        function movePushCalendar(dir) {
-            if (dir === 0) {
-                _calYear  = new Date().getFullYear();
-                _calMonth = new Date().getMonth();
-            } else {
-                _calMonth += dir;
-                if (_calMonth < 0)  { _calMonth = 11; _calYear--; }
-                if (_calMonth > 11) { _calMonth = 0;  _calYear++; }
-            }
-            _calInited = true;
-            loadCalData();
-        }
-
-        /* ── 타이틀 기준 상세 모달 ── */
-        function openCalDetailByTitle(dateStr, evTitle) {
-            var modal = document.getElementById('calDetailModal');
-            var dateEl = document.getElementById('cal-detail-date');
-            var titleEl = document.getElementById('cal-detail-title');
-            var bodyEl  = document.getElementById('cal-detail-body');
-            if (!modal) return;
-
-            dateEl.textContent  = dateStr;
-            titleEl.textContent = evTitle || '상세 정보';
-            bodyEl.innerHTML    = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>';
-            modal.style.display = 'flex';
-
-            if (!evTitle || evTitle === '예정') {
-                // 예정 항목 표시
-                var sched = (_calScheduled||[]).find(function(s){ return s.date===dateStr && s.title===evTitle; });
-                if (sched) {
-                    bodyEl.innerHTML = '<div style="border:1px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:14px;">' +
-                        '<div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:6px;">' + sched.title + '</div>' +
-                        (sched.body ? '<div style="font-size:13px;color:#374151;margin-bottom:8px;">' + sched.body + '</div>' : '') +
-                        (sched.category ? '<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;">' + sched.category + '</span>' : '') +
-                        (sched.target ? ' <span style="background:#F3F4F6;color:#374151;padding:2px 8px;border-radius:6px;font-size:11px;">대상: ' + sched.target + '</span>' : '') +
-                        '</div>';
-                }
-                return;
-            }
-
-            // API 조회 - 해당 날짜 + title
-            pushQuery(
-                'SELECT title, body, notification_category, COUNT(*) as cnt, MIN(created_at) as first_sent, MAX(created_at) as last_sent' +
-                ' FROM ' + PUSH_TABLE +
-                ' WHERE DATE(created_at) = ? AND title = ?' +
-                ' GROUP BY title, body, notification_category ORDER BY cnt DESC',
-                [dateStr, evTitle]
-            ).then(function(data) {
-                if (!data || !data.length) {
-                    bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#9CA3AF;">데이터 없음</div>';
-                    return;
-                }
-                var totalCnt = data.reduce(function(s,r){ return s+(parseInt(r.cnt)||0); }, 0);
-                var html = '<div style="margin-bottom:14px;">' +
-                    '<div style="font-size:12px;color:#6B7280;margin-bottom:4px;">발송일</div>' +
-                    '<div style="font-size:14px;font-weight:600;color:#111827;">' + dateStr + '</div>' +
-                    '</div>' +
-                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">' +
-                    '<div style="background:#F0FDF4;border-radius:8px;padding:10px;"><div style="font-size:11px;color:#6B7280;">총 발송량</div><div style="font-size:20px;font-weight:800;color:#10B981;">' + totalCnt.toLocaleString() + '건</div></div>' +
-                    '<div style="background:#EFF6FF;border-radius:8px;padding:10px;"><div style="font-size:11px;color:#6B7280;">카테고리</div><div style="font-size:13px;font-weight:600;color:#3B82F6;">' + (data[0].notification_category||'기타') + '</div></div>' +
-                    '</div>';
-
-                if (data[0].first_sent) {
-                    html += '<div style="font-size:12px;color:#6B7280;margin-bottom:4px;">발송 일시</div>' +
-                        '<div style="font-size:13px;color:#374151;margin-bottom:14px;">' + toKST(data[0].first_sent) +
-                        (data[0].last_sent && data[0].last_sent !== data[0].first_sent ? ' ~ ' + toKST(data[0].last_sent) : '') + '</div>';
-                }
-
-                html += '<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">내용별 발송 현황</div>';
-                html += '<div style="border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;">';
-                data.forEach(function(r, i) {
-                    html += '<div style="padding:10px 12px;' + (i>0?'border-top:1px solid #F3F4F6;':'') + '">' +
-                        '<div style="font-size:12px;color:#374151;margin-bottom:4px;line-height:1.5;">' + (r.body || '<span style="color:#9CA3AF;">내용 없음</span>') + '</div>' +
-                        '<div style="font-size:12px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</div>' +
-                        '</div>';
-                });
-                html += '</div>';
-
-                bodyEl.innerHTML = html;
-            });
-        }
-
-        /* ── 날짜 클릭 상세 (전체) ── */
-        function openCalDetail(dateStr) {
-            var events = (_calData[dateStr] || []);
-            var scheduled = _calScheduled.filter(function(s){ return s.date === dateStr; });
-
-            var modal = document.getElementById('calDetailModal');
-            var dateEl = document.getElementById('cal-detail-date');
-            var titleEl = document.getElementById('cal-detail-title');
-            var bodyEl = document.getElementById('cal-detail-body');
-            if (!modal) return;
-
-            dateEl.textContent = dateStr;
-            titleEl.textContent = '총 ' + events.reduce(function(s,e){return s+(e.cnt||0);},0).toLocaleString() + '건 발송';
-
-            var html = '';
-
-            // 실제 발송 이력
-            if (events.length) {
-                html += '<div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">발송 이력</div>';
-                events.forEach(function(ev) {
-                    html += '<div style="border:1px solid #E5E7EB;border-radius:10px;padding:12px 14px;margin-bottom:8px;">' +
-                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-                        '<span style="background:' + calColor(ev.cat) + ';color:white;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;">' + ev.cat + '</span>' +
-                        '<span style="font-size:13px;font-weight:700;color:#111827;">' + (ev.cnt||0).toLocaleString() + '건</span>' +
-                        '</div>' +
-                        '<div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:3px;">' + ev.title + '</div>' +
-                        '</div>';
-                });
-            }
-
-            // 발송 예정
-            if (scheduled.length) {
-                html += '<div style="font-size:12px;font-weight:600;color:#6B7280;margin-top:12px;margin-bottom:8px;">발송 예정</div>';
-                scheduled.forEach(function(s, idx) {
-                    html += '<div style="border:1px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:12px 14px;margin-bottom:8px;">' +
-                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-                        '<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;">' + (s.category||'기타') + ' · 예정</span>' +
-                        '<button class="cal-del-btn" data-del-idx="' + idx + '" data-del-date="' + dateStr + '" style="border:none;background:none;color:#9CA3AF;font-size:14px;cursor:pointer;">×</button>' +
-                        '</div>' +
-                        '<div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:2px;">' + s.title + '</div>' +
-                        (s.body ? '<div style="font-size:12px;color:#6B7280;margin-top:3px;">' + s.body + '</div>' : '') +
-                        (s.target ? '<div style="font-size:11px;color:#9CA3AF;margin-top:4px;">대상: ' + s.target + '</div>' : '') +
-                        '</div>';
-                });
-            }
-
-            if (!html) html = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px;">이 날짜에 발송 이력이 없습니다.</div>';
-
-            bodyEl.innerHTML = html;
-            modal.style.display = 'flex';
-            // 삭제 버튼 위임
-            bodyEl.querySelectorAll('.cal-del-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var i = parseInt(this.getAttribute('data-del-idx'));
-                    var dt = this.getAttribute('data-del-date');
-                    deleteCalScheduled(i, dt);
-                });
-            });
-        }
-
-        function closeCalDetailModal() {
-            var m = document.getElementById('calDetailModal');
-            if (m) m.style.display = 'none';
-        }
-
-        function deleteCalScheduled(idx, dateStr) {
-            var found = [];
-            var cnt = 0;
-            _calScheduled = _calScheduled.filter(function(s) {
-                if (s.date === dateStr) {
-                    if (cnt === idx) { cnt++; return false; }
-                    cnt++;
-                }
-                return true;
-            });
-            closeCalDetailModal();
-            renderCalendar();
-            toast('예정 항목이 삭제되었습니다.', 2000);
-        }
-
-        /* ── 예정 추가 모달 ── */
-        function openCalAddModal(dateStr) {
-            var m = document.getElementById('calAddModal');
-            if (!m) return;
-            // 날짜 기본값
-            var dateInput = document.getElementById('cal-add-date');
-            if (dateInput) {
-                var today = new Date();
-                var kst = new Date(today.getTime() + 9*3600*1000);
-                dateInput.value = kst.toISOString().slice(0,10);
-            }
-            // 입력 초기화
-            ['cal-add-title','cal-add-body'].forEach(function(id){
-                var el = document.getElementById(id); if(el) el.value = '';
-            });
-            ['cal-add-category','cal-add-target'].forEach(function(id){
-                var el = document.getElementById(id); if(el) el.selectedIndex = 0;
-            });
-            m.style.display = 'flex';
-        }
-
-        function closeCalAddModal() {
-            var m = document.getElementById('calAddModal');
-            if (m) m.style.display = 'none';
-        }
-
-        function saveCalAdd() {
-            var date  = (document.getElementById('cal-add-date')||{}).value;
-            var title = (document.getElementById('cal-add-title')||{}).value.trim();
-            if (!date || !title) { alert('발송 예정일과 제목은 필수입니다.'); return; }
-            _calScheduled.push({
-                date:     date,
-                title:    title,
-                body:     (document.getElementById('cal-add-body')||{}).value.trim(),
-                category: (document.getElementById('cal-add-category')||{}).value,
-                target:   (document.getElementById('cal-add-target')||{}).value
-            });
-            closeCalAddModal();
-            // 해당 월로 이동
-            var parts = date.split('-');
-            _calYear  = parseInt(parts[0]);
-            _calMonth = parseInt(parts[1]) - 1;
-            renderCalendar();
-            toast('발송 예정이 추가되었습니다.', 2000, true);
-        }
-        /* ===================================================== */
 
 
         /* =====================================================
@@ -7167,7 +6764,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _consentInited = false;
 
         async function initConsentTab() {
+            // 오늘 실시간 데이터 먼저 표시
+            var d = await consentFetchToday();
+            if (d) consentRenderKPI(d);
+            // Firestore 이력
             await consentLoadHistory();
+            // 자동 기록 체크
             await consentAutoRecord();
         }
 
@@ -7223,23 +6825,27 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         async function consentAutoRecord() {
             var kstNow = new Date(Date.now() + 9*3600*1000);
             var hour   = kstNow.getUTCHours();
-            if (hour < 9) {
-                setEl('con-record-status', '오늘 오전 9시 이후 자동 기록');
-                return;
-            }
-            var today = toKSTDate(new Date().toISOString());
+            var today  = toKSTDate(new Date().toISOString());
+            // 오늘 이미 기록됐는지 이력에서 확인
             try {
-                if (window._getPushConsentToday) {
-                    var exists = await window._getPushConsentToday(today);
-                    if (exists) {
-                        consentRenderKPI(exists);
+                if (window._loadPushConsentHistory) {
+                    var hist = await window._loadPushConsentHistory(2);
+                    if (hist && hist.length && hist[hist.length-1].date === today) {
+                        consentRenderKPI(hist[hist.length-1]);
                         setEl('con-record-status', '✅ ' + today + ' 기록 완료');
                         return;
                     }
                 }
             } catch(e) {}
-            // 기록 없으면 자동 기록
-            await consentRecordNow(false);
+            // 9시 이후이고 미기록이면 자동 기록
+            if (hour >= 9) {
+                await consentRecordNow(false);
+            } else {
+                setEl('con-record-status', '오전 9시 이후 자동 기록');
+                // 9시 이전이어도 오늘 데이터는 조회해서 표시
+                var d = await consentFetchToday();
+                if (d) consentRenderKPI(d);
+            }
         }
 
         /* ── 수동/자동 기록 ── */
@@ -7249,7 +6855,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var d = await consentFetchToday();
             if (!d) { setEl('con-record-status', '⚠️ 데이터 조회 실패'); return; }
             try {
-                if (window._savePushConsent) await window._savePushConsent(d);
+                if (window._savePushConsentRecord) await window._savePushConsentRecord(d);
                 setEl('con-record-status', '✅ ' + d.date + ' 기록 완료');
                 if (showToast) toast('✅ 동의 현황이 기록되었습니다.', 2000, true);
             } catch(e) {
@@ -7340,8 +6946,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _pushUserCol  = null;
 
         async function initReviewTab() {
-            if (_reviewInited) return;
-            _reviewInited = true;
             await loadReviewData();
         }
 
