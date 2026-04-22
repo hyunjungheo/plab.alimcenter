@@ -7639,6 +7639,30 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
         /* ===================================================== */
 
+        /* ─── KST 날짜 변환 헬퍼 ─── */
+        function toKST(raw) {
+            if (!raw) return '-';
+            var s = String(raw).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+            try {
+                if (s.includes('T') && !s.endsWith('Z')) s = s + 'Z';
+                var d = new Date(s);
+                if (isNaN(d.getTime())) return String(raw);
+                var k = new Date(d.getTime() + 9*3600*1000);
+                var pad = function(n){ return String(n).padStart(2,'0'); };
+                return k.getFullYear()+'-'+pad(k.getMonth()+1)+'-'+pad(k.getDate())+
+                       ' '+pad(k.getHours())+':'+pad(k.getMinutes())+':'+pad(k.getSeconds());
+            } catch(e) { return String(raw); }
+        }
+        function toKSTDate(raw) {
+            var f = toKST(raw);
+            return (f && f.length >= 10) ? f.slice(0,10) : f;
+        }
+        function toKSTShort(raw) {
+            var f = toKSTDate(raw);
+            return (f && f.length >= 10) ? f.slice(5,10) : f;
+        }
+
         /* ─── toast 알림 ─── */
         function toast(msg, dur, isSave) {
             var el = document.getElementById('_guideToast');
