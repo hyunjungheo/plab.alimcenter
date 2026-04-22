@@ -3339,7 +3339,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
     </style>
     <!-- Google Identity Services -->
-    <!-- Google OAuth 제거 (미리보기) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -3458,29 +3458,34 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         sessionStorage.removeItem('admin_auth');
         sessionStorage.removeItem('admin_email');
         sessionStorage.removeItem('admin_name');
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('main-content').style.display = 'none';
+        sessionStorage.removeItem('admin_display');
+        if (window.google && google.accounts) {
+            google.accounts.id.disableAutoSelect();
+        }
+        // 페이지 새로고침으로 Google 버튼 재렌더링
+        window.location.reload();
     }
 
     window.addEventListener('DOMContentLoaded', function() {
-        // 미리보기 모드: 자동 진입 (라이팅팀 권한)
-        sessionStorage.setItem('admin_auth', 'true');
-        sessionStorage.setItem('admin_email', 'hyunjung.heo@plabfootball.com');
-        sessionStorage.setItem('admin_display', 'hyunjung.heo@plabfootball.com');
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        var nameEl = document.getElementById('admin-user-name');
-        var badge  = document.getElementById('admin-user-badge');
-        if (nameEl) nameEl.textContent = 'hyunjung.heo@plabfootball.com';
-        if (badge)  badge.style.display = 'flex';
-        checkWritingTeamUI();
-        renderTemplateActions();
+        if (sessionStorage.getItem('admin_auth') === 'true') {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            checkWritingTeamUI();
+            var nameEl = document.getElementById('admin-user-name');
+            var badge  = document.getElementById('admin-user-badge');
+            // 이메일만 표시 (이름은 한글 깨짐 가능성)
+            // admin_display(순수 ASCII email) 우선, 없으면 admin_email
+            var storedEmail = sessionStorage.getItem('admin_display') || sessionStorage.getItem('admin_email') || '';
+            if (nameEl) nameEl.textContent = storedEmail;
+            if (badge)  badge.style.display = 'flex';
+            renderTemplateActions();
+        }
     });
     </script>
 </head>
 
 <!-- ========== 로그인 화면 ========== -->
-<div id="login-screen" style="display:none!important;" style="
+<div id="login-screen" style="
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3542,39 +3547,47 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 </div>
 
 <script>
-    // ── 관리자 허용 이메일 목록 ──────────────────────────
-    const ADMIN_EMAILS = [
-        'hyunjung.heo@plabfootball.com'
-    ];
-
     // ── Google 로그인 콜백 ───────────────────────────────
+    // @plabfootball.com 도메인 전체 허용
+    const ALLOWED_LOGIN_DOMAIN = 'plabfootball.com';
+
     function handleCredentialResponse(response) {
         try {
-            // JWT payload 디코딩 (base64)
-            const base64Payload = response.credential.split('.')[1];
-            const payload = JSON.parse(atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/')));
-            const email = payload.email;
+            // UTF-8 안전 디코딩
+            var b64 = response.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+            var bin = atob(b64);
+            var bytes = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            var payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+            var email = payload.email || '';
+            var domain = email.split('@')[1] || '';
 
-            if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+            if (domain === ALLOWED_LOGIN_DOMAIN) {
                 // 인증 성공
                 sessionStorage.setItem('admin_auth', 'true');
                 sessionStorage.setItem('admin_email', email);
+                sessionStorage.setItem('admin_display', email);
                 sessionStorage.setItem('admin_name', payload.name || email);
+                sessionStorage.setItem('tabSession', '1'); // 이 탭에서 로그인함
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
+                checkWritingTeamUI();
+                renderTemplateActions();
 
-                // 헤더에 로그인 사용자 표시
-                const userBadge = document.getElementById('admin-user-badge');
-                const userName = document.getElementById('admin-user-name');
+                // 헤더에 이메일 표시
+                var userBadge = document.getElementById('admin-user-badge');
+                var userName  = document.getElementById('admin-user-name');
                 if (userBadge && userName) {
-                    userName.textContent = payload.name || email;
+                    userName.textContent = email;
                     userBadge.style.display = 'flex';
                 }
             } else {
                 // 접근 거부
-                const errEl = document.getElementById('login-error');
-                errEl.textContent = `'${email}' 계정은 접근 권한이 없습니다.\n관리자에게 문의하세요.`;
-                errEl.style.display = 'block';
+                var errEl = document.getElementById('login-error');
+                if (errEl) {
+                    errEl.textContent = "'" + email + "' 계정은 접근 권한이 없습니다. plabfootball.com 이메일로 로그인해주세요.";
+                    errEl.style.display = 'block';
+                }
             }
         } catch (e) {
             console.error('Login error:', e);
@@ -3586,15 +3599,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
     // ── 페이지 로드 시 세션 확인 ─────────────────────────
     window.addEventListener('DOMContentLoaded', function () {
-        const isAuth = sessionStorage.getItem('admin_auth');
+        // 새 탭/새 창으로 열면 항상 로그인 필요
+        // tabSession이 없으면 새 탭 = 인증 초기화
+        if (!sessionStorage.getItem('tabSession')) {
+            sessionStorage.removeItem('admin_auth');
+            sessionStorage.removeItem('admin_email');
+            sessionStorage.removeItem('admin_name');
+            sessionStorage.removeItem('admin_display');
+        }
+
+        var isAuth = sessionStorage.getItem('admin_auth');
         if (isAuth === 'true') {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
-            const name = sessionStorage.getItem('admin_name') || '';
-            const userBadge = document.getElementById('admin-user-badge');
-            const userName = document.getElementById('admin-user-name');
-            if (userBadge && name) {
-                if (userName) userName.textContent = name;
+            var email = sessionStorage.getItem('admin_display') || sessionStorage.getItem('admin_email') || '';
+            var userBadge = document.getElementById('admin-user-badge');
+            var userName  = document.getElementById('admin-user-name');
+            if (userBadge && userName) {
+                userName.textContent = email;
                 userBadge.style.display = 'flex';
             }
         } else {
