@@ -4620,14 +4620,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <button onclick="loadPushList()" style="padding:10px 18px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">새로고침</button>
                 </div>
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;">
-                    <table style="width:100%;border-collapse:collapse;">
+                    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                        <colgroup><col style="width:100px"><col style="width:160px"><col style="width:auto"><col style="width:110px"><col style="width:70px"></colgroup>
                         <thead>
                             <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
-                                <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">제목</th>
+                                <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">제목</th>
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">내용</th>
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">카테고리</th>
-                                <th style="padding:11px 14px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">발송건수</th>
+                                <th style="padding:11px 14px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">건수</th>
                             </tr>
                         </thead>
                         <tbody id="push-table-body">
@@ -6012,7 +6013,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var bh = Math.max(bh, v > 0 ? 3 : 0);
                 var x  = padL + i * barW;
                 var y  = H - padB - bh;
-                var dateStr = (data[i].d||'').toString().slice(5);
+                var dateStr = toKSTShort(data[i].d);
                 return [
                     '<rect x="', x, '" y="', y, '" width="', bw, '" height="', bh,
                     '" fill="#3B82F6" rx="3" opacity="0.85"/>',
@@ -6053,7 +6054,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var rows = data.map(function(d) {
                 return '<tr style="border-bottom:1px solid #F3F4F6;">' +
                     '<td style="padding:10px 12px;font-size:13px;color:#111827;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (d.title||'') + '">' + (d.title||'-') + '</td>' +
-                    '<td style="padding:10px 12px;font-size:13px;color:#6B7280;white-space:nowrap;">' + (d.last_date||'-') + '</td>' +
+                    '<td style="padding:10px 12px;font-size:13px;color:#6B7280;white-space:nowrap;">' + toKSTDate(d.last_date) + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#7C3AED;text-align:right;">' + Number(parseInt(d.week_cnt)||0).toLocaleString() + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:#3B82F6;text-align:right;">' + Number(parseInt(d.month_cnt)||0).toLocaleString() + '</td>' +
                     '<td style="padding:10px 12px;font-size:13px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(d.total)||0).toLocaleString() + '</td>' +
@@ -6125,20 +6126,21 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             var rows = data.map(function(r) {
                 return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + (r.send_date||'-') + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#111827;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.title||'-') + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#374151;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.body||'-') + '</td>' +
-                    '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">' + (r.notification_category||'기타') + '</span></td>' +
-                    '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'') + '">' + (r.title||'-') + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
+                    '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
+                    '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
                     '</tr>';
             }).join('');
-            bodyEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">' +
+            bodyEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
+                '<colgroup><col style="width:100px"><col style="width:180px"><col style="width:auto"><col style="width:110px"><col style="width:70px"></colgroup>' +
                 '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">' +
                 '<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>' +
-                '<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>' +
+                '<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">제목</th>' +
                 '<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">내용</th>' +
                 '<th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">카테고리</th>' +
-                '<th style="padding:9px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송건수</th>' +
+                '<th style="padding:9px 12px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">건수</th>' +
                 '</tr></thead><tbody>' + rows + '</tbody></table></div>';
             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -6183,11 +6185,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             } else {
                 el.innerHTML = page.map(function(r) {
                     return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                        '<td style="padding:10px 14px;font-size:13px;color:#6B7280;white-space:nowrap;">' + (r.send_date||'-') + '</td>' +
-                        '<td style="padding:10px 14px;font-size:13px;font-weight:500;color:#111827;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'') + '">' + (r.title||'-') + '</td>' +
-                        '<td style="padding:10px 14px;font-size:13px;color:#374151;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.body||'') + '">' + (r.body||'-') + '</td>' +
-                        '<td style="padding:10px 14px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;">' + (r.notification_category||'기타') + '</span></td>' +
-                        '<td style="padding:10px 14px;font-size:13px;font-weight:700;color:#111827;text-align:right;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
+                        '<td style="padding:9px 12px;font-size:12px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
+                        '<td style="padding:9px 12px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
+                        '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
+                        '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 6px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
+                        '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
                         '</tr>';
                 }).join('');
             }
