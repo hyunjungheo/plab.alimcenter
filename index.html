@@ -1377,6 +1377,20 @@
 
         /* 매니저 푸시 탭 */
         .push-tab-content { display: none; }
+
+        /* 로딩 오버레이 */
+        .push-loading-overlay {
+            position:absolute; inset:0; background:rgba(255,255,255,0.85);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            z-index:10; border-radius:14px; gap:12px;
+        }
+        .push-spinner {
+            width:28px; height:28px; border:3px solid #E5E7EB;
+            border-top-color:#3B82F6; border-radius:50%;
+            animation:pushSpin 0.7s linear infinite;
+        }
+        @keyframes pushSpin { to { transform:rotate(360deg); } }
+        .push-loading-text { font-size:13px; color:#6B7280; font-weight:500; }
         .push-tab-content.active-tab { display: block; }
         
         /* Modal */
@@ -6104,7 +6118,16 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             } catch(e) {
                 var msg = e.message || String(e);
                 showPushError('API 오류: ' + msg);
-                console.error('pushQuery error:', msg, 'SQL:', sql);
+                console.error('[pushQuery error]', msg, '\nSQL:', sql);
+                // 동의현황 탭 자체 에러 표시
+                var conErr = document.getElementById('consentApiError');
+                if (conErr && conErr.style.display !== 'none') {
+                    conErr.style.display = 'block';
+                    conErr.style.background = '#FEF2F2';
+                    conErr.style.color = '#DC2626';
+                    conErr.style.borderColor = '#FCA5A5';
+                    conErr.textContent = '⚠️ API 오류: ' + msg;
+                }
                 return null;
             }
         }
@@ -6158,6 +6181,18 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         async function loadDashboard() {
             var tbl = PUSH_TABLE;
 
+            // 로딩 표시
+            ['kpi-total','kpi-today','kpi-week','kpi-templates'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) { el.innerHTML = '<div class="push-spinner" style="width:20px;height:20px;border-width:2px;margin:4px auto;"></div>'; }
+            });
+            showLoadingText('title-stats-wrap', 1, '불러오는 중...');
+            showLoadingText('top-templates', 1, '불러오는 중...');
+            var cDaily = document.getElementById('chart-daily');
+            if (cDaily) cDaily.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:10px;"><div class="push-spinner"></div><div class="push-loading-text">불러오는 중...</div></div>';
+            var cType = document.getElementById('chart-type');
+            if (cType) cType.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:10px;"><div class="push-spinner"></div><div class="push-loading-text">불러오는 중...</div></div>';
+
             // KPI 4개 단일 쿼리로 합산 (직렬 4회 → 1회)
             var kpiQ = pushQuery(
                 'SELECT COUNT(*) as total,' +
@@ -6210,6 +6245,42 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function setEl(id, val) {
             var el = document.getElementById(id);
             if (el) el.textContent = val;
+        }
+
+        /* ── 로딩 표시 헬퍼 ── */
+        function showLoading(containerId, msg) {
+            var el = document.getElementById(containerId);
+            if (!el) return;
+            el.style.position = 'relative';
+            var existing = el.querySelector('.push-loading-overlay');
+            if (existing) existing.remove();
+            var overlay = document.createElement('div');
+            overlay.className = 'push-loading-overlay';
+            overlay.innerHTML =
+                '<div class="push-spinner"></div>' +
+                '<div class="push-loading-text">' + (msg || '불러오는 중...') + '</div>';
+            el.appendChild(overlay);
+        }
+        function hideLoading(containerId) {
+            var el = document.getElementById(containerId);
+            if (!el) return;
+            var overlay = el.querySelector('.push-loading-overlay');
+            if (overlay) overlay.remove();
+        }
+        function showLoadingText(elementId, colspan, msg) {
+            var el = document.getElementById(elementId);
+            if (!el) return;
+            // tbody인 경우
+            if (el.tagName === 'TBODY' || el.tagName === 'tbody') {
+                el.innerHTML = '<tr><td colspan="' + (colspan||5) + '" style="padding:32px;text-align:center;">' +
+                    '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;">' +
+                    '<div class="push-spinner" style="margin:0 auto;"></div>' +
+                    '<div class="push-loading-text">' + (msg||'불러오는 중...') + '</div></div></td></tr>';
+            } else {
+                el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:10px;">' +
+                    '<div class="push-spinner"></div>' +
+                    '<div class="push-loading-text">' + (msg||'불러오는 중...') + '</div></div>';
+            }
         }
 
         /* ── 일별 차트 날짜 필터 적용/재로드 ── */
@@ -6470,7 +6541,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         /* ── 전체 목록 (중복 제거 + 건수) ── */
         async function loadPushList(tbl) {
             var el = document.getElementById('push-table-body');
-            if (el) el.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px;">불러오는 중...</td></tr>';
+            if (el) showLoadingText(el.id || 'push-table-body', 5, '불러오는 중...');
             var period = parseInt((document.getElementById('push-filter-period')||{}).value) || 30;
             var data = await pushQuery(
                 'SELECT DATE(created_at) as send_date, title, body, notification_category, COUNT(*) as cnt' +
@@ -6572,6 +6643,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         /* ── 해당 월 데이터 로드 ── */
         async function loadCalData() {
             var y = _calYear, m = _calMonth;
+            // 캘린더 그리드 로딩 표시
+            var grid = document.getElementById('cal-grid');
+            if (grid) grid.innerHTML = '<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 0;gap:12px;"><div class="push-spinner"></div><div class="push-loading-text">불러오는 중...</div></div>';
             var firstDay = new Date(y, m, 1);
             var lastDay  = new Date(y, m + 1, 0);
             var from = fmtDate(firstDay);
@@ -7036,13 +7110,43 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _consentInited = false;
 
         async function initConsentTab() {
-            // 오늘 실시간 데이터 먼저 표시
+            // KPI 카드 스피너
+            ['con-total','con-on','con-off','con-rate','con-mkt1','con-mkt2'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.innerHTML = '<div class="push-spinner" style="width:20px;height:20px;border-width:2px;margin:4px auto;"></div>';
+            });
+            showLoadingText('con-history-body', 8, '불러오는 중...');
+            var cChart = document.getElementById('con-chart');
+            if (cChart) cChart.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:160px;gap:10px;"><div class="push-spinner"></div><div class="push-loading-text">불러오는 중...</div></div>';
+
+            var errEl = document.getElementById('consentApiError');
+            if (errEl) { errEl.style.display='block'; errEl.textContent='조회 중...'; errEl.style.background='#EFF6FF'; errEl.style.color='#3B82F6'; errEl.style.borderColor='#BFDBFE'; }
+
+            // 1. DB에서 오늘 데이터 직접 조회
             var d = await consentFetchToday();
-            if (d) consentRenderKPI(d);
-            // Firestore 이력
-            await consentLoadHistory();
-            // 자동 기록 체크
-            await consentAutoRecord();
+            if (d) {
+                consentRenderKPI(d);
+                if (errEl) errEl.style.display = 'none';
+            } else {
+                if (errEl) {
+                    errEl.style.background='#FEF2F2'; errEl.style.color='#DC2626'; errEl.style.borderColor='#FCA5A5';
+                    errEl.textContent = '⚠️ DB 조회 실패 — API 에러를 확인해주세요 (F12 콘솔)';
+                }
+            }
+
+            // 2. Firestore 이력 (선택적 - 실패해도 KPI는 이미 표시됨)
+            try {
+                await consentLoadHistory();
+            } catch(e) {
+                console.warn('Firestore 이력 로드 실패:', e);
+            }
+
+            // 3. 자동 기록 (9시 이후)
+            try {
+                await consentAutoRecord();
+            } catch(e) {
+                console.warn('자동 기록 실패:', e);
+            }
         }
 
         /* ── 오늘 데이터 DB 조회 ── */
@@ -7226,7 +7330,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _pushUserCol  = null;
 
         async function initReviewTab() {
-            await loadReviewData();
+            var errEl = document.getElementById('reviewApiError');
+            if (errEl) { errEl.style.display='block'; errEl.textContent='조회 중...'; errEl.style.background='#EFF6FF'; errEl.style.color='#3B82F6'; errEl.style.borderColor='#BFDBFE'; }
+            try {
+                await loadReviewData();
+                if (errEl) errEl.style.display = 'none';
+            } catch(e) {
+                if (errEl) { errEl.style.display='block'; errEl.style.background='#FEF2F2'; errEl.style.color='#DC2626'; errEl.style.borderColor='#FCA5A5'; errEl.textContent='⚠️ 오류: ' + e.message; }
+            }
         }
 
         async function detectPushUserCol() {
@@ -7246,6 +7357,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var period = parseInt((document.getElementById('review-period')||{}).value)||30;
             var summaryEl = document.getElementById('review-summary');
             if (summaryEl) summaryEl.textContent = '컬럼 탐색 중...';
+            showLoadingText('review-ad-body', 6, '불러오는 중...');
+            showLoadingText('review-normal-body', 5, '불러오는 중...');
+            ['review-kpi-ad','review-kpi-normal','review-kpi-total'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.innerHTML = '<div class="push-spinner" style="width:18px;height:18px;border-width:2px;margin:4px auto;"></div>';
+            });
 
             var userCol = await detectPushUserCol();
             if (!userCol || userCol.startsWith('NOT_FOUND:')) {
