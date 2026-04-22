@@ -6118,7 +6118,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             } catch(e) {
                 var msg = e.message || String(e);
                 showPushError('API 오류: ' + msg);
-                console.error('[pushQuery error]', msg, '\nSQL:', sql);
+                console.error('[pushQuery error] 오류:', msg, '\nSQL:', sql.slice(0, 200));
                 // 동의현황 탭 자체 에러 표시
                 var conErr = document.getElementById('consentApiError');
                 if (conErr && conErr.style.display !== 'none') {
@@ -6160,8 +6160,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (tab === 'dashboard') initPushDashboard();
             if (tab === 'list' && _pushAllData.length === 0) loadPushList();
             if (tab === 'calendar') initCalendar();
-            if (tab === 'consent') initConsentTab();
-            if (tab === 'review') initReviewTab();
+            if (tab === 'consent') { console.log('[TAB] consent 탭 진입 → initConsentTab 호출'); initConsentTab(); }
+            if (tab === 'review') { console.log('[TAB] review 탭 진입 → initReviewTab 호출'); initReviewTab(); }
         }
 
         /* ── 초기화 ── */
@@ -7110,6 +7110,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _consentInited = false;
 
         async function initConsentTab() {
+            console.log('[CONSENT] initConsentTab 시작');
             // KPI 카드 스피너
             ['con-total','con-on','con-off','con-rate','con-mkt1','con-mkt2'].forEach(function(id){
                 var el = document.getElementById(id);
@@ -7155,7 +7156,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (errEl) errEl.style.display = 'none';
 
             // manager 테이블 접근 가능 여부 사전 확인
+            console.log('[CONSENT] manager 테이블 테스트 쿼리 실행...');
             var testQ = await pushQuery('SELECT COUNT(*) as cnt FROM manager WHERE is_open=1 LIMIT 1');
+            console.log('[CONSENT] 테스트 쿼리 결과:', testQ);
             if (!testQ) {
                 // testQ가 null → API 오류 → pushQuery 내부에서 에러 표시됨
                 if (errEl) {
@@ -7343,6 +7346,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _pushUserCol  = null;
 
         async function initReviewTab() {
+            console.log('[REVIEW] initReviewTab 시작');
             var errEl = document.getElementById('reviewApiError');
             if (errEl) { errEl.style.display='block'; errEl.textContent='조회 중...'; errEl.style.background='#EFF6FF'; errEl.style.color='#3B82F6'; errEl.style.borderColor='#BFDBFE'; }
             try {
@@ -7396,6 +7400,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             }
 
             if (summaryEl) summaryEl.textContent = '조회 중...';
+            console.log('[REVIEW] loadReviewData 시작 - 기간:', period, '일');
 
             // manager → v3_auth_user JOIN
             var join = userCol === 'manager_id'
