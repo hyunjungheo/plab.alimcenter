@@ -6581,10 +6581,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             // API 실제 발송 데이터 (날짜+카테고리+건수)
             var data = await pushQuery(
-                'SELECT DATE(created_at) as d, title, body, notification_category as cat, COUNT(*) as cnt, MIN(created_at) as first_sent' +
+                'SELECT DATE(created_at) as d, title,' +
+                ' MAX(notification_category) as cat,' +
+                ' COUNT(*) as cnt,' +
+                ' MIN(created_at) as first_sent,' +
+                ' MAX(created_at) as last_sent' +
                 ' FROM ' + PUSH_TABLE +
                 ' WHERE DATE(created_at) BETWEEN ? AND ?' +
-                ' GROUP BY DATE(created_at), title, body, notification_category ORDER BY d, cnt DESC',
+                ' GROUP BY DATE(created_at), title ORDER BY d, cnt DESC',
                 [from, to]
             );
             if (data) {
@@ -6592,11 +6596,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     var dk = toKSTDate(r.d);
                     if (!_calDayData[dk]) _calDayData[dk] = [];
                     _calDayData[dk].push({
-                        title: r.title||'(제목 없음)',
-                        body:  r.body||'',
-                        cat:   r.cat||'기타',
-                        cnt:   parseInt(r.cnt)||0,
+                        title:      r.title||'(제목 없음)',
+                        cat:        r.cat||'기타',
+                        cnt:        parseInt(r.cnt)||0,
                         first_sent: r.first_sent||'',
+                        last_sent:  r.last_sent||'',
+                        dateStr:    dk,
                         isScheduled: false
                     });
                 });
@@ -6803,89 +6808,90 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function openCalEntryDetail(dateStr, entry) {
             var modal  = document.getElementById('calDetailModal');
             var dateEl = document.getElementById('cal-detail-date');
-            var titleEl= document.getElementById('cal-detail-title');
+            var titEl  = document.getElementById('cal-detail-title');
             var bodyEl = document.getElementById('cal-detail-body');
             if (!modal) return;
 
+            /* 예정 항목 */
             if (entry.isScheduled) {
-                // 예정 항목
                 var s = entry.data || {};
-                dateEl.textContent  = dateStr + ' · 발송 예정';
-                titleEl.textContent = s.title || '제목 없음';
+                dateEl.textContent = dateStr + ' · 발송 예정';
+                titEl.textContent  = s.title || '제목 없음';
                 bodyEl.innerHTML =
                     '<div style="display:flex;flex-direction:column;gap:10px;">' +
-                    (s.body ? '<div style="font-size:13px;color:#374151;line-height:1.6;">' + s.body + '</div>' : '') +
+                    (s.body ? '<div style="font-size:13px;color:#374151;line-height:1.6;background:#F9FAFB;border-radius:8px;padding:12px;">' + s.body + '</div>' : '') +
                     '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
                     (s.category ? '<span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600;">' + s.category + '</span>' : '') +
                     (s.target   ? '<span style="background:#F3F4F6;color:#374151;padding:3px 10px;border-radius:8px;font-size:12px;">대상: ' + s.target + '</span>' : '') +
                     '</div></div>';
                 modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
                 return;
             }
 
-            // 실제 발송 항목
-            dateEl.textContent  = dateStr;
-            titleEl.textContent = entry.title || '(제목 없음)';
-            bodyEl.innerHTML = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:20px;">불러오는 중...</div>';
+            /* 실제 발송 항목 */
+            dateEl.textContent = dateStr;
+            titEl.textContent  = entry.title || '(제목 없음)';
+            bodyEl.innerHTML   = '<div style="color:#9CA3AF;font-size:13px;text-align:center;padding:24px;">불러오는 중...</div>';
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
 
-            // 해당 날짜 + title 상세 조회
+            /* title 기준 body별 상세 조회 */
             pushQuery(
-                'SELECT title, body, notification_category, COUNT(*) as cnt, MIN(created_at) as first_sent, MAX(created_at) as last_sent' +
+                'SELECT body, notification_category, COUNT(*) as cnt,' +
+                ' MIN(created_at) as first_sent, MAX(created_at) as last_sent' +
                 ' FROM ' + PUSH_TABLE +
                 ' WHERE DATE(created_at) = ? AND title = ?' +
-                ' GROUP BY title, body, notification_category ORDER BY cnt DESC',
+                ' GROUP BY body, notification_category ORDER BY cnt DESC',
                 [dateStr, entry.title || '']
-            ).then(function(data) {
-                if (!data || !data.length) {
-                    bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px;">조회된 데이터가 없습니다.</div>';
+            ).then(function(rows) {
+                if (!rows || !rows.length) {
+                    bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px;">데이터가 없습니다.</div>';
                     return;
                 }
-                var totalCnt = data.reduce(function(s,r){ return s+(parseInt(r.cnt)||0); }, 0);
-                var r0 = data[0];
+                var totalCnt = rows.reduce(function(s, r){ return s + (parseInt(r.cnt)||0); }, 0);
+                var r0       = rows[0];
 
                 var html = '<div style="display:flex;flex-direction:column;gap:14px;">';
 
-                // KPI 행
-                html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">' +
-                    '<div style="background:#F0FDF4;border-radius:10px;padding:12px;text-align:center;">' +
-                    '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">발송량</div>' +
-                    '<div style="font-size:20px;font-weight:800;color:#10B981;">' + totalCnt.toLocaleString() + '건</div></div>' +
-                    '<div style="background:#EFF6FF;border-radius:10px;padding:12px;text-align:center;">' +
-                    '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">카테고리</div>' +
-                    '<div style="font-size:13px;font-weight:700;color:#3B82F6;">' + (r0.notification_category||'기타') + '</div></div>' +
-                    '<div style="background:#F9FAFB;border-radius:10px;padding:12px;text-align:center;">' +
-                    '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">발송일</div>' +
-                    '<div style="font-size:12px;font-weight:600;color:#374151;">' + dateStr + '</div></div>' +
-                    '</div>';
-
-                // 발송 일시
-                if (r0.first_sent) {
-                    html += '<div style="background:#F9FAFB;border-radius:10px;padding:12px;">' +
-                        '<div style="font-size:11px;color:#6B7280;margin-bottom:4px;">발송 일시</div>' +
-                        '<div style="font-size:13px;color:#374151;">' + toKST(r0.first_sent) +
-                        (r0.last_sent && r0.last_sent !== r0.first_sent ? '<span style="color:#9CA3AF;"> ~ </span>' + toKST(r0.last_sent) : '') +
-                        '</div></div>';
-                }
-
-                // 내용 목록
-                if (data.length > 0) {
-                    html += '<div style="border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;">' +
-                        '<div style="background:#F9FAFB;padding:9px 12px;font-size:11px;font-weight:600;color:#6B7280;border-bottom:1px solid #E5E7EB;">내용 (body) · 발송건수</div>';
-                    data.forEach(function(r, i) {
-                        html += '<div style="padding:10px 12px;' + (i>0?'border-top:1px solid #F3F4F6;':'') + 'display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">' +
-                            '<div style="font-size:13px;color:#374151;line-height:1.5;flex:1;">' + (r.body || '<span style="color:#9CA3AF;">내용 없음</span>') + '</div>' +
-                            '<div style="font-size:13px;font-weight:700;color:#111827;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</div>' +
-                            '</div>';
-                    });
-                    html += '</div>';
-                }
-
+                /* 요약 KPI */
+                html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">';
+                html += '<div style="background:#F0FDF4;border-radius:10px;padding:13px;text-align:center;">' +
+                        '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">총 발송량</div>' +
+                        '<div style="font-size:22px;font-weight:800;color:#10B981;">' + totalCnt.toLocaleString() + '건</div></div>';
+                html += '<div style="background:#EFF6FF;border-radius:10px;padding:13px;text-align:center;">' +
+                        '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">카테고리</div>' +
+                        '<div style="font-size:13px;font-weight:700;color:#3B82F6;word-break:break-all;">' + (r0.notification_category||'기타') + '</div></div>';
+                html += '<div style="background:#F9FAFB;border-radius:10px;padding:13px;text-align:center;">' +
+                        '<div style="font-size:11px;color:#6B7280;margin-bottom:3px;">발송일</div>' +
+                        '<div style="font-size:13px;font-weight:600;color:#374151;">' + dateStr + '</div></div>';
                 html += '</div>';
+
+                /* 발송 일시 */
+                if (r0.first_sent) {
+                    var timeStr = toKST(r0.first_sent);
+                    var timeEnd = (r0.last_sent && r0.last_sent !== r0.first_sent) ? ' ~ ' + toKST(r0.last_sent) : '';
+                    html += '<div style="background:#F9FAFB;border-radius:10px;padding:13px;">' +
+                            '<div style="font-size:11px;color:#6B7280;margin-bottom:5px;font-weight:600;">발송 일시</div>' +
+                            '<div style="font-size:13px;color:#374151;">' + timeStr + timeEnd + '</div></div>';
+                }
+
+                /* 내용별 발송 목록 */
+                html += '<div style="border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;">' +
+                        '<div style="background:#F9FAFB;padding:10px 14px;font-size:12px;font-weight:700;color:#374151;border-bottom:1px solid #E5E7EB;">' +
+                        '내용별 발송 현황 <span style="font-weight:400;color:#9CA3AF;margin-left:4px;">(' + rows.length + '건)</span></div>';
+                rows.forEach(function(r, i) {
+                    html += '<div style="padding:12px 14px;' + (i > 0 ? 'border-top:1px solid #F3F4F6;' : '') +
+                            'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+                            '<div style="font-size:13px;color:#374151;line-height:1.6;flex:1;">' +
+                            (r.body ? r.body : '<span style="color:#9CA3AF;">내용 없음</span>') + '</div>' +
+                            '<div style="font-size:14px;font-weight:700;color:#111827;white-space:nowrap;flex-shrink:0;">' +
+                            Number(parseInt(r.cnt)||0).toLocaleString() + '건</div></div>';
+                });
+                html += '</div></div>';
                 bodyEl.innerHTML = html;
-            }).catch(function(e) {
-                bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#EF4444;font-size:13px;">조회 오류: ' + (e.message||e) + '</div>';
+            }).catch(function(err) {
+                bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#EF4444;font-size:13px;">조회 오류: ' + (err.message||err) + '</div>';
             });
         }
 
