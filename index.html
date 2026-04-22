@@ -7153,6 +7153,19 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         async function consentFetchToday() {
             var errEl = document.getElementById('consentApiError');
             if (errEl) errEl.style.display = 'none';
+
+            // plab.manager 접근 가능 여부 사전 확인
+            var testQ = await pushQuery('SELECT COUNT(*) as cnt FROM plab.manager WHERE is_open=1 LIMIT 1');
+            if (!testQ) {
+                // testQ가 null → API 오류 → pushQuery 내부에서 에러 표시됨
+                if (errEl) {
+                    errEl.style.display='block';
+                    errEl.style.background='#FEF2F2'; errEl.style.color='#DC2626'; errEl.style.borderColor='#FCA5A5';
+                    errEl.textContent='⚠️ plab.manager 테이블 접근 실패. F12 콘솔에서 [pushQuery error] 메시지를 확인해주세요.';
+                }
+                return null;
+            }
+
             var data = await pushQuery(
                 'SELECT' +
                 ' COUNT(DISTINCT m.id) AS total,' +
@@ -7346,9 +7359,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (!cols) return null;
             var names = cols.map(function(c){ return (c.Field||Object.values(c)[0]||'').toLowerCase(); });
             console.log('push 테이블 컬럼:', names);
-            var candidates = ['manager_id','user_id','v3_auth_user_id','recipient_id'];
-            for (var i = 0; i < candidates.length; i++) {
-                if (names.indexOf(candidates[i]) !== -1) { _pushUserCol = candidates[i]; return _pushUserCol; }
+            // 직접 매핑 컬럼
+            var direct = ['manager_id','user_id','v3_auth_user_id','recipient_id'];
+            for (var i = 0; i < direct.length; i++) {
+                if (names.indexOf(direct[i]) !== -1) { _pushUserCol = direct[i]; return _pushUserCol; }
+            }
+            // manager_fcm_token_id → manager_fcm_token 테이블을 통한 간접 연결
+            if (names.indexOf('manager_fcm_token_id') !== -1) {
+                _pushUserCol = 'manager_fcm_token_id';
+                return _pushUserCol;
             }
             return 'NOT_FOUND:' + names.join(',');
         }
