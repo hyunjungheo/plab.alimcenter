@@ -3256,6 +3256,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         // Critical navigation functions
         function navigateTo(page) {
             console.log('Navigating to:', page);
+            // URL 해시 업데이트 (뒤로가기 지원)
+            if (history.pushState) {
+                history.pushState(null, null, '#' + page);
+            } else {
+                location.hash = '#' + page;
+            }
             
             const menuItems = document.querySelectorAll('.sidebar .menu-item');
             menuItems.forEach(item => item.classList.remove('active'));
@@ -3587,6 +3593,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 document.getElementById('main-content').style.display = 'block';
                 checkWritingTeamUI();
                 renderTemplateActions();
+                // 로그인 후 해시 라우팅
+                var _hash = location.hash.replace('#','') || 'status';
+                var _valid = ['status','template','journey','push','bot','guide'];
+                navigateTo(_valid.indexOf(_hash)!==-1 ? _hash : 'status');
 
                 // 헤더에 이메일 표시
                 var userBadge = document.getElementById('admin-user-badge');
