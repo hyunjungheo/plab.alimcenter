@@ -7180,7 +7180,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return null;
             }
 
-            // 쿼리 3개로 분리 (COUNT DISTINCT 단일쿼리가 타임아웃 발생)
+            // JOIN 대신 서브쿼리로 타임아웃 방지
             console.log('[CONSENT] 쿼리1 - 전체 매니저 수');
             var q1 = await pushQuery(
                 'SELECT COUNT(*) as total FROM manager WHERE is_open=1 AND id NOT IN (3,102)'
@@ -7192,23 +7192,21 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return null;
             }
 
-            console.log('[CONSENT] 쿼리2 - 앱 푸시 동의');
+            // 서브쿼리 방식 - JOIN 없이 v3_auth_user 직접 조회
+            console.log('[CONSENT] 쿼리2 - 동의 현황 (서브쿼리)');
             var q2 = await pushQuery(
-                'SELECT SUM(IF(vau.is_accepts_push=1,1,0)) AS push_on,' +
-                ' SUM(IF(vau.is_accepts_push IS NULL OR vau.is_accepts_push!=1,1,0)) AS push_off' +
-                ' FROM manager m LEFT JOIN v3_auth_user vau ON vau.id=m.v3_auth_user_id' +
-                ' WHERE m.is_open=1 AND m.id NOT IN (3,102)'
+                'SELECT' +
+                ' SUM(IF(is_accepts_push=1,1,0)) AS push_on,' +
+                ' SUM(IF(is_accepts_push IS NULL OR is_accepts_push!=1,1,0)) AS push_off,' +
+                ' SUM(IF(is_accepts_marketing1=1,1,0)) AS mkt1_on,' +
+                ' SUM(IF(is_accepts_marketing2=1,1,0)) AS mkt2_on' +
+                ' FROM v3_auth_user' +
+                ' WHERE id IN (' +
+                '   SELECT v3_auth_user_id FROM manager' +
+                '   WHERE is_open=1 AND id NOT IN (3,102) AND v3_auth_user_id IS NOT NULL' +
+                ' )'
             );
             console.log('[CONSENT] 쿼리2 결과:', q2);
-
-            console.log('[CONSENT] 쿼리3 - 마케팅 동의');
-            var q3 = await pushQuery(
-                'SELECT SUM(IF(vau.is_accepts_marketing1=1,1,0)) AS mkt1_on,' +
-                ' SUM(IF(vau.is_accepts_marketing2=1,1,0)) AS mkt2_on' +
-                ' FROM manager m LEFT JOIN v3_auth_user vau ON vau.id=m.v3_auth_user_id' +
-                ' WHERE m.is_open=1 AND m.id NOT IN (3,102)'
-            );
-            console.log('[CONSENT] 쿼리3 결과:', q3);
 
             var errEl3 = document.getElementById('consentApiError');
             if (errEl3) errEl3.style.display = 'none';
@@ -7216,18 +7214,19 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var total    = parseInt((q1[0]||{}).total)||0;
             var push_on  = parseInt(((q2||[{}])[0]||{}).push_on)||0;
             var push_off = parseInt(((q2||[{}])[0]||{}).push_off)||0;
-            var mkt1_on  = parseInt(((q3||[{}])[0]||{}).mkt1_on)||0;
-            var mkt2_on  = parseInt(((q3||[{}])[0]||{}).mkt2_on)||0;
+            var mkt1_on  = parseInt(((q2||[{}])[0]||{}).mkt1_on)||0;
+            var mkt2_on  = parseInt(((q2||[{}])[0]||{}).mkt2_on)||0;
+            var push_off_calc = total - push_on;
             var push_rate = total > 0 ? Math.round(push_on/total*1000)/10 : 0;
             var mkt1_rate = total > 0 ? Math.round(mkt1_on/total*1000)/10 : 0;
             var mkt2_rate = total > 0 ? Math.round(mkt2_on/total*1000)/10 : 0;
             var today = toKSTDate(new Date().toISOString());
-            console.log('[CONSENT] 최종 데이터:', {total:total, push_on:push_on, push_rate:push_rate});
+            console.log('[CONSENT] 최종 데이터:', {total:total, push_on:push_on, push_rate:push_rate, mkt1_on:mkt1_on, mkt2_on:mkt2_on});
             return {
                 date:       today,
                 total:      total,
                 push_on:    push_on,
-                push_off:   push_off,
+                push_off:   push_off_calc,
                 push_rate:  push_rate,
                 mkt1_on:    mkt1_on,
                 mkt1_rate:  mkt1_rate,
