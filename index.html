@@ -7133,7 +7133,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var errEl = document.getElementById('consentApiError');
             if (errEl) { errEl.style.display='block'; errEl.textContent='조회 중...'; errEl.style.background='#EFF6FF'; errEl.style.color='#3B82F6'; errEl.style.borderColor='#BFDBFE'; }
 
-            // 1. DB에서 오늘 데이터 직접 조회
+            // 1. Firestore 이력 먼저 (차트/테이블)
+            try {
+                await consentLoadHistory();
+            } catch(e) {
+                console.warn('Firestore 이력 로드 실패:', e);
+            }
+
+            // 2. DB 실시간 데이터 (KPI - 마지막에 설정해서 덮어쓰기 방지)
             var d = await consentFetchToday();
             console.log('[CONSENT] consentFetchToday 결과:', d);
             if (d) {
@@ -7144,13 +7151,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     errEl.style.background='#FEF2F2'; errEl.style.color='#DC2626'; errEl.style.borderColor='#FCA5A5';
                     errEl.textContent = '⚠️ DB 조회 실패 — API 에러를 확인해주세요 (F12 콘솔)';
                 }
-            }
-
-            // 2. Firestore 이력 (선택적 - 실패해도 KPI는 이미 표시됨)
-            try {
-                await consentLoadHistory();
-            } catch(e) {
-                console.warn('Firestore 이력 로드 실패:', e);
             }
 
             // 3. 자동 기록 (9시 이후)
@@ -7240,6 +7240,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         /* ── KPI 렌더링 ── */
         function consentRenderKPI(d) {
             if (!d) return;
+            console.log('[CONSENT] consentRenderKPI 호출됨:', d);
             setEl('con-total', Number(d.total).toLocaleString() + '명');
             setEl('con-on',    Number(d.push_on).toLocaleString() + '명');
             setEl('con-on-sub', '전체의 ' + (d.total > 0 ? Math.round(d.push_on/d.total*100) : 0) + '%');
@@ -7262,8 +7263,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 if (window._loadPushConsentHistory) {
                     var hist = await window._loadPushConsentHistory(2);
                     if (hist && hist.length && hist[hist.length-1].date === today) {
-                        consentRenderKPI(hist[hist.length-1]);
-                        setEl('con-record-status', '✅ ' + today + ' 기록 완료');
+                            setEl('con-record-status', '✅ ' + today + ' 기록 완료');
                         return;
                     }
                 }
@@ -7312,9 +7312,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             }
             if (cntEl) cntEl.textContent = '기록 ' + history.length + '건';
 
-            // 최신 KPI 표시 (가장 최근 기록)
+            // 이력은 차트/테이블만 업데이트 (KPI는 실시간 DB 결과 사용)
             var sorted = history.slice().sort(function(a,b){ return b.date > a.date ? 1 : -1; });
-            consentRenderKPI(sorted[0]);
 
             // 전일 대비
             if (sorted.length > 1) {
