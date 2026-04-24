@@ -6254,7 +6254,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         function setEl(id, val) {
             var el = document.getElementById(id);
-            if (el) el.textContent = val;
+            if (el) {
+                el.textContent = val;
+            } else {
+                if (id.startsWith('con-') || id.startsWith('kpi-')) {
+                    console.warn('[setEl] 요소를 찾지 못함:', id);
+                }
+            }
         }
 
         /* ── 로딩 표시 헬퍼 ── */
@@ -7120,6 +7126,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _consentInited = false;
 
         async function initConsentTab() {
+            if (_consentInited) return;
+            _consentInited = true;
             console.log('[CONSENT] initConsentTab 시작');
             // KPI 카드 스피너
             ['con-total','con-on','con-off','con-rate','con-mkt1','con-mkt2'].forEach(function(id){
@@ -7272,9 +7280,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 await consentRecordNow(false);
             } else {
                 setEl('con-record-status', '오전 9시 이후 자동 기록');
-                // 9시 이전이어도 오늘 데이터는 조회해서 표시
-                var d = await consentFetchToday();
-                if (d) consentRenderKPI(d);
+                // 9시 이전: 상태만 표시
             }
         }
 
@@ -7291,7 +7297,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             } catch(e) {
                 setEl('con-record-status', '⚠️ Firestore 저장 실패: ' + e.message);
             }
-            consentRenderKPI(d);
             await consentLoadHistory();
         }
 
