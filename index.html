@@ -7129,14 +7129,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (_consentInited) return;
             _consentInited = true;
             console.log('[CONSENT] initConsentTab 시작');
-            // KPI 카드 스피너
-            ['con-total','con-on','con-off','con-rate','con-mkt1','con-mkt2'].forEach(function(id){
-                var el = document.getElementById(id);
-                if (el) el.innerHTML = '<div class="push-spinner" style="width:20px;height:20px;border-width:2px;margin:4px auto;"></div>';
-            });
+            // 로딩 표시 (KPI 카드 스피너 제거 - textContent 충돌 방지)
             showLoadingText('con-history-body', 8, '불러오는 중...');
             var cChart = document.getElementById('con-chart');
-            if (cChart) cChart.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:160px;gap:10px;"><div class="push-spinner"></div><div class="push-loading-text">불러오는 중...</div></div>';
+            if (cChart) cChart.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:160px;gap:10px;"><div class="push-spinner"></div><div class="push-loading-text">불러오는 중...</div></div>';
 
             var errEl = document.getElementById('consentApiError');
             if (errEl) { errEl.style.display='block'; errEl.textContent='조회 중...'; errEl.style.background='#EFF6FF'; errEl.style.color='#3B82F6'; errEl.style.borderColor='#BFDBFE'; }
@@ -7248,16 +7244,29 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function consentRenderKPI(d) {
             if (!d) return;
             console.log('[CONSENT] consentRenderKPI 호출됨:', d);
-            setEl('con-total', Number(d.total).toLocaleString() + '명');
-            setEl('con-on',    Number(d.push_on).toLocaleString() + '명');
-            setEl('con-on-sub', '전체의 ' + (d.total > 0 ? Math.round(d.push_on/d.total*100) : 0) + '%');
-            setEl('con-off',   Number(d.push_off).toLocaleString() + '명');
-            setEl('con-off-sub', '전체의 ' + (d.total > 0 ? Math.round(d.push_off/d.total*100) : 0) + '%');
-            setEl('con-rate',  d.push_rate + '%');
-            setEl('con-mkt1',  Number(d.mkt1_on).toLocaleString() + '명');
-            setEl('con-mkt1-sub', '동의율 ' + d.mkt1_rate + '%');
-            setEl('con-mkt2',  Number(d.mkt2_on).toLocaleString() + '명');
-            setEl('con-mkt2-sub', '동의율 ' + d.mkt2_rate + '%');
+            // innerHTML로 직접 설정 (스피너 완전 제거)
+            var ids = {
+                'con-total':    Number(d.total).toLocaleString() + '명',
+                'con-on':       Number(d.push_on).toLocaleString() + '명',
+                'con-on-sub':   '전체의 ' + (d.total > 0 ? Math.round(d.push_on/d.total*100) : 0) + '%',
+                'con-off':      Number(d.push_off).toLocaleString() + '명',
+                'con-off-sub':  '전체의 ' + (d.total > 0 ? Math.round(d.push_off/d.total*100) : 0) + '%',
+                'con-rate':     d.push_rate + '%',
+                'con-mkt1':     Number(d.mkt1_on).toLocaleString() + '명',
+                'con-mkt1-sub': '동의율 ' + d.mkt1_rate + '%',
+                'con-mkt2':     Number(d.mkt2_on).toLocaleString() + '명',
+                'con-mkt2-sub': '동의율 ' + d.mkt2_rate + '%'
+            };
+            Object.keys(ids).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '';
+                    el.textContent = ids[id];
+                    console.log('[KPI]', id, '=', ids[id], '/ el exists:', !!el);
+                } else {
+                    console.warn('[KPI] 요소 없음:', id);
+                }
+            });
         }
 
         /* ── 9시 자동 기록 ── */
