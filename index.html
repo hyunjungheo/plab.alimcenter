@@ -7137,14 +7137,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var errEl = document.getElementById('consentApiError');
             if (errEl) { errEl.style.display='block'; errEl.textContent='조회 중...'; errEl.style.background='#EFF6FF'; errEl.style.color='#3B82F6'; errEl.style.borderColor='#BFDBFE'; }
 
-            // 1. Firestore 이력 먼저 (차트/테이블)
-            try {
-                await consentLoadHistory();
-            } catch(e) {
-                console.warn('Firestore 이력 로드 실패:', e);
-            }
-
-            // 2. DB 실시간 데이터 (KPI - 마지막에 설정해서 덮어쓰기 방지)
+            // 1. DB 실시간 데이터 먼저 (KPI 즉시 표시)
             var d = await consentFetchToday();
             console.log('[CONSENT] consentFetchToday 결과:', d);
             if (d) {
@@ -7153,16 +7146,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             } else {
                 if (errEl) {
                     errEl.style.background='#FEF2F2'; errEl.style.color='#DC2626'; errEl.style.borderColor='#FCA5A5';
-                    errEl.textContent = '⚠️ DB 조회 실패 — API 에러를 확인해주세요 (F12 콘솔)';
+                    errEl.textContent = '⚠️ DB 조회 실패 — F12 콘솔 확인';
                 }
             }
 
-            // 3. 자동 기록 (9시 이후)
-            try {
-                await consentAutoRecord();
-            } catch(e) {
-                console.warn('자동 기록 실패:', e);
-            }
+            // 2. Firestore 이력 백그라운드로 (KPI 차단하지 않음)
+            consentLoadHistory().catch(function(e){ console.warn('Firestore 이력 로드 실패:', e); });
+
+            // 3. 자동 기록 백그라운드로
+            consentAutoRecord().catch(function(e){ console.warn('자동 기록 실패:', e); });
         }
 
         /* ── 오늘 데이터 DB 조회 ── */
