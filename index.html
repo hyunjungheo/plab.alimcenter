@@ -4618,7 +4618,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             </div>
 
             <!-- 대시보드 탭 -->
-            <div id="push-dashboard" class="push-tab-content">
+            <div id="push-dashboard" class="push-tab-content" style="display:block;">
                 <!-- KPI 카드 -->
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;">
@@ -4701,7 +4701,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             </div>
 
             <!-- 전체 목록 탭 -->
-            <div id="push-list" class="push-tab-content" style="display:none;">
+            <div id="push-list" class="push-tab-content" style="display:none!important;">
                 <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
                     <div style="flex:1;min-width:200px;position:relative;">
                         <input id="push-search" type="text" placeholder="제목, 내용, 카테고리로 검색..." oninput="filterPushList()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
@@ -4736,7 +4736,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
 
             <!-- 캘린더 탭 -->
-            <div id="push-calendar" class="push-tab-content" style="display:none;">
+            <div id="push-calendar" class="push-tab-content" style="display:none!important;">
                 <!-- 캘린더 헤더 -->
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
                     <div style="display:flex;align-items:center;gap:10px;">
@@ -4759,9 +4759,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 </div>
                 <!-- 그리드 -->
                 <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);border:1px solid #E5E7EB;border-radius:0 0 12px 12px;overflow:hidden;background:white;"></div>
+            </div>
 
             <!-- 동의 현황 탭 -->
-            <div id="push-consent" class="push-tab-content" style="display:none;">
+            <div id="push-consent" class="push-tab-content" style="display:none!important;">
                 <div id="consentApiError" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#DC2626;"></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <div>
@@ -4811,7 +4812,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 </div>
             </div>
             <!-- 검토 필요 탭 -->
-            <div id="push-review" class="push-tab-content" style="display:none;">
+            <div id="push-review" class="push-tab-content" style="display:none!important;">
                 <div id="reviewApiError" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#DC2626;"></div>
                 <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
                     <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:4px;">동의 검토 기준</div>
@@ -6163,10 +6164,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             // push 탭 콘텐츠 모두 숨기기
             ['push-dashboard','push-list','push-calendar','push-consent','push-review'].forEach(function(id) {
                 var el = document.getElementById(id);
-                if (el) el.style.display = 'none';
+                if (el) el.style.cssText = 'display:none!important;';
             });
             var t = document.getElementById('push-' + tab);
-            if (t) t.style.display = 'block';
+            if (t) t.style.cssText = 'display:block!important;';
             if (tab === 'dashboard') initPushDashboard();
             if (tab === 'list' && _pushAllData.length === 0) loadPushList();
             if (tab === 'calendar') initCalendar();
@@ -7126,7 +7127,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         var _consentInited = false;
 
         async function initConsentTab() {
-            if (_consentInited) return;
+            if (_consentInited) { console.log('[CONSENT] 이미 초기화됨, 재실행 스킵'); return; }
             _consentInited = true;
             console.log('[CONSENT] initConsentTab 시작');
             // 로딩 표시 (KPI 카드 스피너 제거 - textContent 충돌 방지)
