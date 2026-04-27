@@ -4647,6 +4647,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <div style="flex:1;min-width:200px;position:relative;">
                         <input id="push-search" type="text" placeholder="제목, 내용, 카테고리로 검색..." oninput="filterPushList()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
                     </div>
+                    <select id="push-filter-ad" onchange="filterPushList()" style="padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;background:white;outline:none;cursor:pointer;">
+                        <option value="">전체 (광고성+정보성)</option>
+                        <option value="1">광고성 ((광고) 포함)</option>
+                        <option value="0">정보성</option>
+                    </select>
                     <select id="push-filter-period" onchange="loadPushList()" style="padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;color:#374151;background:white;cursor:pointer;outline:none;">
                         <option value="30">최근 30일</option>
                         <option value="90">최근 90일</option>
@@ -4665,6 +4670,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">내용</th>
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">카테고리</th>
                                 <th style="padding:11px 14px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">건수</th>
+                                <th style="padding:11px 14px;text-align:center;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">유형</th>
+                                <th style="padding:11px 14px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">마지막 발송</th>
                             </tr>
                         </thead>
                         <tbody id="push-table-body">
@@ -4716,7 +4723,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;">
-                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:18px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:6px;">활성 매니저</div><div id="con-total" style="font-size:26px;font-weight:800;color:#111827;">-</div><div style="font-size:11px;color:#9CA3AF;margin-top:3px;">is_open = 1</div></div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:18px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:6px;">전체 매니저</div><div id="con-total" style="font-size:26px;font-weight:800;color:#111827;">-</div><div style="font-size:11px;color:#9CA3AF;margin-top:3px;">is_open = 1</div></div>
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:18px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:6px;">앱 푸시 ON</div><div id="con-on" style="font-size:26px;font-weight:800;color:#10B981;">-</div><div id="con-on-sub" style="font-size:11px;color:#9CA3AF;margin-top:3px;">is_accepts_push = 1</div></div>
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:18px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:6px;">앱 푸시 OFF</div><div id="con-off" style="font-size:26px;font-weight:800;color:#EF4444;">-</div><div id="con-off-sub" style="font-size:11px;color:#9CA3AF;margin-top:3px;">미동의 / NULL</div></div>
                 </div>
@@ -4738,7 +4745,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <table style="width:100%;border-collapse:collapse;">
                         <thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
                             <th style="padding:9px 12px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;">기록일</th>
-                            <th style="padding:9px 12px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;">활성 매니저</th>
+                            <th style="padding:9px 12px;text-align:right;font-size:12px;font-weight:600;color:#6B7280;">전체 매니저</th>
                             <th style="padding:9px 12px;text-align:right;font-size:12px;font-weight:600;color:#10B981;">푸시 ON</th>
                             <th style="padding:9px 12px;text-align:right;font-size:12px;font-weight:600;color:#EF4444;">푸시 OFF</th>
                             <th style="padding:9px 12px;text-align:right;font-size:12px;font-weight:600;color:#3B82F6;">ON 비율</th>
@@ -4772,13 +4779,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <div id="review-summary" style="font-size:12px;color:#6B7280;"></div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
-                    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">광고성 푸시 미동의</div><div id="review-kpi-ad" style="font-size:24px;font-weight:800;color:#EF4444;">-</div></div>
-                    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">일반 푸시 미동의</div><div id="review-kpi-normal" style="font-size:24px;font-weight:800;color:#F59E0B;">-</div></div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">푸시 ON · 마케팅 동의 OFF</div><div id="review-kpi-ad" style="font-size:24px;font-weight:800;color:#EF4444;">-</div></div>
+                    <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">앱푸시 OFF 발송</div><div id="review-kpi-normal" style="font-size:24px;font-weight:800;color:#F59E0B;">-</div></div>
                     <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:16px;"><div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:4px;">전체</div><div id="review-kpi-total" style="font-size:24px;font-weight:800;color:#7C3AED;">-</div></div>
                 </div>
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:16px;overflow:hidden;">
                     <div style="padding:12px 16px;border-bottom:1px solid #FEE2E2;background:#FFF5F5;display:flex;align-items:center;gap:8px;">
-                        <span style="font-size:14px;font-weight:700;color:#111827;">광고성 푸시 · 동의 미충족</span>
+                        <span style="font-size:14px;font-weight:700;color:#111827;">푸시 ON · 마케팅 수신 동의 OFF</span>
                         <span style="background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;">(광고) 포함</span>
                     </div>
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
@@ -4797,7 +4804,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </table>
                 </div>
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
-                    <div style="padding:12px 16px;border-bottom:1px solid #FEF3C7;background:#FFFBEB;"><span style="font-size:14px;font-weight:700;color:#111827;">일반 푸시 · 앱푸시 OFF 수신</span></div>
+                    <div style="padding:12px 16px;border-bottom:1px solid #FEF3C7;background:#FFFBEB;"><span style="font-size:14px;font-weight:700;color:#111827;">앱푸시 OFF · 발송 이력</span></div>
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                         <colgroup><col style="width:88px"><col style="width:190px"><col style="width:auto"><col style="width:60px"><col style="width:55px"></colgroup>
                         <thead><tr style="background:#FFFBEB;border-bottom:1px solid #FEF3C7;">
@@ -6502,11 +6509,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (el) showLoadingText(el.id || 'push-table-body', 5, '불러오는 중...');
             var period = parseInt((document.getElementById('push-filter-period')||{}).value) || 30;
             var data = await pushQuery(
-                'SELECT DATE(created_at) as send_date, title, body, notification_category, COUNT(*) as cnt' +
+                'SELECT DATE(created_at) as send_date, title, body, notification_category,' +
+                ' COUNT(*) as cnt, MAX(created_at) as last_sent,' +
+                " MAX(IF(title LIKE '%(광고)%' OR body LIKE '%(광고)%', 1, 0)) as is_ad" +
                 ' FROM ' + PUSH_TABLE +
                 ' WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
                 ' GROUP BY DATE(created_at), title, body, notification_category' +
-                ' ORDER BY send_date DESC',
+                ' ORDER BY last_sent DESC',
                 [period]
             );
             if (!data) return;
@@ -6517,8 +6526,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         /* ── 테이블 렌더링 ── */
         function renderPushTable() {
-            var search = ((document.getElementById('push-search')||{}).value||'').toLowerCase();
+            var search  = ((document.getElementById('push-search')||{}).value||'').toLowerCase();
+            var adFilter = ((document.getElementById('push-filter-ad')||{}).value||'');
             var filtered = _pushAllData.filter(function(r) {
+                if (adFilter === '1' && parseInt(r.is_ad) !== 1) return false;
+                if (adFilter === '0' && parseInt(r.is_ad) !== 0) return false;
                 if (!search) return true;
                 return (r.title||'').toLowerCase().includes(search) ||
                        (r.body||'').toLowerCase().includes(search) ||
@@ -6541,6 +6553,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
                         '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 6px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
                         '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
+                        '<td style="padding:9px 12px;text-align:center;">' + (parseInt(r.is_ad)===1 ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">광고성</span>' : '<span style="background:#DCFCE7;color:#16A34A;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">정보성</span>') + '</td>' +
+                        '<td style="padding:9px 12px;font-size:11px;color:#6B7280;text-align:right;white-space:nowrap;">' + (r.last_sent ? toKST(r.last_sent).slice(0,16) : '-') + '</td>' +
                         '</tr>';
                 }).join('');
             }
@@ -7134,15 +7148,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             console.log('[CONSENT] 쿼리2 - 동의 현황 (서브쿼리)');
             var q2 = await pushQuery(
                 'SELECT' +
-                ' SUM(IF(is_accepts_push=1,1,0)) AS push_on,' +
-                ' SUM(IF(is_accepts_push IS NULL OR is_accepts_push!=1,1,0)) AS push_off,' +
-                ' SUM(IF(is_accepts_marketing1=1,1,0)) AS mkt1_on,' +
-                ' SUM(IF(is_accepts_marketing2=1,1,0)) AS mkt2_on' +
-                ' FROM v3_auth_user' +
-                ' WHERE id IN (' +
-                '   SELECT v3_auth_user_id FROM manager' +
-                '   WHERE is_open=1 AND id NOT IN (3,102) AND v3_auth_user_id IS NOT NULL' +
-                ' )'
+                ' COUNT(DISTINCT IF(vau.is_accepts_push=1, m.id, NULL)) AS push_on,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_push=0 OR vau.is_accepts_push IS NULL, m.id, NULL)) AS push_off,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_marketing1=1, m.id, NULL)) AS mkt1_on,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_marketing2=1, m.id, NULL)) AS mkt2_on' +
+                ' FROM manager m LEFT JOIN v3_auth_user vau ON vau.id = m.v3_auth_user_id' +
+                ' WHERE m.is_open=1 AND m.id NOT IN (3,102)'
             );
             console.log('[CONSENT] 쿼리2 결과:', q2);
 
@@ -7158,7 +7169,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var push_rate = total > 0 ? Math.round(push_on/total*1000)/10 : 0;
             var mkt1_rate = total > 0 ? Math.round(mkt1_on/total*1000)/10 : 0;
             var mkt2_rate = total > 0 ? Math.round(mkt2_on/total*1000)/10 : 0;
-            var today = toKSTDate(new Date().toISOString());
+            var today = toKSTDate(new Date().toISOString()); // KST 날짜 (UTC+9)
             console.log('[CONSENT] 최종 데이터:', {total:total, push_on:push_on, push_rate:push_rate, mkt1_on:mkt1_on, mkt2_on:mkt2_on});
             return {
                 date:       today,
@@ -7384,18 +7395,17 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id'
                 : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
 
-            /* 광고성 푸시: (광고) 포함, 앱푸시 OFF 또는 광고동의1 OFF */
+            /* 광고성 푸시: 푸시ON 이지만 마케팅 수신 동의 OFF인 건수(차이) */
             var adData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' SUM(IF(vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL, 1, 0)) AS push_off,' +
-                ' SUM(IF(vau.is_accepts_marketing1 != 1 OR vau.is_accepts_marketing1 IS NULL, 1, 0)) AS mkt1_off,' +
-                ' COUNT(*) AS total' +
+                ' SUM(IF(vau.is_accepts_push=1 AND (vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL), 1, 0)) AS problem_cnt,' +
+                ' COUNT(*) AS total_sent' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
                 "  AND (ph.title LIKE '%(광고)%' OR ph.body LIKE '%(광고)%')" +
-                '  AND (vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL OR vau.is_accepts_marketing1 != 1 OR vau.is_accepts_marketing1 IS NULL)' +
                 ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
-                ' ORDER BY send_date DESC, total DESC LIMIT 200',
+                ' HAVING problem_cnt > 0' +
+                ' ORDER BY send_date DESC, problem_cnt DESC LIMIT 200',
                 [period]
             );
 
@@ -7416,7 +7426,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             renderReviewAd(adData||[]);
             renderReviewNormal(normData||[]);
 
-            var adTotal   = (adData||[]).reduce(function(s,r){return s+(parseInt(r.total)||0);},0);
+            var adTotal   = (adData||[]).reduce(function(s,r){return s+(parseInt(r.problem_cnt)||0);},0);
             var normTotal = (normData||[]).reduce(function(s,r){return s+(parseInt(r.push_off)||0);},0);
             setEl('review-kpi-ad',     adTotal.toLocaleString()+'건');
             setEl('review-kpi-normal', normTotal.toLocaleString()+'건');
@@ -7433,15 +7443,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function renderReviewAd(data) {
             var el = document.getElementById('review-ad-body');
             if (!el) return;
-            if (!data.length) { el.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#10B981;font-size:13px;">✅ 점검 필요 없음</td></tr>'; return; }
+            if (!data.length) { el.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#10B981;font-size:13px;">✅ 점검 필요 없음</td></tr>'; return; }
             el.innerHTML = data.map(function(r) {
+                var prob = parseInt(r.problem_cnt)||0;
                 return '<tr style="border-bottom:1px solid #FFF5F5;">' +
                     '<td style="padding:8px 10px;font-size:12px;color:#6B7280;white-space:nowrap;">'+toKSTDate(r.send_date)+'</td>' +
                     '<td style="padding:8px 10px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(r.title||'').replace(/"/g,'&quot;')+'">'+(r.title||'-')+'</td>' +
                     '<td style="padding:8px 10px;font-size:11px;color:#374151;white-space:nowrap;">'+(r.notification_category||'-')+'</td>' +
-                    '<td style="padding:8px 10px;text-align:center;">'+reviewBadge(parseInt(r.push_off)||0)+'</td>' +
-                    '<td style="padding:8px 10px;text-align:center;">'+reviewBadge(parseInt(r.mkt1_off)||0)+'</td>' +
-                    '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:#EF4444;text-align:right;">'+(parseInt(r.total)||0).toLocaleString()+'</td>' +
+                    '<td style="padding:8px 10px;font-size:13px;font-weight:700;color:#EF4444;text-align:right;white-space:nowrap;">'+prob.toLocaleString()+'건</td>' +
                     '</tr>';
             }).join('');
         }
@@ -7611,11 +7620,20 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             });
                         var statusEl = document.getElementById('templateImportStatus');
                         if (statusEl) statusEl.textContent = '✅ ' + _templateData.length + '개 항목 로드됨';
-                        _templateStepFilter = null;
+                        _templateStepFilter = 4;  // 가져오기 완료 → STEP4 자동 활성
                         _templateSearchQ = '';
-                        // step 필터 초기화
+                        window._activeStepFilter = 4;
+                        // STEP4 버튼 활성화
                         document.querySelectorAll('.step-box').forEach(function(b){ b.classList.remove('active'); });
+                        var step4box = document.querySelector('.step-box:nth-child(1)');
+                        // STEP4 박스 직접 찾기
+                        document.querySelectorAll('.step-number').forEach(function(el) {
+                            if (el.textContent.trim() === 'STEP 4') {
+                                el.closest('.step-box').classList.add('active');
+                            }
+                        });
                         renderTemplateTable();
+                        renderTemplateActions();
                     } catch(err) {
                         alert('파일 파싱 오류: ' + err.message);
                     }
@@ -7663,10 +7681,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var colStatus  = findCol(_templateHeaders, COL_MAP.status);
             var colTarget  = findCol(_templateHeaders, COL_MAP.target);
 
-            // 필터 적용
+            // 노션 DB에서 가져온 데이터는 모두 STEP 4 (등록 완료)
+            // STEP 4 필터이거나 전체 필터일 때만 표시
+            if (_templateStepFilter && _templateStepFilter !== 4) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px;">이 STEP에는 데이터가 없습니다</td></tr>';
+                return;
+            }
+
+            // STEP4가 선택됐거나 전체 보기 → 검색 필터만 적용
             var filtered = _templateData.filter(function(row) {
-                var step = getStep(colStatus ? row[colStatus] : '');
-                if (_templateStepFilter && step !== _templateStepFilter) return false;
                 if (_templateSearchQ) {
                     var searchable = Object.values(row).join(' ').toLowerCase();
                     if (!searchable.includes(_templateSearchQ)) return false;
@@ -7675,7 +7698,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             });
 
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px;">조건에 맞는 템플릿이 없습니다</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px;">검색 결과가 없습니다</td></tr>';
                 return;
             }
 
@@ -7683,20 +7706,19 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var title   = colTitle   ? row[colTitle]   : Object.values(row)[0] || '-';
                 var code    = colCode    ? row[colCode]    : '-';
                 var channel = colChannel ? row[colChannel] : '-';
-                var status  = colStatus  ? row[colStatus]  : '-';
-                var step    = getStep(status);
+                var status  = colStatus  ? row[colStatus]  : '등록 완료';
                 var badge   = channelBadge(channel);
-                var statCls = statusBadgeClass(step);
                 var titleShort = title.length > 50 ? title.slice(0, 50) + '…' : title;
+                var displayStatus = status || '등록 완료';
 
-                return '<tr data-step="' + step + '">' +
+                return '<tr data-step="4">' +
                     '<td><div class="notification-title">' +
                     (channel ? '<span class="channel-badge ' + badge + '">' + escTpl(channel) + '</span>' : '') +
                     '<span class="title-text" title="' + escTpl(title) + '">' + escTpl(titleShort) + '</span>' +
                     '</div></td>' +
                     '<td><span class="date-text">' + escTpl(code) + '</span></td>' +
                     '<td>' + (colTarget ? '<span class="date-text">' + escTpl(row[colTarget]||'-') + '</span>' : '-') + '</td>' +
-                    '<td>' + (statCls ? '<span class="status-badge ' + statCls + '">' + escTpl(status) + '</span>' : '<span class="date-text">' + escTpl(status) + '</span>') + '</td>' +
+                    '<td><span class="status-badge status-completed">' + escTpl(displayStatus) + '</span></td>' +
                     '<td class="action-cell"></td>' +
                     '</tr>';
             }).join('');
