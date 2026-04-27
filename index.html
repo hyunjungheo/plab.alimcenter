@@ -3359,6 +3359,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
     </style>
     <!-- Google Identity Services -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Firebase SDK -->
     <script type="module">
@@ -3965,6 +3966,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <span>+</span>
                             <span>새 템플릿 등록</span>
                         </button>
+                        <button onclick="document.getElementById('templateCsvInput').click()" style="padding:8px 14px;background:#F0F9FF;color:#0369a1;border:1px solid #BAE6FD;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                            📂 노션 DB 가져오기
+                        </button>
+                        <input type="file" id="templateCsvInput" accept=".csv,.xlsx,.xls" style="display:none;">
+                        <span id="templateImportStatus" style="font-size:12px;color:#6B7280;"></span>
                     </div>
                 </div>
                 
@@ -3979,77 +3985,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         </tr>
                     </thead>
                     <tbody id="templateTableBody">
-                        <tr data-step="1">
-                            <td>
-                                <div class="notification-title">
-                                    <span class="channel-badge badge-alimtalk">알림톡</span>
-                                    <span class="title-text">[환불안내] 참가비 환불이 완료되었습니다</span>
-                                </div>
+                        <tr id="templateEmptyRow">
+                            <td colspan="5" style="padding:48px;text-align:center;color:#9CA3AF;">
+                                <div style="font-size:32px;margin-bottom:10px;">📂</div>
+                                <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px;">노션 DB를 가져오세요</div>
+                                <div style="font-size:13px;">우측 상단 <b>노션 DB 가져오기</b> 버튼을 눌러 CSV를 업로드하면<br>템플릿 목록이 여기에 표시됩니다.</div>
                             </td>
-                            <td><span class="date-text">PLAB_REFUND_01</span></td>
-                            <td><span class="date-text">2026.01.21 09:30<br><span style="font-size: 11px; color: var(--text-tertiary);">@김민수 (CX팀)</span></span></td>
-                            <td><span class="status-badge status-pending">내용 등록</span></td>
-                            <td class="action-cell"></td>
-                        </tr>
-                        <tr data-step="2">
-                            <td>
-                                <div class="notification-title">
-                                    <span class="channel-badge badge-alimtalk">알림톡</span>
-                                    <span class="title-text">[이벤트] 친구 초대 이벤트 참여하세요</span>
-                                </div>
-                            </td>
-                            <td><span class="date-text">PLAB_EVENT_01</span></td>
-                            <td><span class="date-text">2026.01.20 16:45<br><span style="font-size: 11px; color: var(--text-tertiary);">@이지은 (마케팅팀)</span></span></td>
-                            <td><span class="status-badge status-review">라이팅 검토</span></td>
-                            <td class="action-cell"></td>
-                        </tr>
-                        <tr data-step="3">
-                            <td>
-                                <div class="notification-title">
-                                    <span class="channel-badge badge-alimtalk">알림톡</span>
-                                    <span class="title-text">[경기변경] 경기 시간이 변경되었습니다</span>
-                                </div>
-                            </td>
-                            <td><span class="date-text">PLAB_CHANGE_01</span></td>
-                            <td><span class="date-text">2026.01.19 14:20<br><span style="font-size: 11px; color: var(--text-tertiary);">@박서준 (운영팀)</span></span></td>
-                            <td><span class="status-badge status-waiting">등록 대기</span></td>
-                            <td class="action-cell"></td>
-                        </tr>
-                        <tr data-step="4">
-                            <td>
-                                <div class="notification-title">
-                                    <span class="channel-badge badge-alimtalk">알림톡</span>
-                                    <span class="title-text">[경기알림] 오늘 경기를 잊지 않으셨죠?</span>
-                                </div>
-                            </td>
-                            <td><span class="date-text">PLAB_REMIND_01</span></td>
-                            <td><span class="date-text">2026.01.18 11:00<br><span style="font-size: 11px; color: var(--text-tertiary);">@최유진 (CX팀)</span></span></td>
-                            <td><span class="status-badge status-completed">등록 완료</span></td>
-                            <td class="action-cell"></td>
-                        </tr>
-                        <tr data-step="4">
-                            <td>
-                                <div class="notification-title">
-                                    <span class="channel-badge badge-push">푸시</span>
-                                    <span class="title-text">[리마인더] 내일 경기가 있어요</span>
-                                </div>
-                            </td>
-                            <td><span class="date-text">PLAB_PUSH_01</span></td>
-                            <td><span class="date-text">2026.01.17 15:30<br><span style="font-size: 11px; color: var(--text-tertiary);">@정수현 (운영팀)</span></span></td>
-                            <td><span class="status-badge status-completed">등록 완료</span></td>
-                            <td class="action-cell"></td>
-                        </tr>
-                        <tr data-step="4">
-                            <td>
-                                <div class="notification-title">
-                                    <span class="channel-badge badge-modal">모달</span>
-                                    <span class="title-text">[이벤트] 첫 경기 할인 이벤트</span>
-                                </div>
-                            </td>
-                            <td><span class="date-text">PLAB_MODAL_EVENT_01</span></td>
-                            <td><span class="date-text">2026.01.15 10:00<br><span style="font-size: 11px; color: var(--text-tertiary);">@김태희 (마케팅팀)</span></span></td>
-                            <td><span class="status-badge status-completed">등록 완료</span></td>
-                            <td class="action-cell"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -7585,6 +7526,183 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var email = (sessionStorage.getItem('admin_email') || '').toLowerCase();
             return WRITING_TEAM.includes(email);
         }
+
+        /* =====================================================
+           템플릿 관리 - 노션 CSV 가져오기
+           ===================================================== */
+        var _templateData = [];  // 전체 파싱된 행
+        var _templateHeaders = [];
+        var _templateStepFilter = null; // 현재 step 필터
+        var _templateSearchQ = '';
+
+        // 컬럼 매핑 (노션 컬럼명 → 내부 키)
+        var COL_MAP = {
+            title: ['현 버전', '제목', '템플릿명', '알림명', 'title'],
+            code:  ['템플릿 코드', '코드', 'code'],
+            channel: ['발송 채널', '채널', '유형', '타입', 'channel'],
+            status: ['상태', 'status', '비즈앱 검수'],
+            target: ['대상 분류', '대상', '타겟'],
+            category: ['분류', '카테고리'],
+        };
+
+        function findCol(headers, candidates) {
+            for (var i = 0; i < candidates.length; i++) {
+                var c = candidates[i].toLowerCase();
+                for (var j = 0; j < headers.length; j++) {
+                    if (headers[j].toLowerCase().includes(c)) return headers[j];
+                }
+            }
+            return null;
+        }
+
+        // 상태값 → step 번호
+        var STATUS_STEP_MAP = {
+            '내용 등록': 1, '내용등록': 1, '등록': 1,
+            '라이팅 검토': 2, '라이팅검토': 2, '검토중': 2, '검토 중': 2,
+            '등록 대기': 3, '등록대기': 3, '카카오 검수': 3, '검수중': 3,
+            '등록 완료': 4, '등록완료': 4, '완료': 4, '통과': 4,
+        };
+        function getStep(statusVal) {
+            if (!statusVal) return 0;
+            var v = statusVal.trim();
+            return STATUS_STEP_MAP[v] || 0;
+        }
+
+        // 채널값 → badge class
+        function channelBadge(val) {
+            if (!val) return '';
+            var v = val.toLowerCase();
+            if (v.includes('알림톡')) return 'badge-alimtalk';
+            if (v.includes('푸시') || v.includes('push')) return 'badge-push';
+            if (v.includes('lms') || v.includes('문자')) return 'badge-modal';
+            return 'badge-alimtalk';
+        }
+
+        // 상태 badge class
+        function statusBadgeClass(step) {
+            if (step === 1) return 'status-pending';
+            if (step === 2) return 'status-review';
+            if (step === 3) return 'status-waiting';
+            if (step === 4) return 'status-completed';
+            return '';
+        }
+
+        // CSV/Excel 파일 파싱
+        document.addEventListener('DOMContentLoaded', function() {
+            var inp = document.getElementById('templateCsvInput');
+            if (!inp) return;
+            inp.addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        var wb = XLSX.read(ev.target.result, { type: 'binary', raw: false, cellText: true });
+                        var ws = wb.Sheets[wb.SheetNames[0]];
+                        var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+                        if (!rows.length) { alert('데이터가 없습니다.'); return; }
+                        _templateHeaders = rows[0].map(function(h){ return (h||'').toString().trim(); });
+                        _templateData = rows.slice(1)
+                            .filter(function(r){ return r.some(function(c){ return c && c.toString().trim(); }); })
+                            .map(function(r) {
+                                var obj = {};
+                                _templateHeaders.forEach(function(h, i){ obj[h] = (r[i]||'').toString().trim(); });
+                                return obj;
+                            });
+                        var statusEl = document.getElementById('templateImportStatus');
+                        if (statusEl) statusEl.textContent = '✅ ' + _templateData.length + '개 항목 로드됨';
+                        _templateStepFilter = null;
+                        _templateSearchQ = '';
+                        // step 필터 초기화
+                        document.querySelectorAll('.step-box').forEach(function(b){ b.classList.remove('active'); });
+                        renderTemplateTable();
+                    } catch(err) {
+                        alert('파일 파싱 오류: ' + err.message);
+                    }
+                };
+                reader.readAsBinaryString(file);
+                e.target.value = '';
+            });
+
+            // 검색 연동
+            var searchInp = document.querySelector('.table-search input');
+            if (searchInp) {
+                searchInp.addEventListener('input', function() {
+                    _templateSearchQ = this.value.toLowerCase().trim();
+                    renderTemplateTable();
+                });
+            }
+        });
+
+        // filterByStatus 재정의 - step 필터 저장 후 renderTemplateTable 호출
+        function filterByStatus(status) {
+            var stepBoxes = document.querySelectorAll('.step-box');
+            stepBoxes.forEach(function(b){ b.classList.remove('active'); });
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            var stepMap = {'내용 등록': 1, '라이팅 검토': 2, '등록 대기': 3, '등록 완료': 4};
+            _templateStepFilter = stepMap[status] || null;
+            window._activeStepFilter = _templateStepFilter;
+            renderTemplateTable();
+            renderTemplateActions();
+        }
+
+        function renderTemplateTable() {
+            var tbody = document.getElementById('templateTableBody');
+            if (!tbody) return;
+
+            // 데이터 없으면 안내
+            if (!_templateData.length) {
+                tbody.innerHTML = '<tr id="templateEmptyRow"><td colspan="5" style="padding:48px;text-align:center;color:#9CA3AF;"><div style="font-size:32px;margin-bottom:10px;">📂</div><div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px;">노션 DB를 가져오세요</div><div style="font-size:13px;">우측 상단 <b>노션 DB 가져오기</b> 버튼을 눌러 CSV를 업로드하면 템플릿 목록이 여기에 표시됩니다.</div></td></tr>';
+                return;
+            }
+
+            // 컬럼 감지
+            var colTitle   = findCol(_templateHeaders, COL_MAP.title);
+            var colCode    = findCol(_templateHeaders, COL_MAP.code);
+            var colChannel = findCol(_templateHeaders, COL_MAP.channel);
+            var colStatus  = findCol(_templateHeaders, COL_MAP.status);
+            var colTarget  = findCol(_templateHeaders, COL_MAP.target);
+
+            // 필터 적용
+            var filtered = _templateData.filter(function(row) {
+                var step = getStep(colStatus ? row[colStatus] : '');
+                if (_templateStepFilter && step !== _templateStepFilter) return false;
+                if (_templateSearchQ) {
+                    var searchable = Object.values(row).join(' ').toLowerCase();
+                    if (!searchable.includes(_templateSearchQ)) return false;
+                }
+                return true;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px;">조건에 맞는 템플릿이 없습니다</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(function(row) {
+                var title   = colTitle   ? row[colTitle]   : Object.values(row)[0] || '-';
+                var code    = colCode    ? row[colCode]    : '-';
+                var channel = colChannel ? row[colChannel] : '-';
+                var status  = colStatus  ? row[colStatus]  : '-';
+                var step    = getStep(status);
+                var badge   = channelBadge(channel);
+                var statCls = statusBadgeClass(step);
+                var titleShort = title.length > 50 ? title.slice(0, 50) + '…' : title;
+
+                return '<tr data-step="' + step + '">' +
+                    '<td><div class="notification-title">' +
+                    (channel ? '<span class="channel-badge ' + badge + '">' + escTpl(channel) + '</span>' : '') +
+                    '<span class="title-text" title="' + escTpl(title) + '">' + escTpl(titleShort) + '</span>' +
+                    '</div></td>' +
+                    '<td><span class="date-text">' + escTpl(code) + '</span></td>' +
+                    '<td>' + (colTarget ? '<span class="date-text">' + escTpl(row[colTarget]||'-') + '</span>' : '-') + '</td>' +
+                    '<td>' + (statCls ? '<span class="status-badge ' + statCls + '">' + escTpl(status) + '</span>' : '<span class="date-text">' + escTpl(status) + '</span>') + '</td>' +
+                    '<td class="action-cell"></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function escTpl(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
         function renderTemplateActions() {
             var tbody = document.getElementById('templateTableBody');
