@@ -3291,42 +3291,44 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             const menuItems = document.querySelectorAll('.sidebar .menu-item');
             menuItems.forEach(item => item.classList.remove('active'));
             
-            // 모든 페이지 숨기기 (style 직접 제어)
-            ['page-status','page-template','page-journey','page-bot','page-guide','page-push'].forEach(function(pid) {
-                var el = document.getElementById(pid);
-                if (el) { el.style.display = 'none'; el.classList.remove('active'); }
-            });
-
-            // 목표 페이지 표시
-            var _pageMap = {
-                'status':   {id:'page-status',   title:'발송 현황'},
-                'template': {id:'page-template', title:'템플릿 관리'},
-                'journey':  {id:'page-journey',  title:'고객 여정 별 메세지'},
-                'bot':      {id:'page-bot',       title:'라이팅 봇'},
-                'guide':    {id:'page-guide',     title:'플랩 라이팅 가이드: 플랩답게 말하기'},
-                'push':     {id:'page-push',      title:'매니저 푸시'},
-            };
-            var pageTitle = document.getElementById('pageTitle');
-            var _info = _pageMap[page];
-            if (_info) {
-                var _el = document.getElementById(_info.id);
-                if (_el) { _el.style.display = 'block'; _el.classList.add('active'); }
-                if (pageTitle) pageTitle.textContent = _info.title;
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(p => p.classList.remove('active'));
+            
+            const pageTitle = document.getElementById('pageTitle');
+            let pageIndex = 0;
+            
+            switch(page) {
+                case 'status': pageIndex = 4; if(pageTitle) pageTitle.textContent = '발송 현황';
+                    setTimeout(function(){ switchPushTab(document.querySelector('[onclick*="push-dashboard"]'), 'dashboard'); }, 50); break;
+                case 'template': pageIndex = 0; if(pageTitle) pageTitle.textContent = '템플릿 관리'; setTimeout(renderTemplateActions, 0); break;
+                case 'journey': pageIndex = 1; if(pageTitle) pageTitle.textContent = '고객 여정 별 메세지'; break;
+                case 'bot': pageIndex = 2; if(pageTitle) pageTitle.textContent = '라이팅 봇'; break;
+                case 'guide': pageIndex = 3; if(pageTitle) pageTitle.textContent = '플랩 라이팅 가이드: 플랩답게 말하기'; break;
+                case 'push': pageIndex = 4; if(pageTitle) pageTitle.textContent = '매니저 푸시'; setTimeout(initPushDashboard, 100); break;
             }
-
-            // 메뉴 활성화
-            menuItems.forEach(function(item) {
-                var txt = item.textContent.trim();
-                var match = {
-                    'status': '발송 현황','template': '템플릿 관리','journey': '고객 여정',
-                    'bot': '라이팅 봇','guide': '라이팅 가이드','push': '매니저 푸시'
-                }[page];
-                if (match && txt.includes(match)) item.classList.add('active');
+            
+            menuItems.forEach(item => {
+                if ((page === 'status' && item.textContent.includes('발송 현황')) ||
+                    (page === 'template' && item.textContent.includes('템플릿 관리')) ||
+                    (page === 'journey' && item.textContent.includes('고객 여정')) ||
+                    (page === 'bot' && item.textContent.includes('라이팅 봇')) ||
+                    (page === 'guide' && item.textContent.includes('라이팅 가이드')) ||
+                    (page === 'push' && item.textContent.includes('매니저 푸시'))) {
+                    item.classList.add('active');
+                }
             });
-
-            // 페이지별 초기화
-            if (page === 'template') setTimeout(renderTemplateActions, 0);
-            if (page === 'push') setTimeout(initPushDashboard, 100);
+            
+            if (pages[pageIndex]) {
+                pages[pageIndex].classList.add('active');
+                pages[pageIndex].style.display = 'block';
+            }
+            
+            // 다른 페이지들 숨기기
+            pages.forEach((p, i) => {
+                if (i !== pageIndex) {
+                    p.style.display = 'none';
+                }
+            });
             setTimeout(function(){ if(typeof checkWritingTeamUI==='function') checkWritingTeamUI(); }, 0);
         }
         
@@ -3522,10 +3524,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (nameEl) nameEl.textContent = storedEmail;
             if (badge)  badge.style.display = 'flex';
             renderTemplateActions();
-            // 로그인 후 현재 hash 또는 status 페이지로 이동
-            var _hash = location.hash.replace('#','').trim();
-            var _valid = ['status','template','journey','bot','guide','push'];
-            navigateTo(_valid.indexOf(_hash) !== -1 ? _hash : 'status');
         }
     });
     </script>
@@ -3766,7 +3764,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 </div>
                 
                 <!-- Page 1: Active Notifications -->
-                <div id="page-status" class="page-content">
+                <div class="page-content active">
             
             <!-- Anomaly Detection Section -->
             <div class="anomaly-section">
@@ -3930,7 +3928,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         </div>
         
         <!-- Page 2: Template Management -->
-        <div id="page-template" class="page-content">
+        <div class="page-content">
             <!-- Process Flow -->
             <div class="process-flow">
                 <div class="process-title">📋 등록 프로세스</div>
@@ -4025,7 +4023,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         </div>
         
         <!-- Page 3: Customer Journey -->
-        <div id="page-journey" class="page-content">
+        <div class="page-content">
             <!-- 탭 네비게이션 -->
             <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #E5E7EB;">
                 <button class="journey-tab active" onclick="switchJourneyTab(this,'player')" style="padding:10px 24px;background:none;border:none;border-bottom:2px solid #3B82F6;margin-bottom:-2px;font-size:14px;font-weight:600;color:#3B82F6;cursor:pointer;">참가자</button>
@@ -4412,7 +4410,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         </div>
         
         <!-- Page 4: Writing Bot -->
-        <div id="page-bot" class="page-content">
+        <div class="page-content">
             <div class="bot-page-container">
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 40px;">
                     <div style="font-size: 64px; margin-bottom: 24px;">✨</div>
@@ -4434,7 +4432,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         </div>
         
         <!-- Page 5: Writing Guide -->
-        <div id="page-guide" class="page-content">
+        <div class="page-content">
             <!-- 게시글 보기 모드 (기본) -->
             <div id="guideViewMode">
                 <!-- 가이드 본문 (Firebase에서 불러온 내용) -->
@@ -4573,7 +4571,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         </div>
 
         <!-- Page 6: Manager Push Dashboard -->
-        <div id="page-push" class="page-content">
+        <div class="page-content">
             <div id="pushApiError" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#92400E;"></div>
 
             <!-- 탭 -->
