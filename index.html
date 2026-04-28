@@ -3298,13 +3298,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             let pageIndex = 0;
             
             switch(page) {
-                case 'status': pageIndex = 4; if(pageTitle) pageTitle.textContent = '발송 현황';
-                    setTimeout(function(){ switchPushTab(document.querySelector('[onclick*="push-dashboard"]'), 'dashboard'); }, 50); break;
-                case 'template': pageIndex = 0; if(pageTitle) pageTitle.textContent = '템플릿 관리'; setTimeout(renderTemplateActions, 0); break;
-                case 'journey': pageIndex = 1; if(pageTitle) pageTitle.textContent = '고객 여정 별 메세지'; break;
-                case 'bot': pageIndex = 2; if(pageTitle) pageTitle.textContent = '라이팅 봇'; break;
-                case 'guide': pageIndex = 3; if(pageTitle) pageTitle.textContent = '플랩 라이팅 가이드: 플랩답게 말하기'; break;
-                case 'push': pageIndex = 4; if(pageTitle) pageTitle.textContent = '매니저 푸시'; setTimeout(initPushDashboard, 100); break;
+                case 'status':   pageIndex = 0; if(pageTitle) pageTitle.textContent = '발송 현황'; break;
+                case 'template': pageIndex = 1; if(pageTitle) pageTitle.textContent = '템플릿 관리'; setTimeout(renderTemplateActions, 0); break;
+                case 'journey':  pageIndex = 2; if(pageTitle) pageTitle.textContent = '고객 여정 별 메세지'; break;
+                case 'bot':      pageIndex = 3; if(pageTitle) pageTitle.textContent = '라이팅 봇'; break;
+                case 'guide':    pageIndex = 4; if(pageTitle) pageTitle.textContent = '플랩 라이팅 가이드: 플랩답게 말하기'; break;
+                case 'push':     pageIndex = 5; if(pageTitle) pageTitle.textContent = '매니저 푸시'; setTimeout(initPushDashboard, 100); break;
             }
             
             menuItems.forEach(item => {
@@ -13056,4 +13055,3 @@ document.addEventListener("click", function(e) {
 
 </body>
 </html>
-
