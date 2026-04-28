@@ -4661,7 +4661,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 </div>
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;">
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                        <colgroup><col style="width:100px"><col style="width:160px"><col style="width:auto"><col style="width:110px"><col style="width:70px"></colgroup>
+                        <colgroup><col style="width:auto"><col style="width:auto"><col style="width:80px"><col style="width:70px"><col style="width:140px"></colgroup>
                         <thead>
                             <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
@@ -4764,8 +4764,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
                     <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:4px;">동의 검토 기준</div>
                     <div style="font-size:12px;color:#78350F;line-height:1.7;">
-                        <b>제목/내용에 (광고) 포함</b> → is_accepts_push = 1 AND is_accepts_marketing1 = 1 이어야 함<br>
-                        <b>일반 푸시</b> → is_accepts_push = 1 이어야 함
+                        <b>푸시 ON · 마케팅 수신 동의 OFF</b> → 제목/내용에 (광고) 포함이면 is_accepts_push = 1 AND is_accepts_marketing1 = 1 이어야 함<br>
+                        <b>앱푸시 OFF · 발송 이력</b> → 일반 푸시는 is_accepts_push = 1 이어야 함
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
@@ -4793,9 +4793,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">발송일</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">카테고리</th>
-                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;">앱푸시</th>
-                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;">광고1</th>
-                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;">건수</th>
+                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#10B981;white-space:nowrap;">푸시 ON/OFF</th>
+                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#8B5CF6;white-space:nowrap;">마케팅동의 ON/OFF</th>
+                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">총 건수</th>
                         </tr></thead>
                         <tbody id="review-ad-body">
                             <tr><td colspan="6" style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
@@ -4805,7 +4805,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
                     <div style="padding:12px 16px;border-bottom:1px solid #FEF3C7;background:#FFFBEB;"><span style="font-size:14px;font-weight:700;color:#111827;">앱푸시 OFF · 발송 이력</span></div>
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                        <colgroup><col style="width:88px"><col style="width:190px"><col style="width:auto"><col style="width:60px"><col style="width:55px"></colgroup>
+                        <colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>
                         <thead><tr style="background:#FFFBEB;border-bottom:1px solid #FEF3C7;">
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
@@ -6484,7 +6484,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return '<tr style="border-bottom:1px solid #F3F4F6;">' +
                     '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
                     '<td style="padding:9px 12px;font-size:12px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'') + '">' + (r.title||'-') + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#374151;line-height:1.5;word-break:break-word;">' + (r.body||'-') + '</td>' +
                     '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
                     '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
                     '</tr>';
@@ -6548,7 +6548,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     return '<tr style="border-bottom:1px solid #F3F4F6;">' +
                         '<td style="padding:9px 12px;font-size:12px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
                         '<td style="padding:9px 12px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
-                        '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
+                        '<td style="padding:9px 12px;font-size:12px;color:#374151;line-height:1.5;word-break:break-word;">' + (r.body||'-') + '</td>' +
                         '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 6px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
                         '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
                         '<td style="padding:9px 12px;text-align:center;">' + (parseInt(r.is_ad)===1 ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">광고성</span>' : '<span style="background:#DCFCE7;color:#16A34A;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">정보성</span>') + '</td>' +
@@ -7291,7 +7291,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     var dStr  = delta !== null ? (delta >= 0 ? '+' : '') + delta + '%p' : '-';
                     var dClr  = delta > 0 ? '#10B981' : delta < 0 ? '#EF4444' : '#9CA3AF';
                     return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                        '<td style="padding:9px 12px;font-size:13px;color:#374151;">' + (r.date||'-') + '</td>' +
+                        '<td style="padding:9px 12px;font-size:13px;color:#374151;white-space:nowrap;">' + (r.recorded_at ? r.recorded_at.slice(0,16) : (r.savedAt ? toKST(r.savedAt).slice(0,16) : (r.date||'-'))) + '</td>' +
                         '<td style="padding:9px 12px;font-size:13px;text-align:right;">' + Number(r.total||0).toLocaleString() + '</td>' +
                         '<td style="padding:9px 12px;font-size:13px;font-weight:600;text-align:right;color:#10B981;">' + Number(r.push_on||0).toLocaleString() + '</td>' +
                         '<td style="padding:9px 12px;font-size:13px;font-weight:600;text-align:right;color:#EF4444;">' + Number(r.push_off||0).toLocaleString() + '</td>' +
@@ -7493,7 +7493,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
             var managers = await pushQuery(
                 'SELECT DISTINCT m2.id AS mgr_id, vau.email, vau.name,' +
-                ' vau.is_accepts_push, vau.is_accepts_marketing1' +
+                ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' + pushOffCond +
                 ' LIMIT 100',
@@ -7512,12 +7512,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var mktBadge = m.is_accepts_marketing1==1
                     ? '<span style="background:#D1FAE5;color:#065F46;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">동의</span>'
                     : '<span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">미동의</span>';
+                var adBadge = m.is_accepts_marketing2==1
+                    ? '<span style="background:#D1FAE5;color:#065F46;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">동의</span>'
+                    : '<span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">미동의</span>';
                 return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                    '<td style="padding:8px 12px;font-size:13px;color:#374151;">' + (m.mgr_id||'-') + '</td>' +
+                    '<td style="padding:8px 12px;font-size:13px;color:#374151;white-space:nowrap;">' + (m.mgr_id||'-') + '</td>' +
                     '<td style="padding:8px 12px;font-size:13px;color:#111827;">' + (m.name||'-') + '</td>' +
-                    '<td style="padding:8px 12px;font-size:12px;color:#6B7280;">' + (m.email||'-') + '</td>' +
                     '<td style="padding:8px 12px;text-align:center;">' + pushBadge + '</td>' +
                     '<td style="padding:8px 12px;text-align:center;">' + mktBadge + '</td>' +
+                    '<td style="padding:8px 12px;text-align:center;">' + adBadge + '</td>' +
                     '</tr>';
             }).join('');
 
@@ -7527,9 +7530,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">' +
                 '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">ID</th>' +
                 '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">이름</th>' +
-                '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">이메일</th>' +
                 '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#10B981;">앱푸시</th>' +
-                '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#EF4444;">마케팅동의</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#8B5CF6;">마케팅동의</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#F59E0B;">광고성동의</th>' +
                 '</tr></thead><tbody>' + rows + '</tbody></table>';
         }
         function renderReviewAd(data) {
