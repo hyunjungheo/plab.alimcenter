@@ -3298,13 +3298,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             let pageIndex = 0;
             
             switch(page) {
-                case 'status': pageIndex = 4; if(pageTitle) pageTitle.textContent = '발송 현황';
-                    setTimeout(function(){ switchPushTab(document.querySelector('[onclick*="push-dashboard"]'), 'dashboard'); }, 50); break;
-                case 'template': pageIndex = 0; if(pageTitle) pageTitle.textContent = '템플릿 관리'; setTimeout(renderTemplateActions, 0); break;
-                case 'journey': pageIndex = 1; if(pageTitle) pageTitle.textContent = '고객 여정 별 메세지'; break;
-                case 'bot': pageIndex = 2; if(pageTitle) pageTitle.textContent = '라이팅 봇'; break;
-                case 'guide': pageIndex = 3; if(pageTitle) pageTitle.textContent = '플랩 라이팅 가이드: 플랩답게 말하기'; break;
-                case 'push': pageIndex = 4; if(pageTitle) pageTitle.textContent = '매니저 푸시'; setTimeout(initPushDashboard, 100); break;
+                case 'status': pageIndex = 0; if(pageTitle) pageTitle.textContent = '발송 현황'; break;
+                case 'template': pageIndex = 1; if(pageTitle) pageTitle.textContent = '템플릿 관리'; setTimeout(renderTemplateActions, 0); break;
+                case 'journey': pageIndex = 2; if(pageTitle) pageTitle.textContent = '고객 여정 별 메세지'; break;
+                case 'bot': pageIndex = 3; if(pageTitle) pageTitle.textContent = '라이팅 봇'; break;
+                case 'guide': pageIndex = 4; if(pageTitle) pageTitle.textContent = '플랩 라이팅 가이드: 플랩답게 말하기'; break;
+                case 'push': pageIndex = 5; if(pageTitle) pageTitle.textContent = '매니저 푸시'; setTimeout(initPushDashboard, 100); break;
+                
             }
             
             menuItems.forEach(item => {
@@ -7939,13 +7939,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         // 컬럼 매핑 (노션 컬럼명 → 내부 키)
         var COL_MAP = {
-            title:    ['현 버전', '제목', '템플릿명', '알림명', 'title'],
-            code:     ['템플릿 코드', '코드', 'code'],
-            channel:  ['발송 채널', '채널', '유형', '타입', 'channel'],
-            status:   ['상태', 'status', '비즈앱 검수'],
-            target:   ['대상 분류', '대상', '타겟'],
+            title: ['현 버전', '제목', '템플릿명', '알림명', 'title'],
+            code:  ['템플릿 코드', '코드', 'code'],
+            channel: ['발송 채널', '채널', '유형', '타입', 'channel'],
+            status: ['상태', 'status', '비즈앱 검수'],
+            target: ['대상 분류', '대상', '타겟'],
             category: ['분류', '카테고리'],
-            date:     ['등록일', '생성일', '날짜', 'date', 'created'],
         };
 
         function findCol(headers, candidates) {
@@ -8129,13 +8128,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var badge   = channelBadge(channel);
                 var titleShort = title.length > 50 ? title.slice(0, 50) + '…' : title;
                 var displayStatus = status || '등록 완료';
-                var colDate = findCol(_templateHeaders, COL_MAP.date);
-                var dateVal = colDate ? (row[colDate] || '-') : '-';
-                // 날짜 형식 정리 (노션 export: "2024-01-01T..." 또는 "January 1, 2024" 등)
-                if (dateVal && dateVal !== '-') {
-                    var m = dateVal.match(/^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
-                    if (m) dateVal = m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
-                }
 
                 return '<tr data-step="4">' +
                     '<td><div class="notification-title">' +
@@ -8143,7 +8135,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     '<span class="title-text" title="' + escTpl(title) + '">' + escTpl(titleShort) + '</span>' +
                     '</div></td>' +
                     '<td><span class="date-text">' + escTpl(code) + '</span></td>' +
-                    '<td><span class="date-text">' + escTpl(dateVal) + '</span></td>' +
+                    '<td>' + (colTarget ? '<span class="date-text">' + escTpl(row[colTarget]||'-') + '</span>' : '-') + '</td>' +
                     '<td><span class="status-badge status-completed">' + escTpl(displayStatus) + '</span></td>' +
                     '<td class="action-cell"></td>' +
                     '</tr>';
@@ -8265,66 +8257,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             e.stopPropagation();
             var row = e.target.closest('tr');
             var step = row ? parseInt(row.getAttribute('data-step')) : 4;
-
-            // 노션 DB 데이터가 있으면 전용 팝업
-            if (_templateData && _templateData.length && row) {
-                var allRows = Array.from(row.closest('tbody').querySelectorAll('tr[data-step]'));
-                var rowIdx = allRows.indexOf(row);
-                var filtered = _templateData.filter(function(r) {
-                    if (_templateSearchQ) return Object.values(r).join(' ').toLowerCase().includes(_templateSearchQ);
-                    return true;
-                });
-                var d = filtered[rowIdx];
-                if (d) { openTemplateDetailPopup(d); return; }
+            if (step === 3) {
+                // Step3: 발송통계/차트 숨기고 열기
+                openViewOnlyModalNoStats();
+            } else {
+                openDetailModal(1);
             }
-
-            if (step === 3) openViewOnlyModalNoStats();
-            else openDetailModal(1);
-        }
-
-        function openTemplateDetailPopup(d) {
-            var existing = document.getElementById('tplDetailPopup');
-            if (existing) existing.remove();
-
-            var overlay = document.createElement('div');
-            overlay.id = 'tplDetailPopup';
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
-            overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
-
-            var titleCol   = findCol(_templateHeaders, COL_MAP.title);
-            var channelCol = findCol(_templateHeaders, COL_MAP.channel);
-            var title   = titleCol   ? (d[titleCol]   || '템플릿 상세') : '템플릿 상세';
-            var channel = channelCol ? (d[channelCol] || '')            : '';
-
-            // 테이블 행: 모든 컬럼 표시 (빈 값은 공란)
-            var rowsHtml = _templateHeaders.map(function(h) {
-                var val = d[h] || '';
-                return '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                    '<td style="padding:9px 14px;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;width:150px;vertical-align:top;">' + esc(h) + '</td>' +
-                    '<td style="padding:9px 14px;font-size:13px;color:#111827;line-height:1.6;white-space:pre-wrap;word-break:break-word;">' + esc(val) + '</td>' +
-                    '</tr>';
-            }).join('');
-
-            function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-            var inner = document.createElement('div');
-            inner.style.cssText = 'background:white;border-radius:16px;width:92%;max-width:700px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.2);overflow:hidden;';
-            inner.innerHTML =
-                '<div style="padding:18px 22px;border-bottom:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">' +
-                    '<div style="flex:1;min-width:0;">' +
-                    (channel ? '<span style="background:#EFF6FF;color:#1D4ED8;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-right:8px;">' + esc(channel) + '</span>' : '') +
-                    '<span style="font-size:15px;font-weight:700;color:#111827;">' + esc(title) + '</span>' +
-                    '</div>' +
-                    '<button id="tplPopClose" style="border:none;background:#F3F4F6;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;color:#6B7280;margin-left:12px;">×</button>' +
-                '</div>' +
-                '<div style="overflow-y:auto;flex:1;">' +
-                '<table style="width:100%;border-collapse:collapse;">' +
-                '<tbody>' + rowsHtml + '</tbody></table>' +
-                '</div>';
-
-            overlay.appendChild(inner);
-            document.body.appendChild(overlay);
-            inner.querySelector('#tplPopClose').onclick = function(){ overlay.remove(); };
         }
 
         function openViewOnlyModalNoStats() {
