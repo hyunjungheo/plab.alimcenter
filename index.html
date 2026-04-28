@@ -3335,10 +3335,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function closeModal(modalId) {
             var modal = document.getElementById(modalId);
             if (modal) {
-                modal.removeAttribute('style');
-                modal.style.display = 'none';
+                modal.style.cssText = 'display:none!important;';
                 modal.classList.remove('active');
-                document.body.style.overflow = 'auto';
+                document.body.style.overflow = '';
                 if (modalId === 'simpleFormModal' && !window.isNavigating && typeof resetModalForm === 'function') {
                     resetModalForm();
                 }
@@ -4808,11 +4807,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                         <colgroup><col style="width:88px"><col style="width:190px"><col style="width:auto"><col style="width:60px"><col style="width:55px"></colgroup>
                         <thead><tr style="background:#FFFBEB;border-bottom:1px solid #FEF3C7;">
-                            <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">발송일</th>
+                            <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
-                            <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">카테고리</th>
-                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#6B7280;">앱푸시</th>
-                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;">건수</th>
+                            <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">카테고리</th>
+                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">건수</th>
                         </tr></thead>
                         <tbody id="review-normal-body">
                             <tr><td colspan="5" style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
@@ -7395,9 +7393,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id'
                 : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
 
-            /* 광고성 푸시: 푸시ON 이지만 마케팅 수신 동의 OFF인 건수(차이) */
+            /* 광고성 푸시: 발송일+제목별, 푸시ON/OFF·마케팅동의ON/OFF 현황 */
             var adData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
+                ' SUM(IF(vau.is_accepts_push=1,1,0)) AS push_on_cnt,' +
+                ' SUM(IF(vau.is_accepts_push!=1 OR vau.is_accepts_push IS NULL,1,0)) AS push_off_cnt,' +
+                ' SUM(IF(vau.is_accepts_marketing1=1,1,0)) AS mkt_on_cnt,' +
+                ' SUM(IF(vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL,1,0)) AS mkt_off_cnt,' +
                 ' SUM(IF(vau.is_accepts_push=1 AND (vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL), 1, 0)) AS problem_cnt,' +
                 ' COUNT(*) AS total_sent' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
@@ -7440,6 +7442,96 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 : '<span style="background:#D1FAE5;color:#065F46;padding:2px 5px;border-radius:5px;font-size:10px;">✓</span>';
         }
 
+
+
+        function closeReviewManagerModal() { var m = document.getElementById('reviewManagerModal'); if(m) m.style.display='none'; }
+        /* ── 검토필요 매니저 정보 모달 ── */
+        async function openReviewManagerModal(type, idx) {
+            var row = type === 'ad' ? (window._reviewAdData||[])[idx] : (window._reviewNormData||[])[idx];
+            if (!row) return;
+
+            // 모달 생성 또는 재사용
+            var modal = document.getElementById('reviewManagerModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'reviewManagerModal';
+                modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;';
+                modal.innerHTML = '<div style="background:white;border-radius:16px;padding:0;width:90%;max-width:640px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+                    '<div style="padding:20px 24px;border-bottom:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">' +
+                    '<div><div id="rmTitle" style="font-size:16px;font-weight:700;color:#111827;"></div>' +
+                    '<div id="rmSub" style="font-size:12px;color:#6B7280;margin-top:3px;"></div></div>' +
+                    '<button onclick="closeReviewManagerModal()" style="border:none;background:#F3F4F6;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;color:#6B7280;">×</button>' +
+                    '</div>' +
+                    '<div id="rmBody" style="padding:20px 24px;overflow-y:auto;flex:1;">' +
+                    '<div style="text-align:center;color:#9CA3AF;font-size:13px;padding:24px;">불러오는 중...</div>' +
+                    '</div></div>';
+                modal.addEventListener('click', function(e){ if(e.target===modal) closeReviewManagerModal(); });
+                document.body.appendChild(modal);
+            }
+            modal.style.cssText = 'display:flex;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;';
+
+            var titleEl = document.getElementById('rmTitle');
+            var subEl   = document.getElementById('rmSub');
+            var bodyEl  = document.getElementById('rmBody');
+            if (titleEl) titleEl.textContent = row.title || '-';
+            if (subEl)   subEl.textContent   = toKSTDate(row.send_date) + ' · ' + (row.notification_category||'-');
+            if (bodyEl)  bodyEl.innerHTML    = '<div style="text-align:center;color:#9CA3AF;padding:24px;">매니저 정보 불러오는 중...</div>';
+
+            // userCol 감지 후 매니저 정보 조회
+            var userCol = await detectPushUserCol();
+            if (!userCol || userCol.startsWith('NOT_FOUND')) {
+                bodyEl.innerHTML = '<div style="color:#EF4444;font-size:13px;padding:16px;">사용자 컬럼을 찾지 못했습니다.</div>';
+                return;
+            }
+            var join = userCol === 'manager_id'
+                ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id'
+                : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol + ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
+
+            var pushOffCond = type === 'ad'
+                ? ' AND vau.is_accepts_push=1 AND (vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL)'
+                : ' AND (vau.is_accepts_push!=1 OR vau.is_accepts_push IS NULL)';
+
+            var managers = await pushQuery(
+                'SELECT DISTINCT m2.id AS mgr_id, vau.email, vau.name,' +
+                ' vau.is_accepts_push, vau.is_accepts_marketing1' +
+                ' FROM ' + PUSH_TABLE + ' ph' + join +
+                ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' + pushOffCond +
+                ' LIMIT 100',
+                [row.send_date, row.title]
+            );
+
+            if (!managers || !managers.length) {
+                bodyEl.innerHTML = '<div style="color:#9CA3AF;font-size:13px;padding:16px;text-align:center;">매니저 정보를 찾지 못했습니다.</div>';
+                return;
+            }
+
+            var rows = managers.map(function(m) {
+                var pushBadge = m.is_accepts_push==1
+                    ? '<span style="background:#D1FAE5;color:#065F46;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">ON</span>'
+                    : '<span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">OFF</span>';
+                var mktBadge = m.is_accepts_marketing1==1
+                    ? '<span style="background:#D1FAE5;color:#065F46;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">동의</span>'
+                    : '<span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">미동의</span>';
+                return '<tr style="border-bottom:1px solid #F3F4F6;">' +
+                    '<td style="padding:8px 12px;font-size:13px;color:#374151;">' + (m.mgr_id||'-') + '</td>' +
+                    '<td style="padding:8px 12px;font-size:13px;color:#111827;">' + (m.name||'-') + '</td>' +
+                    '<td style="padding:8px 12px;font-size:12px;color:#6B7280;">' + (m.email||'-') + '</td>' +
+                    '<td style="padding:8px 12px;text-align:center;">' + pushBadge + '</td>' +
+                    '<td style="padding:8px 12px;text-align:center;">' + mktBadge + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            bodyEl.innerHTML =
+                '<div style="font-size:13px;color:#6B7280;margin-bottom:12px;">총 <b>' + managers.length + '명</b>의 매니저 정보</div>' +
+                '<table style="width:100%;border-collapse:collapse;">' +
+                '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">' +
+                '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">ID</th>' +
+                '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">이름</th>' +
+                '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">이메일</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#10B981;">앱푸시</th>' +
+                '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#EF4444;">마케팅동의</th>' +
+                '</tr></thead><tbody>' + rows + '</tbody></table>';
+        }
         function renderReviewAd(data) {
             var el = document.getElementById('review-ad-body');
             if (!el) return;
@@ -7600,6 +7692,26 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         document.addEventListener('DOMContentLoaded', function() {
             var inp = document.getElementById('templateCsvInput');
             if (!inp) return;
+
+            // localStorage에서 이전 데이터 복원
+            try {
+                var saved = localStorage.getItem('plab_template_data');
+                var savedH = localStorage.getItem('plab_template_headers');
+                if (saved && savedH) {
+                    _templateData = JSON.parse(saved);
+                    _templateHeaders = JSON.parse(savedH);
+                    var statusEl = document.getElementById('templateImportStatus');
+                    if (statusEl && _templateData.length) statusEl.textContent = '✅ ' + _templateData.length + '개 항목 (저장된 데이터)';
+                    _templateStepFilter = 4;
+                    window._activeStepFilter = 4;
+                    document.querySelectorAll('.step-number').forEach(function(el) {
+                        if (el.textContent.trim() === 'STEP 4') el.closest('.step-box').classList.add('active');
+                    });
+                    renderTemplateTable();
+                    renderTemplateActions();
+                }
+            } catch(e) { console.warn('localStorage 복원 실패:', e); }
+
             inp.addEventListener('change', function(e) {
                 var file = e.target.files[0];
                 if (!file) return;
@@ -7623,6 +7735,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         _templateStepFilter = 4;  // 가져오기 완료 → STEP4 자동 활성
                         _templateSearchQ = '';
                         window._activeStepFilter = 4;
+                        // localStorage에 저장 (탭 이탈 후에도 유지)
+                        try {
+                            localStorage.setItem('plab_template_data', JSON.stringify(_templateData));
+                            localStorage.setItem('plab_template_headers', JSON.stringify(_templateHeaders));
+                        } catch(e) { console.warn('localStorage 저장 실패:', e); }
                         // STEP4 버튼 활성화
                         document.querySelectorAll('.step-box').forEach(function(b){ b.classList.remove('active'); });
                         var step4box = document.querySelector('.step-box:nth-child(1)');
@@ -7880,9 +7997,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             m.querySelectorAll('.section').forEach(function(sec) {
                 sec.style.display = '';
             });
-            m.removeAttribute('style');
-            m.classList.remove('active');
-            m.style.cssText = 'display:flex;position:fixed;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;background:rgba(15,23,42,0.6);z-index:9999;overflow-y:auto;';
+            // 직접 style 설정 (classList.active 방식 우회)
+            m.style.cssText = 'display:flex!important;position:fixed;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;background:rgba(15,23,42,0.6);z-index:9999;overflow-y:auto;';
             document.body.style.overflow = 'hidden';
             // 외부 클릭 시 닫기
             if (!m._backdropBound) {
