@@ -3295,7 +3295,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var _allPages = document.querySelectorAll('.page-content');
             _allPages.forEach(function(p) {
                 p.classList.remove('active');
-                p.style.display = 'none';
+                p.style.setProperty('display', 'none', 'important');
             });
 
             var pageTitle = document.getElementById('pageTitle');
@@ -3313,7 +3313,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var _el = document.getElementById(_target.id);
                 if (_el) {
                     _el.classList.add('active');
-                    _el.style.cssText = 'display:block !important;';
+                    _el.style.removeProperty('display'); _el.style.setProperty('display', 'block', 'important');
                 }
                 if (pageTitle) pageTitle.textContent = _target.title;
             }
