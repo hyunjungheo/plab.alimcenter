@@ -3291,14 +3291,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             const menuItems = document.querySelectorAll('.sidebar .menu-item');
             menuItems.forEach(item => item.classList.remove('active'));
             
-            // 모든 페이지 숨기기
-            var _allPages = document.querySelectorAll('.page-content');
-            _allPages.forEach(function(p) {
-                p.classList.remove('active');
-                p.style.setProperty('display', 'none', 'important');
+            // 모든 페이지 숨기기 (style 직접 제어)
+            ['page-status','page-template','page-journey','page-bot','page-guide','page-push'].forEach(function(pid) {
+                var el = document.getElementById(pid);
+                if (el) { el.style.display = 'none'; el.classList.remove('active'); }
             });
 
-            var pageTitle = document.getElementById('pageTitle');
+            // 목표 페이지 표시
             var _pageMap = {
                 'status':   {id:'page-status',   title:'발송 현황'},
                 'template': {id:'page-template', title:'템플릿 관리'},
@@ -3307,26 +3306,22 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 'guide':    {id:'page-guide',     title:'플랩 라이팅 가이드: 플랩답게 말하기'},
                 'push':     {id:'page-push',      title:'매니저 푸시'},
             };
-
-            var _target = _pageMap[page];
-            if (_target) {
-                var _el = document.getElementById(_target.id);
-                if (_el) {
-                    _el.classList.add('active');
-                    _el.style.removeProperty('display'); _el.style.setProperty('display', 'block', 'important');
-                }
-                if (pageTitle) pageTitle.textContent = _target.title;
+            var pageTitle = document.getElementById('pageTitle');
+            var _info = _pageMap[page];
+            if (_info) {
+                var _el = document.getElementById(_info.id);
+                if (_el) { _el.style.display = 'block'; _el.classList.add('active'); }
+                if (pageTitle) pageTitle.textContent = _info.title;
             }
 
             // 메뉴 활성화
-            var _menuMap = {
-                'status':'발송 현황','template':'템플릿 관리','journey':'고객 여정',
-                'bot':'라이팅 봇','guide':'라이팅 가이드','push':'매니저 푸시'
-            };
             menuItems.forEach(function(item) {
-                if (_menuMap[page] && item.textContent.includes(_menuMap[page])) {
-                    item.classList.add('active');
-                }
+                var txt = item.textContent.trim();
+                var match = {
+                    'status': '발송 현황','template': '템플릿 관리','journey': '고객 여정',
+                    'bot': '라이팅 봇','guide': '라이팅 가이드','push': '매니저 푸시'
+                }[page];
+                if (match && txt.includes(match)) item.classList.add('active');
             });
 
             // 페이지별 초기화
@@ -3771,7 +3766,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 </div>
                 
                 <!-- Page 1: Active Notifications -->
-                <div id="page-status" class="page-content"active">
+                <div id="page-status" class="page-content">
             
             <!-- Anomaly Detection Section -->
             <div class="anomaly-section">
