@@ -7398,9 +7398,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
         async function detectPushUserCol() {
             if (_pushUserCol) return _pushUserCol;
-            var cols = await pushQuery('DESCRIBE ' + PUSH_TABLE);
+            var cols = await pushQuery('SELECT column_name FROM information_schema.columns WHERE table_name = \'' + PUSH_TABLE + '\' ORDER BY ordinal_position');
             if (!cols) return null;
-            var names = cols.map(function(c){ return (c.Field||Object.values(c)[0]||'').toLowerCase(); });
+            var names = cols.map(function(c){ return (c.column_name||c.Field||Object.values(c)[0]||'').toLowerCase(); });
             console.log('push 테이블 컬럼:', names);
             // 직접 매핑 컬럼
             var direct = ['manager_id','user_id','v3_auth_user_id','recipient_id'];
