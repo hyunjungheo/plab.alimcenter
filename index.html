@@ -7682,9 +7682,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (normal.length)
                 tbody += secHeader('✅ 조건 해당 매니저 (' + normal.length + '명)', '#065F46', '#F0FDF4') +
                          normal.map(mgrRow).join('');
-            if (condMismatch.length)
-                tbody += secHeader('ℹ️ 현재 동의 조건 불일치 (' + condMismatch.length + '명) — 발송 당시 상태는 확인 불가, 현재 기준 미충족', '#1D4ED8', '#EFF6FF') +
-                         condMismatch.map(mgrRow).join('');
             if (noVau.length)
                 tbody += secHeader('⚠️ 계정 연결 끊김 (' + noVau.length + '건) — FCM 토큰→계정 매핑 없음', '#B45309', '#FFFBEB') +
                          noVau.map(function(){
@@ -7712,7 +7709,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     '</tbody></table></div>';
             }
 
-            var totalLabel = '총 발송 ' + managers.length + '건 (현재 기준) | 조건해당 ' + normal.length + '명 · 현재 조건 불일치 ' + condMismatch.length + '명 · 연결끊김 ' + noVau.length + '건 · 비활성계정 ' + noMgr.length + '건';
+            var totalLabel = '총 발송 ' + managers.length + '건 (현재 기준) | 조건해당 ' + normal.length + '명 · 연결끊김 ' + noVau.length + '건 · 비활성계정 ' + noMgr.length + '건';
             bodyEl.innerHTML =
                 '<div style="font-size:12px;color:#6B7280;margin-bottom:12px;line-height:1.6;">' + totalLabel + '</div>' +
                 '<div style="max-height:380px;overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;">' +
