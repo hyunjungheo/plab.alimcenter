@@ -7528,50 +7528,44 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                manager_id          : ph → manager(mgr) → v3_auth_user(vau)
                manager_fcm_token_id: ph → manager_fcm_token(mft) → manager(mgr) → v3_auth_user(vau)
                v3_auth_user_id 등  : ph → v3_auth_user(vau) → manager(m2)
+               ※ openCond는 WHERE에 넣지 않고 JS에서 처리 — JOIN 실패 시 행이 0건이 되는 문제 방지
             */
-            var isMgrCol   = userCol === 'manager_id';
-            var isFcmCol   = userCol === 'manager_fcm_token_id';
-            var selectCols, joinClause, openCond;
+            var isMgrCol = userCol === 'manager_id';
+            var isFcmCol = userCol === 'manager_fcm_token_id';
+            var selectCols, joinClause;
 
             if (isMgrCol) {
                 selectCols =
-                    ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS m2_is_open,' +
+                    ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
                     ' vau.id AS vau_id, vau.email,' +
                     ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2';
                 joinClause =
                     ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
                     ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
-                openCond = ' AND (mgr.is_open IS NULL OR mgr.is_open != 0)';
-
             } else if (isFcmCol) {
-                /* manager_fcm_token_id → manager_fcm_token → manager → v3_auth_user */
                 selectCols =
-                    ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS m2_is_open,' +
+                    ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
                     ' vau.id AS vau_id, vau.email,' +
                     ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2';
                 joinClause =
                     ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.' + userCol +
                     ' LEFT JOIN manager mgr ON mgr.id = mft.manager_id' +
                     ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
-                openCond = ' AND (mgr.is_open IS NULL OR mgr.is_open != 0)';
-
             } else {
-                /* v3_auth_user_id 등 직접 vau 참조 */
                 selectCols =
-                    ' m2.id AS mgr_id, m2.name, m2.is_open AS m2_is_open,' +
+                    ' m2.id AS mgr_id, m2.name, m2.is_open AS mgr_is_open,' +
                     ' vau.id AS vau_id, vau.email,' +
                     ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2';
                 joinClause =
                     ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol +
                     ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
-                openCond = ' AND (m2.is_open IS NULL OR m2.is_open != 0)';
             }
 
             var managers = await pushQuerySilent(
                 'SELECT DISTINCT' + selectCols +
                 ' FROM ' + PUSH_TABLE + ' ph' + joinClause +
-                ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' + openCond +
-                ' LIMIT 200',
+                ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' +
+                ' LIMIT 300',
                 [row.send_date, row.title]
             );
 
@@ -7582,29 +7576,27 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return;
             }
 
-            /* JS에서 동의 조건 분류 */
-            var result = managers.map(function(m) {
+            /* ── JS 분류 ──
+               ① 활성 매니저 + 동의조건 해당   → normal
+               ② 활성 매니저 + 동의조건 불일치  → condMismatch (발송 후 동의상태 변경됨)
+               ③ vau_id 없음 (연결 끊김)       → noVau
+               ④ mgr_id 없음 + vau 있음        → noMgr (비활성/삭제 계정, 별도 테이블)
+               ⑤ 탈퇴 매니저(is_open=0)        → 제외
+            */
+            var normal = [], condMismatch = [], noVau = [], noMgr = [];
+
+            managers.forEach(function(m) {
+                if (m.mgr_is_open == 0) return; // ⑤ 탈퇴 제외
+                if (m.vau_id && !m.mgr_id) { noMgr.push(m); return; } // ④ manager 없음
+                if (!m.vau_id) { noVau.push(m); return; } // ③ vau 없음
+
                 var matchesCond = type === 'ad'
                     ? (m.is_accepts_push == 1 && m.is_accepts_marketing1 != 1)
                     : (m.is_accepts_push != 1 || m.is_accepts_push == null);
 
-                /* 연결 이상 이유 판정 (탈퇴 매니저는 이미 DB에서 제외됨) */
-                var reason = null;
-                if (!m.vau_id) {
-                    reason = isFcmCol
-                        ? '⚠️ v3_auth_user 연결 없음 — manager_fcm_token → manager → v3_auth_user 경로 중단'
-                        : '⚠️ v3_auth_user 연결 없음 — mgr.v3_auth_user_id가 NULL이거나 미등록 계정';
-                } else if (!m.mgr_id) {
-                    reason = '⚠️ manager 테이블 매핑 없음 — v3_auth_user는 존재하나 manager 행 없음';
-                }
-
-                return { m: m, matchesCond: matchesCond, reason: reason };
+                if (matchesCond) normal.push(m); // ①
+                else condMismatch.push(m);        // ②
             });
-
-            /* 조건 일치 + 정상 연결 */
-            var normal = result.filter(function(r){ return r.matchesCond && !r.reason; });
-            /* 연결 이상 (동의 조건 불일치 포함) */
-            var broken = result.filter(function(r){ return r.reason || !r.matchesCond; });
 
             function conBadge(val, on, off) {
                 return val == 1
@@ -7612,26 +7604,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     : '<span style="background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;">' + off + '</span>';
             }
 
-            function managerRow(m, reasonText) {
-                var pushB = conBadge(m.is_accepts_push, 'ON', 'OFF');
-                var mktB  = conBadge(m.is_accepts_marketing1, '동의', '미동의');
-                var adB   = conBadge(m.is_accepts_marketing2, '동의', '미동의');
-                var nameCell = m.name || '<span style="color:#D1D5DB;">-</span>';
-                var tr = '<tr style="border-bottom:1px solid #F3F4F6;">' +
-                    '<td style="padding:7px 12px;font-size:13px;color:#374151;">' + (m.mgr_id||m.ph_mgr_id||'-') + '</td>' +
-                    '<td style="padding:7px 12px;font-size:13px;color:#111827;">' + nameCell + '</td>' +
-                    '<td style="padding:7px 12px;text-align:center;">' + pushB + '</td>' +
-                    '<td style="padding:7px 12px;text-align:center;">' + mktB + '</td>' +
-                    '<td style="padding:7px 12px;text-align:center;">' + adB + '</td>' +
-                    '</tr>';
-                if (reasonText) {
-                    tr += '<tr style="background:#FFFBEB;border-bottom:1px solid #FEF3C7;">' +
-                        '<td colspan="5" style="padding:4px 12px 8px;font-size:11px;color:#B45309;">' + reasonText + '</td></tr>';
-                }
-                return tr;
-            }
-
-            var thead = '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;position:sticky;top:0;">' +
+            var thead = '<thead><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">' +
                 '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">ID</th>' +
                 '<th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">이름</th>' +
                 '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#10B981;">앱푸시</th>' +
@@ -7639,21 +7612,60 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 '<th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:600;color:#F59E0B;">광고성동의</th>' +
                 '</tr></thead>';
 
-            var tbody = '';
-            if (normal.length) {
-                tbody += '<tr><td colspan="5" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#374151;background:#F9FAFB;">✅ 조건 해당 매니저 (' + normal.length + '명)</td></tr>';
-                tbody += normal.map(function(r){ return managerRow(r.m, null); }).join('');
-            }
-            if (broken.length) {
-                tbody += '<tr><td colspan="5" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;">⚠️ 정보 불완전 / 조건 불일치 (' + broken.length + '건)</td></tr>';
-                tbody += broken.map(function(r){ return managerRow(r.m, r.reason); }).join('');
+            function mgrRow(m) {
+                return '<tr style="border-bottom:1px solid #F3F4F6;">' +
+                    '<td style="padding:7px 12px;font-size:13px;color:#374151;">' + (m.mgr_id||'-') + '</td>' +
+                    '<td style="padding:7px 12px;font-size:13px;color:#111827;">' + (m.name||'-') + '</td>' +
+                    '<td style="padding:7px 12px;text-align:center;">' + conBadge(m.is_accepts_push,'ON','OFF') + '</td>' +
+                    '<td style="padding:7px 12px;text-align:center;">' + conBadge(m.is_accepts_marketing1,'동의','미동의') + '</td>' +
+                    '<td style="padding:7px 12px;text-align:center;">' + conBadge(m.is_accepts_marketing2,'동의','미동의') + '</td>' +
+                    '</tr>';
             }
 
-            var totalLabel = '총 ' + managers.length + '건 발송 (조건 해당 ' + normal.length + '명 / 불완전 ' + broken.length + '건)';
+            function secHeader(label, color, bg) {
+                return '<tr><td colspan="5" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:' + color + ';background:' + bg + ';">' + label + '</td></tr>';
+            }
+
+            var tbody = '';
+            if (normal.length)
+                tbody += secHeader('✅ 조건 해당 매니저 (' + normal.length + '명)', '#065F46', '#F0FDF4') +
+                         normal.map(mgrRow).join('');
+            if (condMismatch.length)
+                tbody += secHeader('ℹ️ 동의 조건 불일치 (' + condMismatch.length + '명) — 발송 후 동의 상태 변경됨', '#1D4ED8', '#EFF6FF') +
+                         condMismatch.map(mgrRow).join('');
+            if (noVau.length)
+                tbody += secHeader('⚠️ 계정 연결 끊김 (' + noVau.length + '건) — FCM 토큰→계정 매핑 없음', '#B45309', '#FFFBEB') +
+                         noVau.map(function(){
+                             return '<tr style="border-bottom:1px solid #FEF3C7;"><td colspan="5" style="padding:7px 12px;font-size:12px;color:#92400E;">' +
+                                 'ph.' + userCol + ' 연결 경로가 끊겨 계정 정보 조회 불가</td></tr>';
+                         }).join('');
+
+            /* ④ 별도 테이블: manager에 없으나 발송된 이력 */
+            var noMgrSection = '';
+            if (noMgr.length) {
+                noMgrSection =
+                    '<div style="margin-top:16px;border:1px solid #FEE2E2;border-radius:10px;overflow:hidden;">' +
+                    '<div style="padding:8px 14px;background:#FFF5F5;font-size:12px;font-weight:700;color:#DC2626;">' +
+                    '🚫 manager에 없으나 발송된 이력 (' + noMgr.length + '건) — 비활성/삭제 계정으로 간주</div>' +
+                    '<table style="width:100%;border-collapse:collapse;">' + thead +
+                    '<tbody>' + noMgr.map(function(m){
+                        return '<tr style="border-bottom:1px solid #FEE2E2;">' +
+                            '<td style="padding:7px 12px;font-size:13px;color:#9CA3AF;">-</td>' +
+                            '<td style="padding:7px 12px;font-size:13px;color:#9CA3AF;">-</td>' +
+                            '<td style="padding:7px 12px;text-align:center;">' + conBadge(m.is_accepts_push,'ON','OFF') + '</td>' +
+                            '<td style="padding:7px 12px;text-align:center;">' + conBadge(m.is_accepts_marketing1,'동의','미동의') + '</td>' +
+                            '<td style="padding:7px 12px;text-align:center;">' + conBadge(m.is_accepts_marketing2,'동의','미동의') + '</td>' +
+                            '</tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
+            }
+
+            var totalLabel = '총 발송 ' + managers.length + '건 | 조건해당 ' + normal.length + '명 · 동의불일치 ' + condMismatch.length + '명 · 연결끊김 ' + noVau.length + '건 · 비활성계정 ' + noMgr.length + '건';
             bodyEl.innerHTML =
-                '<div style="font-size:13px;color:#6B7280;margin-bottom:12px;">' + totalLabel + '</div>' +
-                '<div style="max-height:420px;overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;">' +
-                '<table style="width:100%;border-collapse:collapse;">' + thead + '<tbody>' + tbody + '</tbody></table></div>';
+                '<div style="font-size:12px;color:#6B7280;margin-bottom:12px;line-height:1.6;">' + totalLabel + '</div>' +
+                '<div style="max-height:380px;overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;">' +
+                '<table style="width:100%;border-collapse:collapse;">' + thead + '<tbody>' + tbody + '</tbody></table></div>' +
+                noMgrSection;
         }
         function renderReviewAd(data) {
             window._reviewAdData = data;
