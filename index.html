@@ -7515,8 +7515,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return;
             }
             var join = userCol === 'manager_id'
-                ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id'
-                : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol + ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
+                ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id INNER JOIN manager m2 ON m2.v3_auth_user_id = vau.id AND m2.is_open = 1'
+                : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol + ' INNER JOIN manager m2 ON m2.v3_auth_user_id = vau.id AND m2.is_open = 1';
 
             var pushOffCond = type === 'ad'
                 ? ' AND vau.is_accepts_push=1 AND (vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL)'
@@ -7809,10 +7809,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function filterByStatus(status) {
             var stepBoxes = document.querySelectorAll('.step-box');
             stepBoxes.forEach(function(b){ b.classList.remove('active'); });
-            if (event && event.currentTarget) event.currentTarget.classList.add('active');
-            var stepMap = {'내용 등록': 1, '라이팅 검토': 2, '등록 대기': 3, '등록 완료': 4};
-            _templateStepFilter = stepMap[status] || null;
-            window._activeStepFilter = _templateStepFilter;
+            var step4Box = document.querySelector('.step-box[onclick*="등록 완료"]');
+            if (step4Box) step4Box.classList.add('active');
+            _templateStepFilter = 4;
+            window._activeStepFilter = 4;
             renderTemplateTable();
             renderTemplateActions();
         }
@@ -8307,28 +8307,23 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
         
         function filterByStatus(status) {
-            // Update step box active states
-            const stepBoxes = document.querySelectorAll('.step-box');
-            stepBoxes.forEach(box => box.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            // step 번호 매핑
-            var stepMap = {'내용 등록': 1, '라이팅 검토': 2, '등록 대기': 3, '등록 완료': 4};
-            window._activeStepFilter = stepMap[status] || null;
-            
-            // Filter table rows
+            // 모든 등록 템플릿은 STEP 4(등록 완료)로 취급 — 어떤 STEP 클릭해도 STEP4 활성화
+            var stepBoxes = document.querySelectorAll('.step-box');
+            stepBoxes.forEach(function(b){ b.classList.remove('active'); });
+            // STEP 4 박스를 항상 active로 표시
+            var step4Box = document.querySelector('.step-box[onclick*="등록 완료"]');
+            if (step4Box) step4Box.classList.add('active');
+
+            window._activeStepFilter = 4;
+            _templateStepFilter = 4;
+
+            // 모든 행 표시
             var tbody = document.getElementById('templateTableBody');
-            if (!tbody) return;
-            var rows = tbody.querySelectorAll('tr[data-step]');
-            rows.forEach(function(row) {
-                var badge = row.querySelector('.status-badge');
-                if (badge && badge.textContent.trim().includes(status)) {
+            if (tbody) {
+                tbody.querySelectorAll('tr[data-step]').forEach(function(row){
                     row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            // 해당 step에 맞는 액션 버튼만 노출
+                });
+            }
             renderTemplateActions();
         }
         
