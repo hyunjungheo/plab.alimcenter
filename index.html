@@ -4661,7 +4661,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 </div>
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;">
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                        <colgroup><col style="width:auto"><col style="width:auto"><col style="width:80px"><col style="width:70px"><col style="width:140px"></colgroup>
+                        <colgroup><col style="width:88px"><col style="width:180px"><col style="width:auto"><col style="width:80px"><col style="width:52px"><col style="width:58px"><col style="width:112px"></colgroup>
                         <thead>
                             <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
@@ -6091,6 +6091,25 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             }
         }
 
+        /* 모달 등 내부 조회용 — 페이지 상단 에러 배너 미표시 */
+        async function pushQuerySilent(sql, params) {
+            try {
+                var body = { query: sql };
+                if (params && params.length) body.params = params;
+                var res = await fetch(PUSH_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                var json = await res.json();
+                if (!json.success) throw new Error(json.error || '쿼리 오류');
+                return json.data || [];
+            } catch(e) {
+                console.error('[pushQuerySilent error]', e.message, '\nSQL:', sql.slice(0, 200));
+                return null;
+            }
+        }
+
         function showPushError(msg) {
             var el = document.getElementById('pushApiError');
             if (el) { el.style.display = 'block'; el.textContent = msg; }
@@ -6486,7 +6505,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return '<tr style="border-bottom:1px solid #F3F4F6;">' +
                     '<td style="padding:9px 12px;font-size:12px;color:#6B7280;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
                     '<td style="padding:9px 12px;font-size:12px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'') + '">' + (r.title||'-') + '</td>' +
-                    '<td style="padding:9px 12px;font-size:12px;color:#374151;line-height:1.5;word-break:break-word;">' + (r.body||'-') + '</td>' +
+                    '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
                     '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
                     '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
                     '</tr>';
@@ -6550,7 +6569,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     return '<tr style="border-bottom:1px solid #F3F4F6;">' +
                         '<td style="padding:9px 12px;font-size:12px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + toKSTDate(r.send_date) + '</td>' +
                         '<td style="padding:9px 12px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.title||'').replace(/"/g,'&quot;') + '">' + (r.title||'-') + '</td>' +
-                        '<td style="padding:9px 12px;font-size:12px;color:#374151;line-height:1.5;word-break:break-word;">' + (r.body||'-') + '</td>' +
+                        '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
                         '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 6px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
                         '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
                         '<td style="padding:9px 12px;text-align:center;">' + (parseInt(r.is_ad)===1 ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">광고성</span>' : '<span style="background:#DCFCE7;color:#16A34A;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">정보성</span>') + '</td>' +
@@ -7503,8 +7522,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 ? ' AND vau.is_accepts_push=1 AND (vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL)'
                 : ' AND (vau.is_accepts_push!=1 OR vau.is_accepts_push IS NULL)';
 
-            var managers = await pushQuery(
-                'SELECT DISTINCT m2.id AS mgr_id, vau.email, vau.name,' +
+            var managers = await pushQuerySilent(
                 ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' + pushOffCond +
@@ -7591,8 +7609,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 if (isNaN(d.getTime())) return String(raw);
                 var k = new Date(d.getTime() + 9*3600*1000);
                 var pad = function(n){ return String(n).padStart(2,'0'); };
-                return k.getFullYear()+'-'+pad(k.getMonth()+1)+'-'+pad(k.getDate())+
-                       ' '+pad(k.getHours())+':'+pad(k.getMinutes())+':'+pad(k.getSeconds());
+                return k.getUTCFullYear()+'-'+pad(k.getUTCMonth()+1)+'-'+pad(k.getUTCDate())+
+                       ' '+pad(k.getUTCHours())+':'+pad(k.getUTCMinutes())+':'+pad(k.getUTCSeconds());
             } catch(e) { return String(raw); }
         }
         function toKSTDate(raw) {
