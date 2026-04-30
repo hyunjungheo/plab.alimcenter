@@ -7391,44 +7391,41 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             return 'NOT_FOUND:' + names.join(',');
         }
 
-        var _fcmJoin = null;
+        var _fcmJoin = null; // 캐시
 
+        /* FCM 경로 자동 탐색: 실제 존재하는 JOIN 경로를 찾아 반환 */
         async function detectFcmJoin() {
             if (_fcmJoin) return _fcmJoin;
 
             var candidates = [
+                /* 경로 1: manager_fcm_token.manager_id */
                 ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.manager_fcm_token_id' +
                 ' LEFT JOIN manager mgr ON mgr.id = mft.manager_id' +
                 ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
-
+                /* 경로 2: manager_fcm_token.user_id */
                 ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.manager_fcm_token_id' +
                 ' LEFT JOIN manager mgr ON mgr.id = mft.user_id' +
                 ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
-
+                /* 경로 3: manager.fcm_token_id 직접 */
                 ' LEFT JOIN manager mgr ON mgr.fcm_token_id = ph.manager_fcm_token_id' +
                 ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
-
-                ' LEFT JOIN v3_auth_user vau ON vau.id = ph.manager_fcm_token_id' +
-                ' LEFT JOIN manager mgr ON mgr.v3_auth_user_id = vau.id',
+                /* 경로 4: manager.id 직접 */
+                ' LEFT JOIN manager mgr ON mgr.id = ph.manager_fcm_token_id' +
+                ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
             ];
 
-            /* 4개 탐색 쿼리 동시 실행 */
-            var probes = await Promise.all(candidates.map(function(c, i) {
-                return pushQuerySilent(
-                    'SELECT mgr.id FROM ' + PUSH_TABLE + ' ph' + c +
-                    ' WHERE ph.manager_fcm_token_id IS NOT NULL AND mgr.id IS NOT NULL LIMIT 1',
-                    []
-                ).then(function(res) { return { i: i, ok: res && res.length > 0, join: c }; })
-                 .catch(function() { return { i: i, ok: false, join: c }; });
-            }));
-
-            var winner = probes.find(function(p) { return p.ok; });
-            if (winner) {
-                console.log('[FCM JOIN] 경로 ' + (winner.i+1) + ' 채택');
-                _fcmJoin = winner.join;
-                return _fcmJoin;
+            for (var i = 0; i < candidates.length; i++) {
+                var testSql =
+                    'SELECT mgr.id AS mgr_id FROM ' + PUSH_TABLE + ' ph' + candidates[i] +
+                    ' WHERE ph.manager_fcm_token_id IS NOT NULL LIMIT 1';
+                var res = await pushQuerySilent(testSql, []);
+                if (res !== null) { // null = 쿼리 오류, [] = 결과 없음(정상)
+                    console.log('[FCM JOIN] 경로 ' + (i+1) + ' 사용:', candidates[i].trim().slice(0,60));
+                    _fcmJoin = candidates[i];
+                    return _fcmJoin;
+                }
             }
-            console.warn('[FCM JOIN] 모든 경로 매칭 없음');
+            console.warn('[FCM JOIN] 모든 경로 실패');
             return null;
         }
 
@@ -7467,17 +7464,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             } else if (userCol === 'manager_fcm_token_id') {
                 join = await detectFcmJoin();
                 if (!join) {
-                    var fcmMsg = '<tr><td colspan="4" style="padding:24px;text-align:center;color:#B45309;font-size:12px;">' +
-                        '⚠️ FCM 토큰→매니저 연결 경로를 자동으로 찾을 수 없습니다.<br>' +
-                        '<span style="color:#9CA3AF;font-size:11px;line-height:1.8;">' +
-                        'manager_fcm_token 테이블이 없고, 다른 경로에서도 매칭 행이 없습니다.<br>' +
-                        '개발자 도구 콘솔의 [FCM JOIN] 로그를 확인하거나,<br>' +
-                        '<b>app_pushs_apppushhistory.manager_fcm_token_id</b>가 참조하는 테이블/컬럼명을 알려주세요.</span></td></tr>';
-                    var elAd = document.getElementById('review-ad-body');
-                    var elNm = document.getElementById('review-normal-body');
-                    if (elAd) elAd.innerHTML = fcmMsg;
-                    if (elNm) elNm.innerHTML = fcmMsg;
-                    if (summaryEl) summaryEl.textContent = 'FCM 경로 탐색 실패 — 스키마 확인 필요';
+                    var msg = '<tr><td colspan="6" style="padding:24px;text-align:center;color:#EF4444;font-size:13px;">FCM 토큰→매니저 연결 경로를 찾을 수 없습니다<br><small style="color:#9CA3AF;">개발자 도구 콘솔의 [FCM JOIN] 로그를 확인해주세요</small></td></tr>';
+                    showLoadingText('review-ad-body', 0, ''); document.getElementById('review-ad-body').innerHTML = msg;
+                    showLoadingText('review-normal-body', 0, ''); document.getElementById('review-normal-body').innerHTML = msg;
+                    if (summaryEl) summaryEl.textContent = 'FCM 경로 탐색 실패';
                     return;
                 }
                 mgrAlias = 'mgr';
@@ -7487,46 +7477,39 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 mgrAlias = 'm2';
             }
 
-            /* adData, normData 동시 실행 + CASE WHEN → WHERE 조건으로 단순화 */
-            var mAlias = mgrAlias; // closure 캡처
-            var results = await Promise.all([
+            /* 광고성 푸시: is_accepts_push=1 AND is_accepts_marketing1=0 */
+            var adData = await pushQuery(
+                'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
+                ' COUNT(DISTINCT CASE WHEN vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0' +
+                '   AND ' + mgrAlias + '.id IS NOT NULL AND vau.id IS NOT NULL' +
+                '   AND (' + mgrAlias + '.is_open IS NULL OR ' + mgrAlias + '.is_open != 0)' +
+                '   THEN ' + mgrAlias + '.id END) AS problem_cnt,' +
+                ' COUNT(*) AS total_sent' +
+                ' FROM ' + PUSH_TABLE + ' ph' + join +
+                ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
+                "  AND (ph.title LIKE '%(광고)%' OR ph.body LIKE '%(광고)%')" +
+                ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
+                ' HAVING problem_cnt > 0' +
+                ' ORDER BY send_date DESC, problem_cnt DESC LIMIT 200',
+                [period]
+            );
 
-                /* 광고성 푸시: is_accepts_push=1 AND is_accepts_marketing1=0 */
-                pushQuery(
-                    'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                    ' COUNT(DISTINCT ' + mAlias + '.id) AS problem_cnt' +
-                    ' FROM ' + PUSH_TABLE + ' ph' + join +
-                    ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
-                    "  AND (ph.title LIKE '%(광고)%' OR ph.body LIKE '%(광고)%')" +
-                    '  AND vau.is_accepts_push = 1 AND vau.is_accepts_marketing1 = 0' +
-                    '  AND ' + mAlias + '.id IS NOT NULL' +
-                    '  AND (' + mAlias + '.is_open IS NULL OR ' + mAlias + '.is_open != 0)' +
-                    ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
-                    ' HAVING problem_cnt > 0' +
-                    ' ORDER BY send_date DESC, problem_cnt DESC LIMIT 200',
-                    [period]
-                ),
-
-                /* 일반 푸시: is_accepts_push=0 */
-                pushQuery(
-                    'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                    ' COUNT(DISTINCT ' + mAlias + '.id) AS push_off' +
-                    ' FROM ' + PUSH_TABLE + ' ph' + join +
-                    ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
-                    "  AND ph.title NOT LIKE '%(광고)%' AND (ph.body NOT LIKE '%(광고)%' OR ph.body IS NULL)" +
-                    '  AND vau.is_accepts_push = 0' +
-                    '  AND ' + mAlias + '.id IS NOT NULL' +
-                    '  AND (' + mAlias + '.is_open IS NULL OR ' + mAlias + '.is_open != 0)' +
-                    ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
-                    ' HAVING push_off > 0' +
-                    ' ORDER BY send_date DESC, push_off DESC LIMIT 200',
-                    [period]
-                )
-
-            ]);
-
-            var adData   = results[0] || [];
-            var normData = results[1] || [];
+            /* 일반 푸시: is_accepts_push=0 */
+            var normData = await pushQuery(
+                'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
+                ' COUNT(DISTINCT CASE WHEN vau.is_accepts_push=0' +
+                '   AND ' + mgrAlias + '.id IS NOT NULL AND vau.id IS NOT NULL' +
+                '   AND (' + mgrAlias + '.is_open IS NULL OR ' + mgrAlias + '.is_open != 0)' +
+                '   THEN ' + mgrAlias + '.id END) AS push_off,' +
+                ' COUNT(*) AS total' +
+                ' FROM ' + PUSH_TABLE + ' ph' + join +
+                ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
+                "  AND ph.title NOT LIKE '%(광고)%' AND (ph.body NOT LIKE '%(광고)%' OR ph.body IS NULL)" +
+                ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
+                ' HAVING push_off > 0' +
+                ' ORDER BY send_date DESC, push_off DESC LIMIT 200',
+                [period]
+            );
 
             renderReviewAd(adData||[]);
             renderReviewNormal(normData||[]);
