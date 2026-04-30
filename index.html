@@ -7419,15 +7419,25 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (summaryEl) summaryEl.textContent = '조회 중...';
             console.log('[REVIEW] loadReviewData 시작 - 기간:', period, '일');
 
-            // manager → v3_auth_user JOIN
-            var join = userCol === 'manager_id'
-                ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id'
-                : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
+            // manager → v3_auth_user JOIN (모달과 동일한 경로)
+            var join;
+            if (userCol === 'manager_id') {
+                join = ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
+                       ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
+            } else if (userCol === 'manager_fcm_token_id') {
+                join = ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.' + userCol +
+                       ' LEFT JOIN manager mgr ON mgr.id = mft.manager_id' +
+                       ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
+            } else {
+                join = ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
+            }
+
+            var mgrIdExpr = (userCol === 'manager_fcm_token_id' || userCol === 'manager_id') ? 'mgr.id' : 'ph.' + userCol;
 
             /* 광고성 푸시: is_accepts_push=1 AND is_accepts_marketing1=0 */
             var adData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0, ph.' + userCol + ', NULL)) AS problem_cnt,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0, ' + mgrIdExpr + ', NULL)) AS problem_cnt,' +
                 ' COUNT(*) AS total_sent' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
@@ -7441,7 +7451,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             /* 일반 푸시: is_accepts_push=0 */
             var normData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push=0, ph.' + userCol + ', NULL)) AS push_off,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_push=0, ' + mgrIdExpr + ', NULL)) AS push_off,' +
                 ' COUNT(*) AS total' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
