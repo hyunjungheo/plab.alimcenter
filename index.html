@@ -7380,17 +7380,53 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             if (!cols) return null;
             var names = cols.map(function(c){ return (c.Field||Object.values(c)[0]||'').toLowerCase(); });
             console.log('push 테이블 컬럼:', names);
-            // 직접 매핑 컬럼
             var direct = ['manager_id','user_id','v3_auth_user_id','recipient_id'];
             for (var i = 0; i < direct.length; i++) {
                 if (names.indexOf(direct[i]) !== -1) { _pushUserCol = direct[i]; return _pushUserCol; }
             }
-            // manager_fcm_token_id → manager_fcm_token 테이블을 통한 간접 연결
             if (names.indexOf('manager_fcm_token_id') !== -1) {
                 _pushUserCol = 'manager_fcm_token_id';
                 return _pushUserCol;
             }
             return 'NOT_FOUND:' + names.join(',');
+        }
+
+        var _fcmJoin = null; // 캐시
+
+        /* FCM 경로 자동 탐색: 실제 존재하는 JOIN 경로를 찾아 반환 */
+        async function detectFcmJoin() {
+            if (_fcmJoin) return _fcmJoin;
+
+            var candidates = [
+                /* 경로 1: manager_fcm_token.manager_id */
+                ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.manager_fcm_token_id' +
+                ' LEFT JOIN manager mgr ON mgr.id = mft.manager_id' +
+                ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
+                /* 경로 2: manager_fcm_token.user_id */
+                ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.manager_fcm_token_id' +
+                ' LEFT JOIN manager mgr ON mgr.id = mft.user_id' +
+                ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
+                /* 경로 3: manager.fcm_token_id 직접 */
+                ' LEFT JOIN manager mgr ON mgr.fcm_token_id = ph.manager_fcm_token_id' +
+                ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
+                /* 경로 4: manager.id 직접 */
+                ' LEFT JOIN manager mgr ON mgr.id = ph.manager_fcm_token_id' +
+                ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id',
+            ];
+
+            for (var i = 0; i < candidates.length; i++) {
+                var testSql =
+                    'SELECT mgr.id AS mgr_id FROM ' + PUSH_TABLE + ' ph' + candidates[i] +
+                    ' WHERE ph.manager_fcm_token_id IS NOT NULL LIMIT 1';
+                var res = await pushQuerySilent(testSql, []);
+                if (res !== null) { // null = 쿼리 오류, [] = 결과 없음(정상)
+                    console.log('[FCM JOIN] 경로 ' + (i+1) + ' 사용:', candidates[i].trim().slice(0,60));
+                    _fcmJoin = candidates[i];
+                    return _fcmJoin;
+                }
+            }
+            console.warn('[FCM JOIN] 모든 경로 실패');
+            return null;
         }
 
         async function loadReviewData() {
@@ -7425,9 +7461,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 join = ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
                        ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
             } else if (userCol === 'manager_fcm_token_id') {
-                join = ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.' + userCol +
-                       ' LEFT JOIN manager mgr ON mgr.id = mft.manager_id' +
-                       ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
+                join = await detectFcmJoin();
+                if (!join) {
+                    var msg = '<tr><td colspan="6" style="padding:24px;text-align:center;color:#EF4444;font-size:13px;">FCM 토큰→매니저 연결 경로를 찾을 수 없습니다<br><small style="color:#9CA3AF;">개발자 도구 콘솔의 [FCM JOIN] 로그를 확인해주세요</small></td></tr>';
+                    showLoadingText('review-ad-body', 0, ''); document.getElementById('review-ad-body').innerHTML = msg;
+                    showLoadingText('review-normal-body', 0, ''); document.getElementById('review-normal-body').innerHTML = msg;
+                    if (summaryEl) summaryEl.textContent = 'FCM 경로 탐색 실패';
+                    return;
+                }
             } else {
                 join = ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
             }
@@ -7550,13 +7591,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
                     ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
             } else if (isFcmCol) {
+                var fcmJoin = await detectFcmJoin();
                 selectCols =
                     ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
                     ' vau.id AS vau_id, vau.email,' +
                     ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2';
-                joinClause =
-                    ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.' + userCol +
-                    ' LEFT JOIN manager mgr ON mgr.id = mft.manager_id' +
+                joinClause = fcmJoin ||
+                    /* 최후 폴백: manager.id 직접 */
+                    ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
                     ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
             } else {
                 selectCols =
@@ -7575,58 +7617,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 'SELECT DISTINCT' + selectCols + ' FROM ' + PUSH_TABLE + ' ph' + joinClause + baseWhere + ' LIMIT 300',
                 baseParams
             );
-
-            /* FCM 경로가 실패했을 때 폴백 시도 */
-            if ((!managers || !managers.length) && isFcmCol) {
-                /* 폴백 1: manager_fcm_token 컬럼명이 user_id일 수 있음 */
-                managers = await pushQuerySilent(
-                    'SELECT DISTINCT mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
-                    ' vau.id AS vau_id, vau.email,' +
-                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
-                    ' FROM ' + PUSH_TABLE + ' ph' +
-                    ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.' + userCol +
-                    ' LEFT JOIN manager mgr ON mgr.id = mft.user_id' +
-                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id' +
-                    baseWhere + ' LIMIT 300',
-                    baseParams
-                );
-            }
-
-            if ((!managers || !managers.length) && isFcmCol) {
-                /* 폴백 2: manager_fcm_token 테이블명이 다를 수 있음 — manager.fcm_token_id 직접 조인 시도 */
-                managers = await pushQuerySilent(
-                    'SELECT DISTINCT mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
-                    ' vau.id AS vau_id, vau.email,' +
-                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
-                    ' FROM ' + PUSH_TABLE + ' ph' +
-                    ' LEFT JOIN manager mgr ON mgr.fcm_token_id = ph.' + userCol +
-                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id' +
-                    baseWhere + ' LIMIT 300',
-                    baseParams
-                );
-            }
-
-            if ((!managers || !managers.length) && isFcmCol) {
-                /* 폴백 3: ph.manager_fcm_token_id 가 실제로 manager.id와 직접 연결되는 경우 */
-                managers = await pushQuerySilent(
-                    'SELECT DISTINCT mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
-                    ' vau.id AS vau_id, vau.email,' +
-                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
-                    ' FROM ' + PUSH_TABLE + ' ph' +
-                    ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
-                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id' +
-                    baseWhere + ' LIMIT 300',
-                    baseParams
-                );
-            }
-
-            if ((!managers || !managers.length) && isFcmCol) {
-                /* 폴백 4: 스키마 탐색 — manager_fcm_token 컬럼 목록 조회 후 콘솔 출력 */
-                var fcmCols = await pushQuerySilent('DESCRIBE manager_fcm_token', []);
-                var mgCols  = await pushQuerySilent('DESCRIBE manager', []);
-                console.warn('[REVIEW] manager_fcm_token 컬럼:', fcmCols ? fcmCols.map(function(c){return c.Field||Object.values(c)[0];}) : '테이블 없음');
-                console.warn('[REVIEW] manager 컬럼:', mgCols ? mgCols.map(function(c){return c.Field||Object.values(c)[0];}) : '조회 실패');
-            }
 
             if (!managers || !managers.length) {
                 bodyEl.innerHTML = '<div style="color:#9CA3AF;font-size:13px;padding:16px;text-align:center;">' +
