@@ -7424,14 +7424,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id'
                 : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
 
-            /* 광고성 푸시: 발송일+제목별, 푸시ON/OFF·마케팅동의ON/OFF 현황 */
+            /* 광고성 푸시: is_accepts_push=1 AND is_accepts_marketing1=0 */
             var adData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' SUM(IF(vau.is_accepts_push=1,1,0)) AS push_on_cnt,' +
-                ' SUM(IF(vau.is_accepts_push!=1 OR vau.is_accepts_push IS NULL,1,0)) AS push_off_cnt,' +
-                ' SUM(IF(vau.is_accepts_marketing1=1,1,0)) AS mkt_on_cnt,' +
-                ' SUM(IF(vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL,1,0)) AS mkt_off_cnt,' +
-                ' SUM(IF(vau.is_accepts_push=1 AND (vau.is_accepts_marketing1!=1 OR vau.is_accepts_marketing1 IS NULL), 1, 0)) AS problem_cnt,' +
+                ' SUM(IF(vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0, 1, 0)) AS problem_cnt,' +
                 ' COUNT(*) AS total_sent' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
@@ -7442,16 +7438,17 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 [period]
             );
 
-            /* 일반 푸시: (광고) 없음, 앱푸시 OFF */
+            /* 일반 푸시: is_accepts_push=0 */
             var normData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' SUM(IF(vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL, 1, 0)) AS push_off,' +
+                ' SUM(IF(vau.is_accepts_push=0, 1, 0)) AS push_off,' +
                 ' COUNT(*) AS total' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
                 "  AND ph.title NOT LIKE '%(광고)%' AND (ph.body NOT LIKE '%(광고)%' OR ph.body IS NULL)" +
-                '  AND (vau.is_accepts_push != 1 OR vau.is_accepts_push IS NULL)' +
+                '  AND vau.is_accepts_push = 0' +
                 ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
+                ' HAVING push_off > 0' +
                 ' ORDER BY send_date DESC, push_off DESC LIMIT 200',
                 [period]
             );
@@ -7646,8 +7643,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 if (!m.vau_id) { noVau.push(m); return; } // ③ vau 없음
 
                 var matchesCond = type === 'ad'
-                    ? (m.is_accepts_push == 1 && m.is_accepts_marketing1 != 1)
-                    : (m.is_accepts_push != 1 || m.is_accepts_push == null);
+                    ? (m.is_accepts_push == 1 && m.is_accepts_marketing1 == 0)
+                    : (m.is_accepts_push == 0);
 
                 if (matchesCond) normal.push(m); // ①
                 else condMismatch.push(m);        // ②
