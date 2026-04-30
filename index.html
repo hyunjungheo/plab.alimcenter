@@ -7456,10 +7456,11 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             console.log('[REVIEW] loadReviewData 시작 - 기간:', period, '일');
 
             // manager → v3_auth_user JOIN (모달과 동일한 경로)
-            var join;
+            var join, mgrAlias;
             if (userCol === 'manager_id') {
                 join = ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
                        ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
+                mgrAlias = 'mgr';
             } else if (userCol === 'manager_fcm_token_id') {
                 join = await detectFcmJoin();
                 if (!join) {
@@ -7469,16 +7470,20 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     if (summaryEl) summaryEl.textContent = 'FCM 경로 탐색 실패';
                     return;
                 }
+                mgrAlias = 'mgr';
             } else {
-                join = ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol;
+                join = ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol +
+                       ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
+                mgrAlias = 'm2';
             }
-
-            var mgrIdExpr = (userCol === 'manager_fcm_token_id' || userCol === 'manager_id') ? 'mgr.id' : 'ph.' + userCol;
 
             /* 광고성 푸시: is_accepts_push=1 AND is_accepts_marketing1=0 */
             var adData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0, ' + mgrIdExpr + ', NULL)) AS problem_cnt,' +
+                ' COUNT(DISTINCT CASE WHEN vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0' +
+                '   AND ' + mgrAlias + '.id IS NOT NULL AND vau.id IS NOT NULL' +
+                '   AND (' + mgrAlias + '.is_open IS NULL OR ' + mgrAlias + '.is_open != 0)' +
+                '   THEN ' + mgrAlias + '.id END) AS problem_cnt,' +
                 ' COUNT(*) AS total_sent' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
@@ -7492,12 +7497,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             /* 일반 푸시: is_accepts_push=0 */
             var normData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' COUNT(DISTINCT IF(vau.is_accepts_push=0, ' + mgrIdExpr + ', NULL)) AS push_off,' +
+                ' COUNT(DISTINCT CASE WHEN vau.is_accepts_push=0' +
+                '   AND ' + mgrAlias + '.id IS NOT NULL AND vau.id IS NOT NULL' +
+                '   AND (' + mgrAlias + '.is_open IS NULL OR ' + mgrAlias + '.is_open != 0)' +
+                '   THEN ' + mgrAlias + '.id END) AS push_off,' +
                 ' COUNT(*) AS total' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
                 "  AND ph.title NOT LIKE '%(광고)%' AND (ph.body NOT LIKE '%(광고)%' OR ph.body IS NULL)" +
-                '  AND vau.is_accepts_push = 0' +
                 ' GROUP BY DATE(ph.created_at), ph.title, ph.notification_category' +
                 ' HAVING push_off > 0' +
                 ' ORDER BY send_date DESC, push_off DESC LIMIT 200',
