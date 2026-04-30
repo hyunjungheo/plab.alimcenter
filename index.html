@@ -7427,7 +7427,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             /* 광고성 푸시: is_accepts_push=1 AND is_accepts_marketing1=0 */
             var adData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' SUM(IF(vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0, 1, 0)) AS problem_cnt,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_push=1 AND vau.is_accepts_marketing1=0, ph.' + userCol + ', NULL)) AS problem_cnt,' +
                 ' COUNT(*) AS total_sent' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
@@ -7441,7 +7441,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             /* 일반 푸시: is_accepts_push=0 */
             var normData = await pushQuery(
                 'SELECT DATE(ph.created_at) AS send_date, ph.title, ph.notification_category,' +
-                ' SUM(IF(vau.is_accepts_push=0, 1, 0)) AS push_off,' +
+                ' COUNT(DISTINCT IF(vau.is_accepts_push=0, ph.' + userCol + ', NULL)) AS push_off,' +
                 ' COUNT(*) AS total' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE ph.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)' +
