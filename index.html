@@ -7561,18 +7561,73 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
             }
 
+            var baseWhere = ' WHERE DATE(ph.created_at) = ? AND ph.title = ?';
+            var baseParams = [row.send_date, row.title];
+
             var managers = await pushQuerySilent(
-                'SELECT DISTINCT' + selectCols +
-                ' FROM ' + PUSH_TABLE + ' ph' + joinClause +
-                ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' +
-                ' LIMIT 300',
-                [row.send_date, row.title]
+                'SELECT DISTINCT' + selectCols + ' FROM ' + PUSH_TABLE + ' ph' + joinClause + baseWhere + ' LIMIT 300',
+                baseParams
             );
+
+            /* FCM 경로가 실패했을 때 폴백 시도 */
+            if ((!managers || !managers.length) && isFcmCol) {
+                /* 폴백 1: manager_fcm_token 컬럼명이 user_id일 수 있음 */
+                managers = await pushQuerySilent(
+                    'SELECT DISTINCT mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
+                    ' vau.id AS vau_id, vau.email,' +
+                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
+                    ' FROM ' + PUSH_TABLE + ' ph' +
+                    ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.' + userCol +
+                    ' LEFT JOIN manager mgr ON mgr.id = mft.user_id' +
+                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id' +
+                    baseWhere + ' LIMIT 300',
+                    baseParams
+                );
+            }
+
+            if ((!managers || !managers.length) && isFcmCol) {
+                /* 폴백 2: manager_fcm_token 테이블명이 다를 수 있음 — manager.fcm_token_id 직접 조인 시도 */
+                managers = await pushQuerySilent(
+                    'SELECT DISTINCT mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
+                    ' vau.id AS vau_id, vau.email,' +
+                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
+                    ' FROM ' + PUSH_TABLE + ' ph' +
+                    ' LEFT JOIN manager mgr ON mgr.fcm_token_id = ph.' + userCol +
+                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id' +
+                    baseWhere + ' LIMIT 300',
+                    baseParams
+                );
+            }
+
+            if ((!managers || !managers.length) && isFcmCol) {
+                /* 폴백 3: ph.manager_fcm_token_id 가 실제로 manager.id와 직접 연결되는 경우 */
+                managers = await pushQuerySilent(
+                    'SELECT DISTINCT mgr.id AS mgr_id, mgr.name, mgr.is_open AS mgr_is_open,' +
+                    ' vau.id AS vau_id, vau.email,' +
+                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
+                    ' FROM ' + PUSH_TABLE + ' ph' +
+                    ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
+                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id' +
+                    baseWhere + ' LIMIT 300',
+                    baseParams
+                );
+            }
+
+            if ((!managers || !managers.length) && isFcmCol) {
+                /* 폴백 4: 스키마 탐색 — manager_fcm_token 컬럼 목록 조회 후 콘솔 출력 */
+                var fcmCols = await pushQuerySilent('DESCRIBE manager_fcm_token', []);
+                var mgCols  = await pushQuerySilent('DESCRIBE manager', []);
+                console.warn('[REVIEW] manager_fcm_token 컬럼:', fcmCols ? fcmCols.map(function(c){return c.Field||Object.values(c)[0];}) : '테이블 없음');
+                console.warn('[REVIEW] manager 컬럼:', mgCols ? mgCols.map(function(c){return c.Field||Object.values(c)[0];}) : '조회 실패');
+            }
 
             if (!managers || !managers.length) {
                 bodyEl.innerHTML = '<div style="color:#9CA3AF;font-size:13px;padding:16px;text-align:center;">' +
-                    '발송 이력은 있으나 매니저 연결 정보를 전혀 찾을 수 없습니다.<br>' +
-                    '<span style="font-size:11px;color:#D1D5DB;">ph.' + userCol + ' 컬럼이 비어있거나 참조 테이블과 연결이 끊긴 상태입니다.</span></div>';
+                    '매니저 연결 정보를 찾을 수 없습니다.<br>' +
+                    '<span style="font-size:11px;color:#D1D5DB;line-height:1.8;">' +
+                    '컬럼: <b style="color:#6B7280;">ph.' + userCol + '</b><br>' +
+                    '시도한 경로: manager_fcm_token.manager_id / manager_fcm_token.user_id<br>/ manager.fcm_token_id / manager.id 직접 조인<br>' +
+                    '개발자 도구 콘솔에서 <b>[REVIEW] manager_fcm_token 컬럼</b> 로그를 확인하세요.</span></div>';
                 return;
             }
 
