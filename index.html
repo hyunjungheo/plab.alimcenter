@@ -116,6 +116,7 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
         
         .container {
@@ -123,6 +124,11 @@
             padding: 24px;
             flex: 1;
             overflow-y: auto;
+            min-height: 0;
+        }
+        
+        .page-content {
+            min-height: 0;
         }
         
         /* Header */
@@ -3310,11 +3316,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function openModal(modalId) {
             var modal = document.getElementById(modalId);
             if (!modal) return;
+            /* 부모가 display:none인 page-content 안에 있으면 body로 이동 */
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
             modal.style.display = 'flex';
             modal.style.alignItems = 'center';
             modal.style.justifyContent = 'center';
             document.body.style.overflow = 'hidden';
-            // 외부 클릭 시 닫기 (한 번만 등록)
             if (!modal._backdropBound) {
                 modal._backdropBound = true;
                 modal.addEventListener('click', function(e) {
@@ -3325,7 +3334,6 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 setTimeout(function() {
                     if (typeof currentStep !== 'undefined') { currentStep = 1; selectedType = ''; }
                     if (typeof updateStepDisplay === 'function') updateStepDisplay();
-                    // 모달 스크롤 최상단
                     var mc = document.querySelector('#createModal .modal-content');
                     if (mc) mc.scrollTop = 0;
                 }, 0);
@@ -3973,8 +3981,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </div>
                 </div>
                 
+                <div style="max-height:calc(100vh - 340px);overflow-y:auto;border-radius:0 0 12px 12px;">
                 <table>
-                    <thead>
+                    <thead style="position:sticky;top:0;z-index:1;">
                         <tr>
                             <th>템플릿명</th>
                             <th>템플릿 코드</th>
@@ -3993,6 +4002,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         </tr>
                     </tbody>
                 </table>
+                </div><!-- /scroll-wrapper -->
             </div>
         </div>
         
@@ -4659,7 +4669,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     </select>
                     <button onclick="loadPushList()" style="padding:10px 18px;background:#3B82F6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">새로고침</button>
                 </div>
-                <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;">
+                <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;max-height:calc(100vh - 340px);overflow-y:auto;">
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                         <colgroup><col style="width:88px"><col style="width:180px"><col style="width:auto"><col style="width:80px"><col style="width:52px"><col style="width:58px"><col style="width:112px"></colgroup>
                         <thead>
@@ -7806,13 +7816,28 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         });
 
         // filterByStatus 재정의 - step 필터 저장 후 renderTemplateTable 호출
+        /* ── 상태 문자열 → step 번호 매핑 ── */
+        var STATUS_STEP_MAP = {
+            '내용 등록':1,'내용등록':1,'등록 중':1,'작성':1,'작성 중':1,
+            '라이팅 검토':2,'검토':2,'검토 중':2,'라이팅검토':2,
+            '등록 대기':3,'대기':3,'대기 중':3,'등록대기':3,'검토 완료':3,
+            '등록 완료':4,'등록완료':4,'완료':4,'통과':4,'active':4,'발송중':4
+        };
+        function statusToStep(s) {
+            if (!s) return 4;
+            return STATUS_STEP_MAP[s.trim()] || STATUS_STEP_MAP[s.trim().toLowerCase()] || 4;
+        }
+
         function filterByStatus(status) {
             var stepBoxes = document.querySelectorAll('.step-box');
             stepBoxes.forEach(function(b){ b.classList.remove('active'); });
-            var step4Box = document.querySelector('.step-box[onclick*="등록 완료"]');
-            if (step4Box) step4Box.classList.add('active');
-            _templateStepFilter = 4;
-            window._activeStepFilter = 4;
+            /* 클릭된 STEP 박스 활성화 */
+            var clickedBox = document.querySelector('.step-box[onclick*="' + status + '"]');
+            if (clickedBox) clickedBox.classList.add('active');
+
+            var stepMap = {'내용 등록':1,'라이팅 검토':2,'등록 대기':3,'등록 완료':4};
+            _templateStepFilter = stepMap[status] || null;
+            window._activeStepFilter = _templateStepFilter;
             renderTemplateTable();
             renderTemplateActions();
         }
@@ -7821,28 +7846,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var tbody = document.getElementById('templateTableBody');
             if (!tbody) return;
 
-            // 데이터 없으면 안내
             if (!_templateData.length) {
                 tbody.innerHTML = '<tr id="templateEmptyRow"><td colspan="5" style="padding:48px;text-align:center;color:#9CA3AF;"><div style="font-size:32px;margin-bottom:10px;">📂</div><div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px;">노션 DB를 가져오세요</div><div style="font-size:13px;">우측 상단 <b>노션 DB 가져오기</b> 버튼을 눌러 CSV를 업로드하면 템플릿 목록이 여기에 표시됩니다.</div></td></tr>';
                 return;
             }
 
-            // 컬럼 감지
             var colTitle   = findCol(_templateHeaders, COL_MAP.title);
             var colCode    = findCol(_templateHeaders, COL_MAP.code);
             var colChannel = findCol(_templateHeaders, COL_MAP.channel);
             var colStatus  = findCol(_templateHeaders, COL_MAP.status);
             var colTarget  = findCol(_templateHeaders, COL_MAP.target);
 
-            // 노션 DB에서 가져온 데이터는 모두 STEP 4 (등록 완료)
-            // STEP 4 필터이거나 전체 필터일 때만 표시
-            if (_templateStepFilter && _templateStepFilter !== 4) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px;">이 STEP에는 데이터가 없습니다</td></tr>';
-                return;
-            }
-
-            // STEP4가 선택됐거나 전체 보기 → 검색 필터만 적용
             var filtered = _templateData.filter(function(row) {
+                /* 상태값 → step 번호 */
+                var rawStatus = colStatus ? row[colStatus] : '';
+                var rowStep = statusToStep(rawStatus);
+                /* step 필터 적용 (null이면 전체) */
+                if (_templateStepFilter && rowStep !== _templateStepFilter) return false;
+                /* 검색 필터 */
                 if (_templateSearchQ) {
                     var searchable = Object.values(row).join(' ').toLowerCase();
                     if (!searchable.includes(_templateSearchQ)) return false;
@@ -7851,27 +7872,37 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             });
 
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px;">검색 결과가 없습니다</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px;">' +
+                    (_templateStepFilter ? 'STEP ' + _templateStepFilter + '에 해당하는 항목이 없습니다' : '검색 결과가 없습니다') + '</td></tr>';
                 return;
             }
+
+            var stepBadgeMap = {
+                1: 'status-pending',
+                2: 'status-review',
+                3: 'status-waiting',
+                4: 'status-completed'
+            };
 
             tbody.innerHTML = filtered.map(function(row) {
                 var title   = colTitle   ? row[colTitle]   : Object.values(row)[0] || '-';
                 var code    = colCode    ? row[colCode]    : '-';
                 var channel = colChannel ? row[colChannel] : '-';
-                var status  = colStatus  ? row[colStatus]  : '등록 완료';
+                var rawStatus = colStatus ? row[colStatus] : '등록 완료';
+                var rowStep = statusToStep(rawStatus);
                 var badge   = channelBadge(channel);
                 var titleShort = title.length > 50 ? title.slice(0, 50) + '…' : title;
-                var displayStatus = status || '등록 완료';
+                var displayStatus = rawStatus || '등록 완료';
+                var badgeCls = stepBadgeMap[rowStep] || 'status-completed';
 
-                return '<tr data-step="4">' +
+                return '<tr data-step="' + rowStep + '">' +
                     '<td><div class="notification-title">' +
                     (channel ? '<span class="channel-badge ' + badge + '">' + escTpl(channel) + '</span>' : '') +
                     '<span class="title-text" title="' + escTpl(title) + '">' + escTpl(titleShort) + '</span>' +
                     '</div></td>' +
                     '<td><span class="date-text">' + escTpl(code) + '</span></td>' +
                     '<td>' + (colTarget ? '<span class="date-text">' + escTpl(row[colTarget]||'-') + '</span>' : '-') + '</td>' +
-                    '<td><span class="status-badge status-completed">' + escTpl(displayStatus) + '</span></td>' +
+                    '<td><span class="status-badge ' + badgeCls + '">' + escTpl(displayStatus) + '</span></td>' +
                     '<td class="action-cell"></td>' +
                     '</tr>';
             }).join('');
@@ -8029,14 +8060,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function openDetailModal(id) {
             var m = document.getElementById('viewOnlyModal');
             if (!m) return;
-            // 통계 섹션 기본 복원 (step4용)
+            /* 부모가 display:none이면 body로 이동 */
+            if (m.parentElement !== document.body) {
+                document.body.appendChild(m);
+            }
             m.querySelectorAll('.section').forEach(function(sec) {
                 sec.style.display = '';
             });
-            // 직접 style 설정 (classList.active 방식 우회)
             m.style.cssText = 'display:flex!important;position:fixed;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;background:rgba(15,23,42,0.6);z-index:9999;overflow-y:auto;';
             document.body.style.overflow = 'hidden';
-            // 외부 클릭 시 닫기
             if (!m._backdropBound) {
                 m._backdropBound = true;
                 m.addEventListener('click', function(e) {
@@ -8307,23 +8339,14 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
         
         function filterByStatus(status) {
-            // 모든 등록 템플릿은 STEP 4(등록 완료)로 취급 — 어떤 STEP 클릭해도 STEP4 활성화
             var stepBoxes = document.querySelectorAll('.step-box');
             stepBoxes.forEach(function(b){ b.classList.remove('active'); });
-            // STEP 4 박스를 항상 active로 표시
-            var step4Box = document.querySelector('.step-box[onclick*="등록 완료"]');
-            if (step4Box) step4Box.classList.add('active');
-
-            window._activeStepFilter = 4;
-            _templateStepFilter = 4;
-
-            // 모든 행 표시
-            var tbody = document.getElementById('templateTableBody');
-            if (tbody) {
-                tbody.querySelectorAll('tr[data-step]').forEach(function(row){
-                    row.style.display = '';
-                });
-            }
+            var clickedBox = document.querySelector('.step-box[onclick*="' + status + '"]');
+            if (clickedBox) clickedBox.classList.add('active');
+            var stepMap = {'내용 등록':1,'라이팅 검토':2,'등록 대기':3,'등록 완료':4};
+            _templateStepFilter = stepMap[status] || null;
+            window._activeStepFilter = _templateStepFilter;
+            renderTemplateTable();
             renderTemplateActions();
         }
         
