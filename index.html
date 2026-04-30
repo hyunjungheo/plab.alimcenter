@@ -4761,13 +4761,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             <!-- 검토 필요 탭 -->
             <div id="push-review" class="push-tab-content" style="display:none!important;">
                 <div id="reviewApiError" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#DC2626;"></div>
-                <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
-                    <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:4px;">동의 검토 기준</div>
-                    <div style="font-size:12px;color:#78350F;line-height:1.7;">
-                        <b>푸시 ON · 마케팅 수신 동의 OFF</b> → 제목/내용에 (광고) 포함이면 is_accepts_push = 1 AND is_accepts_marketing1 = 1 이어야 함<br>
-                        <b>앱푸시 OFF · 발송 이력</b> → 일반 푸시는 is_accepts_push = 1 이어야 함
-                    </div>
-                </div>
+
                 <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
                     <select id="review-period" style="padding:9px 14px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;font-family:inherit;background:white;outline:none;">
                         <option value="7">최근 7일</option>
@@ -4786,34 +4780,42 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     <div style="padding:12px 16px;border-bottom:1px solid #FEE2E2;background:#FFF5F5;display:flex;align-items:center;gap:8px;">
                         <span style="font-size:14px;font-weight:700;color:#111827;">푸시 ON · 마케팅 수신 동의 OFF</span>
                         <span style="background:#FEE2E2;color:#DC2626;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;">(광고) 포함</span>
+                        <span class="review-info-icon" style="position:relative;display:inline-flex;align-items:center;cursor:default;">
+                            <span style="width:16px;height:16px;border-radius:50%;background:#9CA3AF;color:white;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;">ⓘ</span>
+                            <span class="review-tooltip" style="display:none;position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);background:#1F2937;color:white;font-size:11px;font-weight:500;padding:7px 10px;border-radius:7px;white-space:nowrap;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.2);line-height:1.5;">제목/내용에 (광고) 포함 시,<br>is_accepts_push = 1 AND is_accepts_marketing1 = 1 필요</span>
+                        </span>
                     </div>
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                        <colgroup><col style="width:88px"><col style="width:190px"><col style="width:auto"><col style="width:60px"><col style="width:60px"><col style="width:55px"></colgroup>
+                        <colgroup><col style="width:90px"><col style="width:200px"><col style="width:auto"><col style="width:70px"></colgroup>
                         <thead><tr style="background:#FFF5F5;border-bottom:1px solid #FEE2E2;">
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">발송일</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">카테고리</th>
-                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#10B981;white-space:nowrap;">푸시 ON/OFF</th>
-                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:#8B5CF6;white-space:nowrap;">마케팅동의 ON/OFF</th>
-                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">총 건수</th>
+                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#EF4444;white-space:nowrap;">건수</th>
                         </tr></thead>
                         <tbody id="review-ad-body">
-                            <tr><td colspan="6" style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
+                            <tr><td colspan="4" style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
                         </tbody>
                     </table>
                 </div>
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
-                    <div style="padding:12px 16px;border-bottom:1px solid #FEF3C7;background:#FFFBEB;"><span style="font-size:14px;font-weight:700;color:#111827;">앱푸시 OFF · 발송 이력</span></div>
+                    <div style="padding:12px 16px;border-bottom:1px solid #FEF3C7;background:#FFFBEB;display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:14px;font-weight:700;color:#111827;">앱푸시 OFF · 발송 이력</span>
+                        <span class="review-info-icon" style="position:relative;display:inline-flex;align-items:center;cursor:default;">
+                            <span style="width:16px;height:16px;border-radius:50%;background:#9CA3AF;color:white;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;">ⓘ</span>
+                            <span class="review-tooltip" style="display:none;position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);background:#1F2937;color:white;font-size:11px;font-weight:500;padding:7px 10px;border-radius:7px;white-space:nowrap;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.2);line-height:1.5;">푸시는 모두 is_accepts_push = 1 필요</span>
+                        </span>
+                    </div>
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                        <colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>
+                        <colgroup><col style="width:90px"><col style="width:200px"><col style="width:auto"><col style="width:70px"></colgroup>
                         <thead><tr style="background:#FFFBEB;border-bottom:1px solid #FEF3C7;">
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;">제목</th>
                             <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">카테고리</th>
-                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">건수</th>
+                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:#F59E0B;white-space:nowrap;">건수</th>
                         </tr></thead>
                         <tbody id="review-normal-body">
-                            <tr><td colspan="5" style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
+                            <tr><td colspan="4" style="padding:20px;text-align:center;color:#9CA3AF;font-size:13px;">조회 버튼을 눌러주세요</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -7380,7 +7382,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var el1 = document.getElementById('review-ad-body');
                 var el2 = document.getElementById('review-normal-body');
                 if (el1) el1.innerHTML = msg;
-                if (el2) el2.innerHTML = msg.replace('colspan="6"','colspan="5"');
+                if (el2) el2.innerHTML = msg.replace('colspan="6"','colspan="4"').replace('colspan="5"','colspan="4"');
                 if (summaryEl) summaryEl.textContent = '컬럼 탐색 실패';
                 return;
             }
@@ -7445,6 +7447,16 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
 
         function closeReviewManagerModal() { var m = document.getElementById('reviewManagerModal'); if(m) m.style.display='none'; }
+        /* ── 검토필요 ⓘ 툴팁 hover ── */
+        document.addEventListener('mouseover', function(e) {
+            var icon = e.target.closest('.review-info-icon');
+            if (icon) { var tt = icon.querySelector('.review-tooltip'); if (tt) tt.style.display = 'block'; }
+        });
+        document.addEventListener('mouseout', function(e) {
+            var icon = e.target.closest('.review-info-icon');
+            if (icon) { var tt = icon.querySelector('.review-tooltip'); if (tt) tt.style.display = 'none'; }
+        });
+
         /* ── 검토필요 매니저 정보 모달 ── */
         async function openReviewManagerModal(type, idx) {
             var row = type === 'ad' ? (window._reviewAdData||[])[idx] : (window._reviewNormData||[])[idx];
@@ -7536,12 +7548,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 '</tr></thead><tbody>' + rows + '</tbody></table>';
         }
         function renderReviewAd(data) {
+            window._reviewAdData = data;
             var el = document.getElementById('review-ad-body');
             if (!el) return;
             if (!data.length) { el.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#10B981;font-size:13px;">✅ 점검 필요 없음</td></tr>'; return; }
-            el.innerHTML = data.map(function(r) {
+            el.innerHTML = data.map(function(r, idx) {
                 var prob = parseInt(r.problem_cnt)||0;
-                return '<tr style="border-bottom:1px solid #FFF5F5;">' +
+                return '<tr style="border-bottom:1px solid #FFF5F5;cursor:pointer;" onclick="openReviewManagerModal(\'ad\',' + idx + ')" onmouseover="this.style.background=\'#FFF5F5\'" onmouseout="this.style.background=\'\'">' +
                     '<td style="padding:8px 10px;font-size:12px;color:#6B7280;white-space:nowrap;">'+toKSTDate(r.send_date)+'</td>' +
                     '<td style="padding:8px 10px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(r.title||'').replace(/"/g,'&quot;')+'">'+(r.title||'-')+'</td>' +
                     '<td style="padding:8px 10px;font-size:11px;color:#374151;white-space:nowrap;">'+(r.notification_category||'-')+'</td>' +
@@ -7551,16 +7564,17 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         }
 
         function renderReviewNormal(data) {
+            window._reviewNormData = data;
             var el = document.getElementById('review-normal-body');
             if (!el) return;
-            if (!data.length) { el.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#10B981;font-size:13px;">✅ 점검 필요 없음</td></tr>'; return; }
-            el.innerHTML = data.map(function(r) {
-                return '<tr style="border-bottom:1px solid #FFFBEB;">' +
+            if (!data.length) { el.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#10B981;font-size:13px;">✅ 점검 필요 없음</td></tr>'; return; }
+            el.innerHTML = data.map(function(r, idx) {
+                var cnt = parseInt(r.push_off)||0;
+                return '<tr style="border-bottom:1px solid #FFFBEB;cursor:pointer;" onclick="openReviewManagerModal(\'norm\',' + idx + ')" onmouseover="this.style.background=\'#FFFBEB\'" onmouseout="this.style.background=\'\'">' +
                     '<td style="padding:8px 10px;font-size:12px;color:#6B7280;white-space:nowrap;">'+toKSTDate(r.send_date)+'</td>' +
                     '<td style="padding:8px 10px;font-size:12px;font-weight:500;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(r.title||'').replace(/"/g,'&quot;')+'">'+(r.title||'-')+'</td>' +
                     '<td style="padding:8px 10px;font-size:11px;color:#374151;white-space:nowrap;">'+(r.notification_category||'-')+'</td>' +
-                    '<td style="padding:8px 10px;text-align:center;">'+reviewBadge(parseInt(r.push_off)||0)+'</td>' +
-                    '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:#F59E0B;text-align:right;">'+(parseInt(r.total)||0).toLocaleString()+'</td>' +
+                    '<td style="padding:8px 10px;font-size:13px;font-weight:700;color:#F59E0B;text-align:right;white-space:nowrap;">'+cnt.toLocaleString()+'건</td>' +
                     '</tr>';
             }).join('');
         }
