@@ -7524,22 +7524,35 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 bodyEl.innerHTML = '<div style="color:#EF4444;font-size:13px;padding:16px;">사용자 컬럼을 찾지 못했습니다.</div>';
                 return;
             }
-            var join = userCol === 'manager_id'
-                ? ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol
-                    + ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id'
-                    + ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id'
-                : ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol
-                    + ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
+            /* userCol=manager_id → mgr이 이미 해당 매니저, m2 재조인 불필요
+               userCol=기타(v3_auth_user_id) → vau를 거쳐 m2로 매핑 */
+            var isMgrCol = userCol === 'manager_id';
+            var selectCols, joinClause;
+            if (isMgrCol) {
+                selectCols =
+                    ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS m2_is_open,' +
+                    ' vau.id AS vau_id, vau.email,' +
+                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2';
+                joinClause =
+                    ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
+                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
+            } else {
+                selectCols =
+                    ' m2.id AS mgr_id, m2.name, m2.is_open AS m2_is_open,' +
+                    ' vau.id AS vau_id, vau.email,' +
+                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2';
+                joinClause =
+                    ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol +
+                    ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
+            }
 
-            /* 동의 조건은 HAVING 없이 전체 수집 후 JS에서 분류 */
+            /* 동의 조건은 JS에서 분류, is_open=0 탈퇴 매니저는 DB 단계에서 제외 */
+            var openCond = isMgrCol ? ' AND (mgr.is_open IS NULL OR mgr.is_open != 0)' : ' AND (m2.is_open IS NULL OR m2.is_open != 0)';
+
             var managers = await pushQuerySilent(
-                'SELECT DISTINCT' +
-                (userCol === 'manager_id' ? ' mgr.id AS ph_mgr_id, mgr.is_open AS ph_is_open,' : ' NULL AS ph_mgr_id, NULL AS ph_is_open,') +
-                ' m2.id AS mgr_id, m2.name, m2.is_open AS m2_is_open,' +
-                ' vau.id AS vau_id, vau.email,' +
-                ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
-                ' FROM ' + PUSH_TABLE + ' ph' + join +
-                ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' +
+                'SELECT DISTINCT' + selectCols +
+                ' FROM ' + PUSH_TABLE + ' ph' + joinClause +
+                ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' + openCond +
                 ' LIMIT 200',
                 [row.send_date, row.title]
             );
@@ -7551,26 +7564,24 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return;
             }
 
-            /* JS에서 동의 조건 필터 + 이유 분류 */
+            /* JS에서 동의 조건 분류 */
             var result = managers.map(function(m) {
-                /* 원래 조건에 부합하는지 확인 */
                 var matchesCond = type === 'ad'
                     ? (m.is_accepts_push == 1 && m.is_accepts_marketing1 != 1)
-                    : (m.is_accepts_push != 1 || m.is_accepts_marketing1 == null);
+                    : (m.is_accepts_push != 1 || m.is_accepts_push == null);
 
-                /* 이유 판정 */
+                /* 연결 이상 이유 판정 (탈퇴 매니저는 이미 DB에서 제외됨) */
                 var reason = null;
-                if (!m.vau_id)   reason = '⚠️ v3_auth_user 연결 없음 (FCM 토큰 연결 끊김)';
-                else if (!m.mgr_id) reason = '⚠️ manager 테이블 매핑 없음';
-                else if (m.m2_is_open == 0) reason = '⚠️ 탈퇴/비활성 매니저 (is_open=0)';
+                if (!m.vau_id)   reason = '⚠️ v3_auth_user 연결 없음 — mgr.v3_auth_user_id가 NULL이거나 미등록 계정';
+                else if (!m.mgr_id) reason = '⚠️ manager 테이블 매핑 없음 — v3_auth_user는 존재하나 manager 행 없음';
 
                 return { m: m, matchesCond: matchesCond, reason: reason };
             });
 
-            /* 조건 일치 + 이유 없음(정상) */
-            var normal   = result.filter(function(r){ return r.matchesCond && !r.reason; });
-            /* 조건 일치하지만 연결 이상 */
-            var broken   = result.filter(function(r){ return !r.matchesCond || r.reason; });
+            /* 조건 일치 + 정상 연결 */
+            var normal = result.filter(function(r){ return r.matchesCond && !r.reason; });
+            /* 연결 이상 (동의 조건 불일치 포함) */
+            var broken = result.filter(function(r){ return r.reason || !r.matchesCond; });
 
             function conBadge(val, on, off) {
                 return val == 1
@@ -7582,9 +7593,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var pushB = conBadge(m.is_accepts_push, 'ON', 'OFF');
                 var mktB  = conBadge(m.is_accepts_marketing1, '동의', '미동의');
                 var adB   = conBadge(m.is_accepts_marketing2, '동의', '미동의');
-                var nameCell = m.name
-                    ? (m.name + (m.m2_is_open==0 ? ' <span style="font-size:10px;color:#9CA3AF;">(탈퇴)</span>' : ''))
-                    : '<span style="color:#D1D5DB;">-</span>';
+                var nameCell = m.name || '<span style="color:#D1D5DB;">-</span>';
                 var tr = '<tr style="border-bottom:1px solid #F3F4F6;">' +
                     '<td style="padding:7px 12px;font-size:13px;color:#374151;">' + (m.mgr_id||m.ph_mgr_id||'-') + '</td>' +
                     '<td style="padding:7px 12px;font-size:13px;color:#111827;">' + nameCell + '</td>' +
