@@ -7523,6 +7523,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 : ' AND (vau.is_accepts_push!=1 OR vau.is_accepts_push IS NULL)';
 
             var managers = await pushQuerySilent(
+                'SELECT DISTINCT m2.id AS mgr_id, vau.email, m2.name,' +
                 ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2' +
                 ' FROM ' + PUSH_TABLE + ' ph' + join +
                 ' WHERE DATE(ph.created_at) = ? AND ph.title = ?' + pushOffCond +
