@@ -7524,10 +7524,15 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 bodyEl.innerHTML = '<div style="color:#EF4444;font-size:13px;padding:16px;">사용자 컬럼을 찾지 못했습니다.</div>';
                 return;
             }
-            /* userCol=manager_id → mgr이 이미 해당 매니저, m2 재조인 불필요
-               userCol=기타(v3_auth_user_id) → vau를 거쳐 m2로 매핑 */
-            var isMgrCol = userCol === 'manager_id';
-            var selectCols, joinClause;
+            /* ── JOIN 경로 결정 ──
+               manager_id          : ph → manager(mgr) → v3_auth_user(vau)
+               manager_fcm_token_id: ph → manager_fcm_token(mft) → manager(mgr) → v3_auth_user(vau)
+               v3_auth_user_id 등  : ph → v3_auth_user(vau) → manager(m2)
+            */
+            var isMgrCol   = userCol === 'manager_id';
+            var isFcmCol   = userCol === 'manager_fcm_token_id';
+            var selectCols, joinClause, openCond;
+
             if (isMgrCol) {
                 selectCols =
                     ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS m2_is_open,' +
@@ -7536,7 +7541,22 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 joinClause =
                     ' LEFT JOIN manager mgr ON mgr.id = ph.' + userCol +
                     ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
+                openCond = ' AND (mgr.is_open IS NULL OR mgr.is_open != 0)';
+
+            } else if (isFcmCol) {
+                /* manager_fcm_token_id → manager_fcm_token → manager → v3_auth_user */
+                selectCols =
+                    ' mgr.id AS mgr_id, mgr.name, mgr.is_open AS m2_is_open,' +
+                    ' vau.id AS vau_id, vau.email,' +
+                    ' vau.is_accepts_push, vau.is_accepts_marketing1, vau.is_accepts_marketing2';
+                joinClause =
+                    ' LEFT JOIN manager_fcm_token mft ON mft.id = ph.' + userCol +
+                    ' LEFT JOIN manager mgr ON mgr.id = mft.manager_id' +
+                    ' LEFT JOIN v3_auth_user vau ON vau.id = mgr.v3_auth_user_id';
+                openCond = ' AND (mgr.is_open IS NULL OR mgr.is_open != 0)';
+
             } else {
+                /* v3_auth_user_id 등 직접 vau 참조 */
                 selectCols =
                     ' m2.id AS mgr_id, m2.name, m2.is_open AS m2_is_open,' +
                     ' vau.id AS vau_id, vau.email,' +
@@ -7544,10 +7564,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 joinClause =
                     ' LEFT JOIN v3_auth_user vau ON vau.id = ph.' + userCol +
                     ' LEFT JOIN manager m2 ON m2.v3_auth_user_id = vau.id';
+                openCond = ' AND (m2.is_open IS NULL OR m2.is_open != 0)';
             }
-
-            /* 동의 조건은 JS에서 분류, is_open=0 탈퇴 매니저는 DB 단계에서 제외 */
-            var openCond = isMgrCol ? ' AND (mgr.is_open IS NULL OR mgr.is_open != 0)' : ' AND (m2.is_open IS NULL OR m2.is_open != 0)';
 
             var managers = await pushQuerySilent(
                 'SELECT DISTINCT' + selectCols +
@@ -7572,8 +7590,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
 
                 /* 연결 이상 이유 판정 (탈퇴 매니저는 이미 DB에서 제외됨) */
                 var reason = null;
-                if (!m.vau_id)   reason = '⚠️ v3_auth_user 연결 없음 — mgr.v3_auth_user_id가 NULL이거나 미등록 계정';
-                else if (!m.mgr_id) reason = '⚠️ manager 테이블 매핑 없음 — v3_auth_user는 존재하나 manager 행 없음';
+                if (!m.vau_id) {
+                    reason = isFcmCol
+                        ? '⚠️ v3_auth_user 연결 없음 — manager_fcm_token → manager → v3_auth_user 경로 중단'
+                        : '⚠️ v3_auth_user 연결 없음 — mgr.v3_auth_user_id가 NULL이거나 미등록 계정';
+                } else if (!m.mgr_id) {
+                    reason = '⚠️ manager 테이블 매핑 없음 — v3_auth_user는 존재하나 manager 행 없음';
+                }
 
                 return { m: m, matchesCond: matchesCond, reason: reason };
             });
