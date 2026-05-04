@@ -7167,8 +7167,18 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return null;
             }
 
-            // JOIN 대신 서브쿼리로 타임아웃 방지 + 매치 활성 쿼리 병렬 실행
-            console.log('[CONSENT] 쿼리1/2/3 병렬 실행');
+            /* 기록일 기점 정확히 5개월 전 ~ 기록일 당일 */
+            var recNow  = new Date();
+            var recFrom = new Date(recNow);
+            recFrom.setMonth(recFrom.getMonth() - 5);
+            function fmtDate(d) {
+                var k = new Date(d.getTime() + 9*3600*1000);
+                var pad = function(n){ return String(n).padStart(2,'0'); };
+                return k.getUTCFullYear() + '-' + pad(k.getUTCMonth()+1) + '-' + pad(k.getUTCDate());
+            }
+            var scheduleFrom = fmtDate(recFrom);
+            var scheduleTo   = fmtDate(recNow);
+
             var results = await Promise.all([
                 pushQuery(
                     'SELECT COUNT(*) as total FROM manager WHERE is_open=1 AND id NOT IN (3,102)'
@@ -7183,11 +7193,20 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     ' WHERE m.is_open=1 AND m.id NOT IN (3,102)'
                 ),
                 pushQuery(
-                    'SELECT COUNT(DISTINCT mmh.current_manager_id) AS match_active' +
-                    ' FROM manager_match_history mmh' +
-                    ' INNER JOIN manager m ON mmh.before_manager_id = m.id' +
-                    ' INNER JOIN manager m2 ON mmh.current_manager_id = m2.id' +
-                    ' WHERE mmh.created_at >= DATE_SUB(NOW(), INTERVAL 5 MONTH)'
+                    'SELECT COUNT(DISTINCT IF(' +
+                    "  m.type != 'tshirt'" +
+                    '  AND m.manager_id NOT IN (3, 102, 3291, 12782)' +
+                    "  AND NOT (m.cancel_type = 'READY_ASSIGNED' AND m.status = 'HIDE')," +
+                    '  m.manager_id, NULL)) AS active_manager_cnt' +
+                    ' FROM `match` AS m' +
+                    ' LEFT JOIN match_apply AS ma ON m.id = ma.match_id' +
+                    ' WHERE (' +
+                    "   m.status IN ('RELEASE','READY','CANCEL')" +
+                    "   OR (m.status = 'HIDE' AND m.cancel_type IN ('READY_UNDEFINED','READY_ASSIGNED','EMERGENCY_CLIENT','EMERGENCY_WEATHER'))" +
+                    "   OR (m.status = 'HIDE' AND m.cancel_type IN ('CLIENT','WEATHER') AND ma.id IS NOT NULL)" +
+                    ' )' +
+                    ' AND m.schedule >= ? AND m.schedule <= ?',
+                    [scheduleFrom, scheduleTo]
                 )
             ]);
 
@@ -7212,7 +7231,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var push_off    = parseInt(((q2||[{}])[0]||{}).push_off)||0;
             var mkt1_on     = parseInt(((q2||[{}])[0]||{}).mkt1_on)||0;
             var mkt2_on     = parseInt(((q2||[{}])[0]||{}).mkt2_on)||0;
-            var match_active = parseInt(((q3||[{}])[0]||{}).match_active)||0;
+            var match_active = parseInt(((q3||[{}])[0]||{}).active_manager_cnt)||0;
 
             /* 기록일(recorded_at) 기점 5개월 범위 계산 */
             var recNow  = new Date();
@@ -7223,8 +7242,8 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var pad = function(n){ return String(n).padStart(2,'0'); };
                 return k.getUTCFullYear() + '-' + pad(k.getUTCMonth()+1) + '-' + pad(k.getUTCDate());
             }
-            var match_active_from = fmtDate(recFrom);
-            var match_active_to   = fmtDate(recNow);
+            var match_active_from = scheduleFrom;
+            var match_active_to   = scheduleTo;
 
             /* 전역 캐시 — 이력 렌더링 시 기존 기록 보정에 사용 */
             window._lastMatchActive     = match_active;
@@ -7341,14 +7360,19 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             // 이력은 차트/테이블만 업데이트 (KPI는 실시간 DB 결과 사용)
             var sorted = history.slice().sort(function(a,b){ return b.date > a.date ? 1 : -1; });
 
-            /* 2026-05-04 기록에 match_active가 없으면 현재 조회값으로 보정 */
+            /* 각 행의 기록일 기준으로 정확히 5개월 범위 계산 (저장된 값 없으면 동적 산출) */
             sorted.forEach(function(r) {
-                if (r.date === '2026-05-04' && (r.match_active == null || r.match_active === undefined)) {
-                    if (window._lastMatchActive != null) {
-                        r.match_active      = window._lastMatchActive;
-                        r.match_active_from = window._lastMatchActiveFrom;
-                        r.match_active_to   = window._lastMatchActiveTo;
-                    }
+                if (!r.match_active_from || !r.match_active_to) {
+                    var base = new Date(r.date || r.recorded_at || new Date());
+                    var pad  = function(n){ return String(n).padStart(2,'0'); };
+                    var toFmt = function(d) {
+                        var k = new Date(d.getTime() + 9*3600*1000);
+                        return k.getUTCFullYear() + '-' + pad(k.getUTCMonth()+1) + '-' + pad(k.getUTCDate());
+                    };
+                    var fromDate = new Date(base);
+                    fromDate.setMonth(fromDate.getMonth() - 5);
+                    r.match_active_from = toFmt(fromDate);
+                    r.match_active_to   = toFmt(base);
                 }
             });
 
