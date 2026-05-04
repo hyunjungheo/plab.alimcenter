@@ -8272,9 +8272,96 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
         function openDetailViewModal(e) {
             e.stopPropagation();
             var row = e.target.closest('tr');
-            var step = row ? parseInt(row.getAttribute('data-step')) : 4;
+            if (!row) return;
+
+            /* 클릭된 행의 실제 데이터 찾기 */
+            var tbody = document.getElementById('templateTableBody');
+            var rows  = tbody ? Array.from(tbody.querySelectorAll('tr[data-step]')) : [];
+            var rowIdx = rows.indexOf(row);
+            var rowData = null;
+
+            if (rowIdx >= 0 && _templateData && _templateData.length) {
+                /* renderTemplateTable의 필터 조건을 동일하게 적용해 실제 행 찾기 */
+                var colStatus = findCol(_templateHeaders, COL_MAP.status);
+                var filtered = _templateData.filter(function(r) {
+                    var rawStatus = colStatus ? r[colStatus] : '';
+                    var rStep = statusToStep(rawStatus);
+                    if (_templateStepFilter && rStep !== _templateStepFilter) return false;
+                    if (_templateSearchQ) {
+                        var searchable = Object.values(r).join(' ').toLowerCase();
+                        if (!searchable.includes(_templateSearchQ)) return false;
+                    }
+                    return true;
+                });
+                rowData = filtered[rowIdx] || null;
+            }
+
+            /* 모달에 실제 데이터 주입 */
+            if (rowData) {
+                var colTitle   = findCol(_templateHeaders, COL_MAP.title);
+                var colCode    = findCol(_templateHeaders, COL_MAP.code);
+                var colChannel = findCol(_templateHeaders, COL_MAP.channel);
+                var colTarget  = findCol(_templateHeaders, COL_MAP.target);
+                var colStatus2 = findCol(_templateHeaders, COL_MAP.status);
+                var colCat     = findCol(_templateHeaders, COL_MAP.category);
+
+                var title   = colTitle   ? rowData[colTitle]   : Object.values(rowData)[0] || '-';
+                var code    = colCode    ? rowData[colCode]    : '-';
+                var channel = colChannel ? rowData[colChannel] : '-';
+                var target  = colTarget  ? rowData[colTarget]  : '-';
+                var status  = colStatus2 ? rowData[colStatus2] : '-';
+                var cat     = colCat     ? rowData[colCat]     : '-';
+
+                /* 헤더 */
+                var hTitle = document.querySelector('#viewOnlyModal .modal-title-section h2');
+                if (hTitle) hTitle.textContent = title || '알림톡 템플릿 상세';
+
+                /* 알림톡 미리보기 - 제목 */
+                var previewTitle = document.querySelector('#viewOnlyModal .preview-column [style*="font-size:17px"]');
+                if (previewTitle) previewTitle.innerHTML = escTpl(title).replace(/\n/g,'<br>');
+
+                /* 나머지 컬럼 데이터를 info-grid에 반영 */
+                var infoRows = document.querySelectorAll('#viewOnlyModal .info-grid .info-row');
+                var infoMap = {
+                    '템플릿 코드': code,
+                    '템플릿명':   title,
+                    '대상 고객':  target,
+                    '카테고리':   cat,
+                    '채널':       channel,
+                    '상태':       status
+                };
+                infoRows.forEach(function(ir) {
+                    var label = ir.querySelector('.info-label');
+                    var val   = ir.querySelector('.info-value');
+                    if (label && val && infoMap[label.textContent.trim()] !== undefined) {
+                        val.textContent = infoMap[label.textContent.trim()] || '-';
+                    }
+                });
+
+                /* 노션 CSV에 있는 나머지 컬럼을 추가 섹션으로 표시 */
+                var extraGrid = document.getElementById('viewOnlyExtraGrid');
+                if (!extraGrid) {
+                    extraGrid = document.createElement('div');
+                    extraGrid.id = 'viewOnlyExtraGrid';
+                    extraGrid.className = 'info-grid';
+                    extraGrid.style.marginTop = '12px';
+                    var statsCol = document.querySelector('#viewOnlyModal .stats-column');
+                    var firstSection = statsCol ? statsCol.querySelector('.section') : null;
+                    if (firstSection) firstSection.appendChild(extraGrid);
+                }
+                var skipCols = [colTitle, colCode, colChannel, colTarget, colStatus2, colCat].filter(Boolean);
+                var extraRows = _templateHeaders.filter(function(h) {
+                    return h && skipCols.indexOf(h) === -1;
+                });
+                extraGrid.innerHTML = extraRows.map(function(h) {
+                    var v = rowData[h] || '';
+                    return '<div class="info-row"><div class="info-label">' + escTpl(h) + '</div>' +
+                           '<div class="info-value" style="word-break:break-all;">' + escTpl(v) + '</div></div>';
+                }).join('');
+            }
+
+            var step = parseInt(row.getAttribute('data-step'));
             if (step === 3) {
-                // Step3: 발송통계/차트 숨기고 열기
                 openViewOnlyModalNoStats();
             } else {
                 openDetailModal(1);
