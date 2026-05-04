@@ -4763,7 +4763,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                             <th style="padding:9px 12px;text-align:right;font-size:12px;font-weight:600;color:#06B6D4;white-space:nowrap;">활성 매니저
                                 <span class="review-info-icon" style="position:relative;display:inline-flex;align-items:center;cursor:default;vertical-align:middle;margin-left:2px;">
                                     <span style="width:14px;height:14px;border-radius:50%;background:#9CA3AF;color:white;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;">ⓘ</span>
-                                    <span id="match-active-tooltip" class="review-tooltip" style="display:none;position:absolute;right:0;top:calc(100% + 6px);transform:none;background:#1F2937;color:white;font-size:11px;font-weight:500;padding:7px 10px;border-radius:7px;white-space:nowrap;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.2);line-height:1.6;">최근 5개월 내 매치 선택 이력 보유 매니저<br><span id="match-active-date-range" style="color:#9CA3AF;font-size:10px;">-</span></span>
+                                    <span class="review-tooltip" style="display:none;position:absolute;right:0;top:calc(100% + 6px);transform:none;background:#1F2937;color:white;font-size:11px;font-weight:500;padding:7px 10px;border-radius:7px;white-space:nowrap;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.2);line-height:1.6;">기록일 기점 최근 5개월 내 매치 선택 이력 보유 매니저<br>각 셀에 커서를 올리면 조회 기간을 확인할 수 있습니다</span>
                                 </span>
                             </th>
                             <th style="padding:9px 12px;text-align:right;font-size:12px;font-weight:600;color:#9CA3AF;">전일대비</th>
@@ -7214,17 +7214,22 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             var mkt2_on     = parseInt(((q2||[{}])[0]||{}).mkt2_on)||0;
             var match_active = parseInt(((q3||[{}])[0]||{}).match_active)||0;
 
-            /* 조회 기간 계산 후 툴팁에 표시 */
-            var now = new Date();
-            var from5m = new Date(now);
-            from5m.setMonth(from5m.getMonth() - 5);
+            /* 기록일(recorded_at) 기점 5개월 범위 계산 */
+            var recNow  = new Date();
+            var recFrom = new Date(recNow);
+            recFrom.setMonth(recFrom.getMonth() - 5);
             function fmtDate(d) {
                 var k = new Date(d.getTime() + 9*3600*1000);
                 var pad = function(n){ return String(n).padStart(2,'0'); };
                 return k.getUTCFullYear() + '-' + pad(k.getUTCMonth()+1) + '-' + pad(k.getUTCDate());
             }
-            var rangeEl = document.getElementById('match-active-date-range');
-            if (rangeEl) rangeEl.textContent = fmtDate(from5m) + ' ~ ' + fmtDate(now) + ' (KST)';
+            var match_active_from = fmtDate(recFrom);
+            var match_active_to   = fmtDate(recNow);
+
+            /* 전역 캐시 — 이력 렌더링 시 기존 기록 보정에 사용 */
+            window._lastMatchActive     = match_active;
+            window._lastMatchActiveFrom = match_active_from;
+            window._lastMatchActiveTo   = match_active_to;
             var push_off_calc = total - push_on;
             var push_rate = total > 0 ? Math.round(push_on/total*1000)/10 : 0;
             var mkt1_rate = total > 0 ? Math.round(mkt1_on/total*1000)/10 : 0;
@@ -7241,7 +7246,9 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 mkt1_rate:    mkt1_rate,
                 mkt2_on:      mkt2_on,
                 mkt2_rate:    mkt2_rate,
-                match_active: match_active,
+                match_active:      match_active,
+                match_active_from: match_active_from,
+                match_active_to:   match_active_to,
                 recorded_at:  toKST(new Date().toISOString())
             };
         }
@@ -7334,6 +7341,17 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             // 이력은 차트/테이블만 업데이트 (KPI는 실시간 DB 결과 사용)
             var sorted = history.slice().sort(function(a,b){ return b.date > a.date ? 1 : -1; });
 
+            /* 2026-05-04 기록에 match_active가 없으면 현재 조회값으로 보정 */
+            sorted.forEach(function(r) {
+                if (r.date === '2026-05-04' && (r.match_active == null || r.match_active === undefined)) {
+                    if (window._lastMatchActive != null) {
+                        r.match_active      = window._lastMatchActive;
+                        r.match_active_from = window._lastMatchActiveFrom;
+                        r.match_active_to   = window._lastMatchActiveTo;
+                    }
+                }
+            });
+
             // 전일 대비
             if (sorted.length > 1) {
                 var delta = ((sorted[0].push_rate||0) - (sorted[1].push_rate||0)).toFixed(1);
@@ -7361,7 +7379,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         '<td style="padding:9px 12px;font-size:13px;font-weight:700;text-align:right;color:#3B82F6;">' + (r.push_rate||0) + '%</td>' +
                         '<td style="padding:9px 12px;font-size:13px;text-align:right;color:#8B5CF6;">' + Number(r.mkt1_on||0).toLocaleString() + '</td>' +
                         '<td style="padding:9px 12px;font-size:13px;text-align:right;color:#F59E0B;">' + Number(r.mkt2_on||0).toLocaleString() + '</td>' +
-                        '<td style="padding:9px 12px;font-size:13px;font-weight:600;text-align:right;color:#06B6D4;">' + (r.match_active != null ? Number(r.match_active).toLocaleString() : '-') + '</td>' +
+                        '<td style="padding:9px 12px;font-size:13px;font-weight:600;text-align:right;color:#06B6D4;" title="' + (r.match_active_from && r.match_active_to ? '조회 기간: ' + r.match_active_from + ' ~ ' + r.match_active_to : '기간 정보 없음') + '">' + (r.match_active != null ? Number(r.match_active).toLocaleString() : '-') + '</td>' +
                         '<td style="padding:9px 12px;font-size:13px;text-align:right;color:' + dClr + ';">' + dStr + '</td>' +
                         '</tr>';
                 }).join('');
