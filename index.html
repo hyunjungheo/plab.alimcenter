@@ -7176,8 +7176,13 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 var pad = function(n){ return String(n).padStart(2,'0'); };
                 return k.getUTCFullYear() + '-' + pad(k.getUTCMonth()+1) + '-' + pad(k.getUTCDate());
             }
-            var scheduleFrom = fmtDate(recFrom);
-            var scheduleTo   = fmtDate(recNow);
+            var scheduleFrom = fmtDate(recFrom);  // 기록일 -5개월
+            var scheduleTo   = fmtDate(recNow);   // 기록일 당일 (미만 조건)
+
+            /* 표시용 종료일: 기록일 전날 */
+            var displayTo = new Date(recNow);
+            displayTo.setDate(displayTo.getDate() - 1);
+            var scheduleDisplayTo = fmtDate(displayTo);
 
             var results = await Promise.all([
                 pushQuery(
@@ -7205,7 +7210,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     "   OR (m.status = 'HIDE' AND m.cancel_type IN ('READY_UNDEFINED','READY_ASSIGNED','EMERGENCY_CLIENT','EMERGENCY_WEATHER'))" +
                     "   OR (m.status = 'HIDE' AND m.cancel_type IN ('CLIENT','WEATHER') AND ma.id IS NOT NULL)" +
                     ' )' +
-                    ' AND m.schedule >= ? AND m.schedule <= ?',
+                    ' AND m.schedule >= ? AND m.schedule < ?',
                     [scheduleFrom, scheduleTo]
                 )
             ]);
@@ -7243,12 +7248,12 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 return k.getUTCFullYear() + '-' + pad(k.getUTCMonth()+1) + '-' + pad(k.getUTCDate());
             }
             var match_active_from = scheduleFrom;
-            var match_active_to   = scheduleTo;
+            var match_active_to   = scheduleDisplayTo; // 기록일 전날까지
 
             /* 전역 캐시 — 이력 렌더링 시 기존 기록 보정에 사용 */
             window._lastMatchActive     = match_active;
             window._lastMatchActiveFrom = match_active_from;
-            window._lastMatchActiveTo   = match_active_to;
+            window._lastMatchActiveTo   = scheduleDisplayTo;
             var push_off_calc = total - push_on;
             var push_rate = total > 0 ? Math.round(push_on/total*1000)/10 : 0;
             var mkt1_rate = total > 0 ? Math.round(mkt1_on/total*1000)/10 : 0;
@@ -7379,8 +7384,10 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                     };
                     var fromDate = new Date(base);
                     fromDate.setMonth(fromDate.getMonth() - 5);
+                    var toDate = new Date(base);
+                    toDate.setDate(toDate.getDate() - 1); // 기록일 전날
                     r.match_active_from = toFmt(fromDate);
-                    r.match_active_to   = toFmt(base);
+                    r.match_active_to   = toFmt(toDate);
                 }
             });
 
