@@ -4671,7 +4671,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                 </div>
                 <div style="background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;max-height:calc(100vh - 340px);overflow-y:auto;overflow-x:auto;">
                     <table style="width:100%;min-width:860px;border-collapse:collapse;table-layout:auto;">
-                        <colgroup><col style="width:90px"><col style="width:180px"><col style="min-width:200px"><col style="width:120px"><col style="width:70px"><col style="width:56px"><col style="width:130px"></colgroup>
+                        <colgroup><col style="width:90px"><col style="width:180px"><col style="min-width:200px"><col style="width:120px"><col style="width:70px"><col style="width:68px"><col style="width:130px"></colgroup>
                         <thead>
                             <tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB;">
                                 <th style="padding:11px 14px;text-align:left;font-size:12px;font-weight:600;color:#6B7280;white-space:nowrap;">발송일</th>
@@ -6588,7 +6588,7 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
                         '<td style="padding:9px 12px;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (r.body||'').replace(/"/g,'&quot;') + '">' + (r.body||'-') + '</td>' +
                         '<td style="padding:9px 12px;"><span style="background:#EFF6FF;color:#1D4ED8;padding:2px 6px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">' + (r.notification_category||'기타') + '</span></td>' +
                         '<td style="padding:9px 12px;font-size:12px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">' + Number(parseInt(r.cnt)||0).toLocaleString() + '건</td>' +
-                        '<td style="padding:9px 12px;text-align:center;">' + (parseInt(r.is_ad)===1 ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">광고성</span>' : '<span style="background:#DCFCE7;color:#16A34A;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;">정보성</span>') + '</td>' +
+                        '<td style="padding:9px 12px;text-align:center;white-space:nowrap;">' + (parseInt(r.is_ad)===1 ? '<span style="background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">광고성</span>' : '<span style="background:#DCFCE7;color:#16A34A;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;">정보성</span>') + '</td>' +
                         '<td style="padding:9px 12px;font-size:11px;color:#6B7280;text-align:right;white-space:nowrap;">' + (r.last_sent ? toKST(r.last_sent).slice(0,16) : '-') + '</td>' +
                         '</tr>';
                 }).join('');
@@ -7306,28 +7306,35 @@ html.dark .abody blockquote{background:var(--card);color:var(--muted);border-col
             });
         }
 
-        /* ── 9시 자동 기록 ── */
+        /* ── 자동 기록 (탭 진입 시 호출) ── */
         async function consentAutoRecord() {
             var kstNow = new Date(Date.now() + 9*3600*1000);
             var hour   = kstNow.getUTCHours();
             var today  = toKSTDate(new Date().toISOString());
-            // 오늘 이미 기록됐는지 이력에서 확인
-            try {
-                if (window._loadPushConsentHistory) {
-                    var hist = await window._loadPushConsentHistory(2);
-                    if (hist && hist.length && hist[hist.length-1].date === today) {
-                            setEl('con-record-status', '✅ ' + today + ' 기록 완료');
-                        return;
-                    }
-                }
-            } catch(e) {}
-            // 9시 이후이고 미기록이면 자동 기록
-            if (hour >= 9) {
-                await consentRecordNow(false);
-            } else {
+
+            /* 오늘 9시 전이면 자동 기록 안 함 */
+            if (hour < 9) {
                 setEl('con-record-status', '오전 9시 이후 자동 기록');
-                // 9시 이전: 상태만 표시
+                return;
             }
+
+            /* Firestore 이력 조회 (최근 14일) */
+            var hist = [];
+            try {
+                if (window._loadPushConsentHistory) hist = await window._loadPushConsentHistory(14);
+            } catch(e) {}
+
+            var recorded = {};
+            (hist || []).forEach(function(r){ if (r.date) recorded[r.date] = true; });
+
+            /* 오늘 이미 기록됐으면 종료 */
+            if (recorded[today]) {
+                setEl('con-record-status', '✅ ' + today + ' 기록 완료');
+                return;
+            }
+
+            /* 오늘 기록 */
+            await consentRecordNow(false);
         }
 
         /* ── 수동/자동 기록 ── */
